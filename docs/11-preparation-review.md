@@ -77,7 +77,20 @@ benchmarked. Our four proposed differentiators require the tests in the plan.
 | `python scripts/check_docs.py` | PASS; all local Markdown file links resolve. External links/anchors are outside this check. |
 | `git check-ignore` on samples, benchmarks, validation payloads/cache, `.env`, `.local` | PASS for each private-path sentinel. |
 | Credential-pattern scan | No matches in reviewed project content; a bounded scan is not a universal security audit. |
-| `gh repo create` and `gh repo view` | Repository created under SKang393 and visibility verified PUBLIC. Push/remote CI recorded below when complete. |
+| `gh repo create` and `gh repo view` | Repository created under SKang393, PUBLIC, nonempty, default branch `main`, Apache-2.0 detected. |
+| `git push -u origin main` | PASS; initial commit `f529699a7bbea24d880212a3d37eee68c10646c8` published. GitHub reports both author and committer as `SKang393`. |
+| [Foundation CI run](https://github.com/SKang393/record-deduplicator/actions/runs/41365406312) | Windows Rust checks and documentation check PASS. macOS job remains in progress without step results at this handoff snapshot; do not claim macOS acceptance from the Windows result. |
+
+The follow-up commit records review corrections and this evidence. Check the
+[current workflow runs](https://github.com/SKang393/record-deduplicator/actions)
+for the latest branch status; the row above is tied to the stated initial commit.
+
+The first staged whitespace check flagged existing blank lines at EOF in the two
+historical reference snapshots. Rather than modifying those source snapshots,
+`.gitattributes` preserves their original bytes and scopes the EOF exception to
+those files. The subsequent staged check passed. SHA-256 comparison against the
+original snapshot manifest confirms both working files and committed blobs are
+byte-identical to the starting reference files.
 
 Read-only integration review confirmed the positioning against official sources
 and found a source-identity edge case: independent exports can have identical

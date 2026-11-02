@@ -28,6 +28,9 @@ flowchart LR
 All original metadata fields are preserved untouched on `CanonicalRecord` for display and export. Normalization produces dedicated comparison keys (`NormalizedFields`):
 
 ### 1.1 Title Normalization & Bracketed Artifact Handling
+Extract publication-type and editorial guard markers before any bracket
+unwrapping or stripping, including titles consisting only of a marker.
+
 1. **HTML & Entity Cleaning:**
    - Decode HTML/XML character entities (`&amp;` -> `&`, `&quot;` -> `"`, `&#8211;` -> `-`, etc.).
    - Strip inline formatting tags (`<i>`, `</i>`, `<b>`, `<sup>`, `<sub>`, `<scp>`, MathML tags) commonly embedded in environmental science, chemistry, and medical titles.
@@ -42,7 +45,7 @@ All original metadata fields are preserved untouched on `CanonicalRecord` for di
    - Apply Unicode NFKC normalization and decompose/strip combining diacritical marks (`é` -> `e`, `ü` -> `u`, `ł` -> `l`).
    - Map common Greek characters (`α` -> `alpha`, `β` -> `beta`, `γ` -> `gamma`, `δ` -> `delta`, `μ` -> `mu`).
    - Unify dashes/hyphens (`–`, `—`, `−`, `-`) to space when tokenizing words, and strip remaining non-alphanumeric punctuation.
-   - Fold to ASCII lowercase and collapse whitespace.
+   - Apply Unicode-aware case folding and collapse whitespace; preserve non-Latin scripts. Diacritic folding and optional transliteration are separate comparison forms.
    - Generate:
      - `title_norm_full`: full normalized string.
      - `title_norm_main` / `title_norm_subtitle`: split on the first `:` or ` - ` or `? ` to handle records where one database omits or adds a subtitle (e.g., `: A randomized controlled trial`).
@@ -107,9 +110,9 @@ assuming expanded buckets enforce the desired range. Proposed keys:
 
 1. **Full DOI key**: Exact full normalized DOI with suffixes retained.
 2. **Identifier key**: PMID, PMCID, ERIC ID or database-namespaced accession ID. Trial Registry IDs generate relationship candidates only.
-3. **`BlockKey::TitlePrefixYear(title_prefix_30, year_bucket)`** — First 30 alphanumeric chars of `title_norm_main`, emitted for `year - 1`, `year`, `year + 1` (and keyless if year is missing).
-4. **`BlockKey::TitleRareTokens(token_a, token_b, token_c)`** — Top 3 rarest tokens (by inverse document frequency within the loaded dataset, length $\ge 4$) in `title_tokens`, sorted alphabetically. Catches word-order changes, prepended prefixes, and truncated titles.
-5. **`BlockKey::FirstAuthorYear(surname_norm, year_bucket)`** — Normalized surname of first author (plus reversed surname permutation if East Asian / ambiguous) paired with `year - 1`, `year`, `year + 1` (and up to `year ± 4` when one record is a preprint, dissertation, or working paper).
+3. **Title prefix/year key**: first 30 alphanumeric title characters plus explicit year-distance checks. Use separately bounded unknown-year handling, not a wildcard across all records.
+4. **Rare title-token key**: sorted rare tokens with deterministic tie-breaking. This can recover some reordered titles but does not guarantee truncated or translated-title recall.
+5. **First author/year key**: surname candidates with explicit distance at most two years for ordinary publication candidates and five for related reports in the initial policy. Expanded buckets must not accidentally widen these limits.
 6. **`BlockKey::JournalVolPage(journal_key, volume_norm, start_page_norm)`** — Catches records with completely mangled/translated titles or missing authors that share exact journal, volume, and start page.
 
 ---
@@ -144,7 +147,7 @@ Because a false positive silently deletes a unique eligible study from a systema
 | **G1: Erratum / Retraction / Corrigendum** | One record has `PT` = Erratum/Retraction or title starts with `Correction to:`, `Erratum:`, `Corrigendum:`, `Retraction:`. | Never merge with the original article (`DISTINCT` or linked note). Only merge two records if **both** are the exact same Erratum notice. |
 | **G2: Comment / Reply / Letter** | One record has `Reply to`, `Comment on`, `Re:`, `Author's response`. | Never merge with the target article (`DISTINCT`). |
 | **G3: Boilerplate / Generic Title** | Normalized title has $\le 3$ tokens or matches boilerplate list (`editorial`, `introduction`, `book review`, `preface`, `foreword`, `letter to the editor`, `acknowledgments`, `erratum`). | Require exact DOI match OR (`S_authors` $\ge 0.95$ AND exact `Journal + Volume + Issue + StartPage`). Never merge on `Title + Year` alone. |
-| **G4: Multi-Part / Numbered Series** | Titles are identical except for Roman/Arabic part numbers (`Part I` vs `Part II`, `Paper 1` vs `Paper 2`, `Study 1` vs `Study 2`, `Phase 2` vs `Phase 3`). | Classify as **`DISTINCT`** (unless exact same DOI and identical pagination). |
+| **G4: Multi-Part / Numbered Series** | Titles differ in explicit part/study/phase identifiers. | Prevent automatic merge. A copied DOI or pagination does not override this conflict; retain as distinct or route ambiguous identity to review. |
 | **G5: Study Protocol vs. Trial Results** | One record title/type indicates a study protocol (`Study protocol for a randomized controlled trial`) and the other reports the completed trial results. | Classify as **`KIN_REPORT`** (keep both; never auto-merge). |
 | **G6: Living / Updated Cochrane Review** | Both records are in *Cochrane Database of Systematic Reviews* (or have versioned DOIs like `.pub2` vs `.pub3`) with different publication years/versions. | Classify as **`KIN_REPORT`** (updated review version) or **`PROBABLE_DUPLICATE`** for reviewer decision; do not silently overwrite across versions without logging. |
 | **G7: Disjoint Authors Guard** | `S_title` $\ge 0.92$ but both records have non-empty author lists with `S_authors` $< 0.35$. | Downgrade from auto-merge to **`PROBABLE_DUPLICATE`** (if DOI/pages match) or **`DISTINCT`**. |
