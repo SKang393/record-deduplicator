@@ -11,7 +11,7 @@ order; the M0-M9 inventory below remains for coverage. The
 
 | Batch | Status | Next evidence |
 |---|---|---|
-| B00 foundation/repository/plan | Prepared and published; macOS CI pending | Local/Windows checks passed; see [preparation review](docs/11-preparation-review.md). |
+| B00 foundation/repository/plan | COMPLETE for preparation scope | Local checks and Windows/macOS foundation CI passed; see [preparation review](docs/11-preparation-review.md). |
 | B01 source/model contracts | NEXT | Stable source IDs, namespaced IDs, ordered raw fields and tests. |
 | B02 RIS decoding/import | Pending B01 | Loss-aware parser fixtures and preserved source bytes. |
 | B03 safe exact matching | Pending B02 | Identifier/guard/bridge hard-negative tests. |
@@ -47,7 +47,7 @@ these gates. No new topic/keyword investigation is authorized.
   - Create remote repository when ready: `gh repo create SKang393/record-deduplicator --public --source=. --remote=origin` and push commits **strictly as `SKang393`** (no `Co-authored-by` trailers).
 
 - [x] **Task M0.2 — Scaffold Cargo Workspace & Directory Layout**
-  - Evidence: both crates compile/lint locally; help/version and unsupported-command smoke checks pass. Windows CI and documentation checks pass. macOS CI is configured and pending; no native GUI or algorithmic acceptance is claimed.
+  - Evidence: both crates compile/lint locally; help/version and unsupported-command smoke checks pass. Windows, macOS and documentation CI passed at `f529699`. No native GUI or algorithmic acceptance is claimed.
   - Create root `Cargo.toml` workspace containing:
     - `crates/dedup-core` (Rust library crate: canonical data model, parsers, normalizer, blocker, scorer, guards, classifier, union-find clusterer, merger, exporter, PRISMA audit generator).
     - `crates/dedup-cli` (Rust binary crate: CLI runner with deterministic JSON/RIS/CSV outputs).

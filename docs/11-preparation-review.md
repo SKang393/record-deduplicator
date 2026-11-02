@@ -79,9 +79,9 @@ benchmarked. Our four proposed differentiators require the tests in the plan.
 | Credential-pattern scan | No matches in reviewed project content; a bounded scan is not a universal security audit. |
 | `gh repo create` and `gh repo view` | Repository created under SKang393, PUBLIC, nonempty, default branch `main`, Apache-2.0 detected. |
 | `git push -u origin main` | PASS; initial commit `f529699a7bbea24d880212a3d37eee68c10646c8` published. GitHub reports both author and committer as `SKang393`. |
-| [Foundation CI run](https://github.com/SKang393/record-deduplicator/actions/runs/41365406312) | Windows Rust checks and documentation check PASS. macOS job remains in progress without step results at this handoff snapshot; do not claim macOS acceptance from the Windows result. |
+| [Foundation CI run](https://github.com/SKang393/record-deduplicator/actions/runs/41365406312) | PASS at `f529699`: Windows Rust job, macOS Rust job, and documentation job all completed successfully. Both OS jobs ran formatting, lint, Cargo tests and CLI help smoke checks. This verifies the foundation, not native GUI or matching behavior. |
 
-The follow-up commit records review corrections and this evidence. Check the
+Follow-up documentation commits record review corrections and this evidence. Check the
 [current workflow runs](https://github.com/SKang393/record-deduplicator/actions)
 for the latest branch status; the row above is tied to the stated initial commit.
 
