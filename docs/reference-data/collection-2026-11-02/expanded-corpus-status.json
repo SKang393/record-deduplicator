@@ -1,0 +1,117 @@
+{
+  "checked_at_utc": "2026-11-02T20:48:15.652451+00:00",
+  "execution_status": "execution_revoked_preparation_only",
+  "fields": [
+    {
+      "field": "MED",
+      "role": "core",
+      "trial_id": "MED-X02",
+      "approved_raw_total": 19804,
+      "received_records": 11497,
+      "complete_sources": 3,
+      "expected_sources": 5,
+      "corpus_admitted": false
+    },
+    {
+      "field": "PH",
+      "role": "core",
+      "trial_id": "PH-X02",
+      "approved_raw_total": 15609,
+      "received_records": 5471,
+      "complete_sources": 2,
+      "expected_sources": 7,
+      "corpus_admitted": false
+    },
+    {
+      "field": "HS",
+      "role": "core",
+      "trial_id": "HS-X02",
+      "approved_raw_total": 11438,
+      "received_records": 4507,
+      "complete_sources": 2,
+      "expected_sources": 5,
+      "corpus_admitted": false
+    },
+    {
+      "field": "ENV",
+      "role": "core",
+      "trial_id": "ENV-X02",
+      "approved_raw_total": 12673,
+      "received_records": 3000,
+      "complete_sources": 0,
+      "expected_sources": 4,
+      "corpus_admitted": false
+    },
+    {
+      "field": "SPED",
+      "role": "supplemental",
+      "trial_id": "SPED-X01",
+      "approved_raw_total": 12743,
+      "received_records": 253,
+      "complete_sources": 1,
+      "expected_sources": 9,
+      "corpus_admitted": false
+    },
+    {
+      "field": "NEU",
+      "role": "core",
+      "trial_id": "NEU-X03",
+      "approved_raw_total": 10048,
+      "received_records": 3104,
+      "complete_sources": 1,
+      "expected_sources": 4,
+      "corpus_admitted": false
+    },
+    {
+      "field": "EDU",
+      "role": "core",
+      "trial_id": "EDU-X03",
+      "approved_raw_total": 18353,
+      "received_records": 0,
+      "complete_sources": 0,
+      "expected_sources": 8,
+      "corpus_admitted": false
+    },
+    {
+      "field": "ENG",
+      "role": "core",
+      "trial_id": "ENG-X03",
+      "approved_raw_total": 10218,
+      "received_records": 0,
+      "complete_sources": 0,
+      "expected_sources": 5,
+      "corpus_admitted": false
+    },
+    {
+      "field": "PSY",
+      "role": "core",
+      "trial_id": "PSY-X04",
+      "approved_raw_total": 18826,
+      "received_records": 0,
+      "complete_sources": 0,
+      "expected_sources": 6,
+      "corpus_admitted": false
+    },
+    {
+      "field": "PHA",
+      "role": "core",
+      "trial_id": "PHA-X05",
+      "approved_raw_total": 18802,
+      "received_records": 0,
+      "complete_sources": 0,
+      "expected_sources": 4,
+      "corpus_admitted": false
+    },
+    {
+      "field": "CS",
+      "role": "core",
+      "trial_id": null,
+      "approved_raw_total": null,
+      "received_records": 0,
+      "complete_sources": 0,
+      "expected_sources": 8,
+      "corpus_admitted": false,
+      "status": "query_not_yet_approved_for_export"
+    }
+  ]
+}

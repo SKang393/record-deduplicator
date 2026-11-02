@@ -1,0 +1,211 @@
+field,source,source_type,review_count,denominator,review_ids,conflicting_review_ids,unambiguous_review_count
+MED,PubMed,bibliographic_database,8,10,"[""MED01"", ""MED02"", ""MED03"", ""MED04"", ""MED05"", ""MED06"", ""MED09"", ""MED10""]",[],8
+MED,Embase,bibliographic_database,7,10,"[""MED01"", ""MED03"", ""MED04"", ""MED05"", ""MED06"", ""MED07"", ""MED08""]",[],7
+MED,Web of Science (indexes unspecified),platform_or_unspecified_collection,6,10,"[""MED02"", ""MED04"", ""MED05"", ""MED06"", ""MED09"", ""MED10""]",[],6
+MED,CENTRAL,bibliographic_database,4,10,"[""MED02"", ""MED04"", ""MED07"", ""MED09""]",[],4
+MED,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,3,10,"[""MED01"", ""MED03"", ""MED05""]",[],3
+MED,MEDLINE,bibliographic_database,3,10,"[""MED07"", ""MED08"", ""MED09""]",[],3
+MED,AIM database of candidate medicines for priority maternal conditions,specialized_collection_or_other_source,1,10,"[""MED08""]",[],1
+MED,AMED,bibliographic_database,1,10,"[""MED08""]",[],1
+MED,APA PsycInfo,bibliographic_database,1,10,"[""MED05""]",[],1
+MED,CINAHL (edition unspecified),bibliographic_database,1,10,"[""MED08""]",[],1
+MED,ClinicalTrials.gov,trial_registry,1,10,"[""MED02""]",[],1
+MED,Cochrane Library (Cochrane Reviews specified),platform_or_unspecified_collection,1,10,"[""MED08""]",[],1
+MED,Cochrane database (unspecified),platform_or_unspecified_collection,1,10,"[""MED06""]",[],1
+MED,EBSCOhost (databases unspecified),platform_or_unspecified_collection,1,10,"[""MED02""]",[],1
+MED,EmCare,bibliographic_database,1,10,"[""MED08""]",[],1
+MED,Global Index Medicus,bibliographic_database,1,10,"[""MED08""]",[],1
+MED,Maternity and Infant Care,bibliographic_database,1,10,"[""MED08""]",[],1
+MED,OpenGrey,grey_literature_database,1,10,"[""MED02""]",[],1
+MED,Ovid LWW Total Access,publisher_collection,1,10,"[""MED02""]",[],1
+MED,ProQuest Dissertations & Theses Global,bibliographic_database,1,10,"[""MED02""]",[],1
+MED,Scopus,bibliographic_database,1,10,"[""MED02""]",[],1
+MED,Springer,publisher_collection,1,10,"[""MED04""]",[],1
+MED,US and European trial registries,specialized_collection_or_other_source,1,10,"[""MED07""]",[],1
+MED,WHO ICTRP,trial_registry,1,10,"[""MED08""]",[],1
+MED,reference lists,citation_followup,1,10,"[""MED10""]",[],1
+MED,specified dermatology conference abstracts,specialized_collection_or_other_source,1,10,"[""MED07""]",[],1
+NEU,PubMed,bibliographic_database,10,10,"[""NEU01"", ""NEU02"", ""NEU03"", ""NEU04"", ""NEU05"", ""NEU06"", ""NEU07"", ""NEU08"", ""NEU09"", ""NEU10""]",[],10
+NEU,Web of Science (indexes unspecified),platform_or_unspecified_collection,6,10,"[""NEU01"", ""NEU03"", ""NEU04"", ""NEU05"", ""NEU06"", ""NEU10""]",[],6
+NEU,Embase,bibliographic_database,5,10,"[""NEU01"", ""NEU04"", ""NEU05"", ""NEU07"", ""NEU10""]",[],5
+NEU,APA PsycInfo,bibliographic_database,2,10,"[""NEU04"", ""NEU09""]",[],2
+NEU,CENTRAL,bibliographic_database,2,10,"[""NEU02"", ""NEU04""]",[],2
+NEU,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,2,10,"[""NEU03"", ""NEU10""]",[],2
+NEU,Scopus,bibliographic_database,2,10,"[""NEU03"", ""NEU05""]",[],2
+NEU,CINAHL (edition unspecified),bibliographic_database,1,10,"[""NEU09""]",[],1
+NEU,CNKI (collection unspecified),platform_or_unspecified_collection,1,10,"[""NEU01""]",[],1
+NEU,China Biology Medicine,bibliographic_database,1,10,"[""NEU01""]",[],1
+NEU,Cochrane database (unspecified),platform_or_unspecified_collection,1,10,"[""NEU01""]",[],1
+NEU,Google Scholar,search_engine,1,10,"[""NEU07""]",[],1
+NEU,PEDro,bibliographic_database,1,10,"[""NEU10""]",[],1
+NEU,ScienceDirect,publisher_collection,1,10,"[""NEU02""]",[],1
+NEU,VIP,bibliographic_database,1,10,"[""NEU01""]",[],1
+NEU,Wanfang (collection unspecified),platform_or_unspecified_collection,1,10,"[""NEU01""]",[],1
+NEU,reference lists,citation_followup,1,10,"[""NEU07""]",[],1
+PH,Embase,bibliographic_database,6,10,"[""PH01"", ""PH03"", ""PH04"", ""PH05"", ""PH06"", ""PH08""]",[],6
+PH,Scopus,bibliographic_database,6,10,"[""PH02"", ""PH05"", ""PH06"", ""PH08"", ""PH09"", ""PH10""]",[],6
+PH,Web of Science (indexes unspecified),platform_or_unspecified_collection,6,10,"[""PH03"", ""PH04"", ""PH06"", ""PH07"", ""PH08"", ""PH09""]",[],6
+PH,MEDLINE,bibliographic_database,5,10,"[""PH01"", ""PH02"", ""PH03"", ""PH05"", ""PH06""]",[],5
+PH,PubMed,bibliographic_database,5,10,"[""PH02"", ""PH06"", ""PH07"", ""PH09"", ""PH10""]",[],5
+PH,APA PsycInfo,bibliographic_database,3,10,"[""PH01"", ""PH03"", ""PH06""]",[],3
+PH,CINAHL (edition unspecified),bibliographic_database,3,10,"[""PH01"", ""PH03"", ""PH06""]",[],3
+PH,Cochrane database (unspecified),platform_or_unspecified_collection,3,10,"[""PH02"", ""PH03"", ""PH08""]",[],3
+PH,Google Scholar,search_engine,2,10,"[""PH01"", ""PH10""]",[],2
+PH,PubMed/MEDLINE (as reported),combined_database_interface_label,2,10,"[""PH04"", ""PH08""]",[],2
+PH,African Journals Online,journal_platform,1,10,"[""PH08""]",[],1
+PH,BIOSIS Citation Index,bibliographic_database,1,10,"[""PH05""]",[],1
+PH,CDC stacks,specialized_collection_or_other_source,1,10,"[""PH06""]",[],1
+PH,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,1,10,"[""PH05""]",[],1
+PH,ERIC,bibliographic_database,1,10,"[""PH06""]",[],1
+PH,Ethiopian Demographic and Health Surveys repositories,specialized_collection_or_other_source,1,10,"[""PH08""]",[],1
+PH,Ethiopian Ministry of Health,specialized_collection_or_other_source,1,10,"[""PH08""]",[],1
+PH,GovInfo,specialized_collection_or_other_source,1,10,"[""PH06""]",[],1
+PH,Health Evidence,specialized_collection_or_other_source,1,10,"[""PH06""]",[],1
+PH,MEdRxiv,specialized_collection_or_other_source,1,10,"[""PH06""]",[],1
+PH,ProQuest Policy File,bibliographic_database,1,10,"[""PH06""]",[],1
+PH,SPORTDiscus,bibliographic_database,1,10,"[""PH03""]",[],1
+PH,SSRN,specialized_collection_or_other_source,1,10,"[""PH06""]",[],1
+PH,UNICEF,specialized_collection_or_other_source,1,10,"[""PH08""]",[],1
+PH,WHO,specialized_collection_or_other_source,1,10,"[""PH08""]",[],1
+PSY,Web of Science (indexes unspecified),platform_or_unspecified_collection,9,10,"[""PSY-001"", ""PSY-002"", ""PSY-004"", ""PSY-005"", ""PSY-006"", ""PSY-007"", ""PSY-008"", ""PSY-009"", ""PSY-010""]",[],9
+PSY,PubMed,bibliographic_database,8,10,"[""PSY-001"", ""PSY-003"", ""PSY-004"", ""PSY-005"", ""PSY-006"", ""PSY-008"", ""PSY-009"", ""PSY-010""]",[],8
+PSY,APA PsycInfo,bibliographic_database,4,10,"[""PSY-002"", ""PSY-004"", ""PSY-007"", ""PSY-008""]",[],4
+PSY,Embase,bibliographic_database,4,10,"[""PSY-001"", ""PSY-002"", ""PSY-007"", ""PSY-010""]",[],4
+PSY,EBSCOhost,platform_or_unspecified_collection,3,10,"[""PSY-001"", ""PSY-004"", ""PSY-006""]",[],3
+PSY,MEDLINE,bibliographic_database,3,10,"[""PSY-002"", ""PSY-007"", ""PSY-010""]",[],3
+PSY,Scopus,bibliographic_database,3,10,"[""PSY-005"", ""PSY-006"", ""PSY-009""]",[],3
+PSY,APA PsycArticles,bibliographic_database,2,10,"[""PSY-004"", ""PSY-008""]",[],2
+PSY,ASSIA,bibliographic_database,2,10,"[""PSY-007"", ""PSY-008""]",[],2
+PSY,China National Knowledge Infrastructure (CNKI),bibliographic_database,2,10,"[""PSY-001"", ""PSY-006""]",[],2
+PSY,China Science and Technology Journal Database (VIP),bibliographic_database,2,10,"[""PSY-001"", ""PSY-006""]",[],2
+PSY,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,2,10,"[""PSY-001"", ""PSY-002""]",[],2
+PSY,ERIC,bibliographic_database,2,10,"[""PSY-007"", ""PSY-008""]",[],2
+PSY,Google Scholar,search_engine,2,10,"[""PSY-003"", ""PSY-004""]",[],2
+PSY,ScienceDirect,publisher_platform,2,10,"[""PSY-005"", ""PSY-006""]",[],2
+PSY,Wanfang Database,bibliographic_database,2,10,"[""PSY-001"", ""PSY-006""]",[],2
+PSY,ACM Digital Library,publisher_platform,1,10,"[""PSY-007""]",[],1
+PSY,Bing,search_engine,1,10,"[""PSY-002""]",[],1
+PSY,CENTRAL,bibliographic_database,1,10,"[""PSY-010""]",[],1
+PSY,CINAHL (edition unspecified),bibliographic_database,1,10,"[""PSY-004""]",[],1
+PSY,China Biomedical Literature Database (CBM),bibliographic_database,1,10,"[""PSY-001""]",[],1
+PSY,Criminology Collection,bibliographic_database,1,10,"[""PSY-008""]",[],1
+PSY,Google,search_engine,1,10,"[""PSY-002""]",[],1
+PSY,IEEE Xplore,publisher_platform,1,10,"[""PSY-007""]",[],1
+PSY,LILACS,bibliographic_database,1,10,"[""PSY-001""]",[],1
+PSY,PsycNet,platform_or_unspecified_collection,1,10,"[""PSY-003""]",[],1
+PSY,Psychology and Behavioral Sciences Collection,bibliographic_database,1,10,"[""PSY-009""]",[],1
+PSY,Social Science Database,bibliographic_database,1,10,"[""PSY-008""]",[],1
+PHA,Embase,bibliographic_database,9,10,"[""PHA01"", ""PHA02"", ""PHA03"", ""PHA04"", ""PHA05"", ""PHA06"", ""PHA07"", ""PHA08"", ""PHA10""]",[],9
+PHA,MEDLINE,bibliographic_database,5,10,"[""PHA01"", ""PHA02"", ""PHA04"", ""PHA07"", ""PHA08""]",[],5
+PHA,PubMed,bibliographic_database,4,10,"[""PHA03"", ""PHA05"", ""PHA06"", ""PHA10""]",[],4
+PHA,Web of Science (indexes unspecified),platform_or_unspecified_collection,4,10,"[""PHA03"", ""PHA06"", ""PHA07"", ""PHA10""]",[],4
+PHA,APA PsycInfo,bibliographic_database,2,10,"[""PHA02"", ""PHA04""]",[],2
+PHA,CENTRAL,bibliographic_database,2,10,"[""PHA02"", ""PHA04""]",[],2
+PHA,CINAHL (edition unspecified),bibliographic_database,2,10,"[""PHA04"", ""PHA07""]",[],2
+PHA,ClinicalTrials.gov,trial_registry,2,10,"[""PHA04"", ""PHA07""]",[],2
+PHA,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,2,10,"[""PHA05"", ""PHA06""]",[],2
+PHA,Scopus,bibliographic_database,2,10,"[""PHA05"", ""PHA10""]",[],2
+PHA,WHO ICTRP,trial_registry,2,10,"[""PHA04"", ""PHA07""]",[],2
+PHA,CNKI (collection unspecified),platform_or_unspecified_collection,1,10,"[""PHA09""]",[],1
+PHA,ChinaXiv,preprint_server,1,10,"[""PHA09""]",[],1
+PHA,Chinese Biomedical Literature (as reported),bibliographic_database,1,10,"[""PHA09""]",[],1
+PHA,Chinese Medical Journal Net,specialized_collection_or_other_source,1,10,"[""PHA09""]",[],1
+PHA,Cochrane database (unspecified),platform_or_unspecified_collection,1,10,"[""PHA08""]",[],1
+PHA,Food and Drug Administration and European Medicines Agency regulatory databases,specialized_collection_or_other_source,1,10,"[""PHA04""]",[],1
+PHA,Living Overview of the Evidence COVID-19 Repository (COVID-19 L-OVE),specialized_collection_or_other_source,1,10,"[""PHA09""]",[],1
+PHA,US Centers for Disease Control and Prevention (CDC) COVID-19 Research Articles Downloadable Database,specialized_collection_or_other_source,1,10,"[""PHA09""]",[],1
+PHA,VIP,bibliographic_database,1,10,"[""PHA09""]",[],1
+PHA,Wanfang (collection unspecified),platform_or_unspecified_collection,1,10,"[""PHA09""]",[],1
+PHA,World Health Organization (WHO) covid-19 database,specialized_collection_or_other_source,1,10,"[""PHA09""]",[],1
+PHA,references,citation_followup,1,10,"[""PHA08""]",[],1
+PHA,unnamed trials databases,specialized_collection_or_other_source,1,10,"[""PHA08""]",[],1
+ENG,Scopus,bibliographic_database,9,10,"[""ENG-SR01"", ""ENG-SR02"", ""ENG-SR03"", ""ENG-SR04"", ""ENG-SR06"", ""ENG-SR07"", ""ENG-SR08"", ""ENG-SR09"", ""ENG-SR10""]",[],9
+ENG,Web of Science (indexes unspecified),platform_or_unspecified_collection,8,10,"[""ENG-SR01"", ""ENG-SR02"", ""ENG-SR03"", ""ENG-SR04"", ""ENG-SR05"", ""ENG-SR06"", ""ENG-SR07"", ""ENG-SR08""]","[""ENG-SR04""]",7
+ENG,ScienceDirect,publisher_platform,6,10,"[""ENG-SR03"", ""ENG-SR04"", ""ENG-SR05"", ""ENG-SR06"", ""ENG-SR08"", ""ENG-SR09""]","[""ENG-SR03"", ""ENG-SR04""]",4
+ENG,Google Scholar,scholarly_search_engine,3,10,"[""ENG-SR05"", ""ENG-SR09"", ""ENG-SR10""]",[],3
+ENG,PubMed,bibliographic_database,2,10,"[""ENG-SR03"", ""ENG-SR08""]",[],2
+ENG,Embase,bibliographic_database,1,10,"[""ENG-SR03""]","[""ENG-SR03""]",0
+ENG,Emerald Insight,publisher_platform,1,10,"[""ENG-SR10""]",[],1
+ENG,MDPI,publisher_platform,1,10,"[""ENG-SR04""]","[""ENG-SR04""]",0
+ENG,SpringerLink,publisher_platform,1,10,"[""ENG-SR04""]","[""ENG-SR04""]",0
+HS,Embase,bibliographic_database,7,10,"[""HS01"", ""HS02"", ""HS03"", ""HS05"", ""HS07"", ""HS08"", ""HS10""]",[],7
+HS,PubMed,bibliographic_database,7,10,"[""HS02"", ""HS04"", ""HS05"", ""HS06"", ""HS08"", ""HS09"", ""HS10""]",[],7
+HS,CINAHL (edition unspecified),bibliographic_database,6,10,"[""HS01"", ""HS02"", ""HS04"", ""HS06"", ""HS09"", ""HS10""]",[],6
+HS,Web of Science (indexes unspecified),platform_or_unspecified_collection,6,10,"[""HS02"", ""HS03"", ""HS04"", ""HS05"", ""HS07"", ""HS08""]",[],6
+HS,Scopus,bibliographic_database,5,10,"[""HS03"", ""HS05"", ""HS06"", ""HS09"", ""HS10""]",[],5
+HS,Google Scholar,search_engine,3,10,"[""HS04"", ""HS08"", ""HS09""]",[],3
+HS,CENTRAL,bibliographic_database,2,10,"[""HS01"", ""HS03""]",[],2
+HS,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,2,10,"[""HS06"", ""HS09""]",[],2
+HS,EBSCOhost (databases unspecified),platform_or_unspecified_collection,2,10,"[""HS06"", ""HS10""]",[],2
+HS,ProQuest (databases unspecified),platform_or_unspecified_collection,2,10,"[""HS04"", ""HS06""]",[],2
+HS,PubMed/MEDLINE (as reported),combined_database_interface_label,2,10,"[""HS03"", ""HS07""]",[],2
+HS,LILACS,bibliographic_database,1,10,"[""HS01""]",[],1
+HS,MEDLINE,bibliographic_database,1,10,"[""HS01""]",[],1
+HS,PEDro,bibliographic_database,1,10,"[""HS01""]",[],1
+HS,ScienceDirect,publisher_collection,1,10,"[""HS04""]",[],1
+HS,Web of Science Core Collection,bibliographic_database_collection,1,10,"[""HS06""]",[],1
+HS,reference lists,citation_followup,1,10,"[""HS04""]",[],1
+ENV,Scopus,bibliographic_database,8,10,"[""ENV-SR01"", ""ENV-SR02"", ""ENV-SR03"", ""ENV-SR04"", ""ENV-SR07"", ""ENV-SR08"", ""ENV-SR09"", ""ENV-SR10""]",[],8
+ENV,Web of Science (indexes unspecified),platform_or_unspecified_collection,5,10,"[""ENV-SR02"", ""ENV-SR06"", ""ENV-SR07"", ""ENV-SR08"", ""ENV-SR10""]",[],5
+ENV,Google Scholar,scholarly_search_engine,4,10,"[""ENV-SR01"", ""ENV-SR02"", ""ENV-SR03"", ""ENV-SR05""]",[],4
+ENV,ScienceDirect,publisher_platform,2,10,"[""ENV-SR02"", ""ENV-SR05""]",[],2
+ENV,Academic Search Complete,bibliographic_database,1,10,"[""ENV-SR02""]",[],1
+ENV,Dimensions,bibliographic_discovery_index,1,10,"[""ENV-SR10""]",[],1
+ENV,Environment Complete,bibliographic_database,1,10,"[""ENV-SR02""]",[],1
+ENV,GreenFILE,bibliographic_database,1,10,"[""ENV-SR02""]",[],1
+ENV,PubMed,bibliographic_database,1,10,"[""ENV-SR05""]",[],1
+ENV,Semantic Scholar,scholarly_search_engine,1,10,"[""ENV-SR01""]",[],1
+EDU,ERIC,bibliographic_database,5,10,"[""EDU-007"", ""EDU-008"", ""EDU-010"", ""EDU-011"", ""EDU-012""]",[],5
+EDU,APA PsycInfo,bibliographic_database,4,10,"[""EDU-007"", ""EDU-008"", ""EDU-010"", ""EDU-012""]",[],4
+EDU,Scopus,bibliographic_database,4,10,"[""EDU-002"", ""EDU-003"", ""EDU-009"", ""EDU-012""]",[],4
+EDU,Web of Science (indexes unspecified),platform_or_unspecified_collection,3,10,"[""EDU-001"", ""EDU-002"", ""EDU-008""]",[],3
+EDU,EBSCOhost,platform_or_unspecified_collection,2,10,"[""EDU-007"", ""EDU-009""]",[],2
+EDU,ProQuest Dissertations,platform_or_unspecified_collection,2,10,"[""EDU-007"", ""EDU-011""]",[],2
+EDU,ACM,publisher_platform,1,10,"[""EDU-004""]",[],1
+EDU,APA PsycArticles,bibliographic_database,1,10,"[""EDU-009""]",[],1
+EDU,Academic Search Complete,bibliographic_database,1,10,"[""EDU-007""]",[],1
+EDU,British Education Index,bibliographic_database,1,10,"[""EDU-010""]",[],1
+EDU,Conference Proceedings Citation Index-Science,bibliographic_database,1,10,"[""EDU-007""]",[],1
+EDU,Educational Research Complete,bibliographic_database,1,10,"[""EDU-012""]",[],1
+EDU,Google Scholar,search_engine,1,10,"[""EDU-002""]",[],1
+EDU,IEEE Xplore,publisher_platform,1,10,"[""EDU-004""]",[],1
+EDU,JSTOR,repository,1,10,"[""EDU-001""]",[],1
+EDU,OmniFile Full Text Select,bibliographic_database,1,10,"[""EDU-007""]",[],1
+EDU,Open Dissertations,repository,1,10,"[""EDU-007""]",[],1
+EDU,ProQuest Central,bibliographic_database,1,10,"[""EDU-011""]",[],1
+EDU,ProQuest Education Collection,bibliographic_database,1,10,"[""EDU-009""]",[],1
+EDU,ScienceDirect,publisher_platform,1,10,"[""EDU-004""]",[],1
+EDU,SpringerLink,publisher_platform,1,10,"[""EDU-004""]",[],1
+EDU,Wiley,publisher_platform,1,10,"[""EDU-004""]",[],1
+CS,Scopus,bibliographic_database,7,10,"[""CS-SR01"", ""CS-SR02"", ""CS-SR05"", ""CS-SR07"", ""CS-SR08"", ""CS-SR09"", ""CS-SR10""]",[],7
+CS,IEEE Xplore,digital_library_platform,6,10,"[""CS-SR01"", ""CS-SR03"", ""CS-SR04"", ""CS-SR07"", ""CS-SR08"", ""CS-SR10""]",[],6
+CS,Web of Science (indexes unspecified),platform_or_unspecified_collection,6,10,"[""CS-SR01"", ""CS-SR02"", ""CS-SR03"", ""CS-SR05"", ""CS-SR06"", ""CS-SR08""]",[],6
+CS,ScienceDirect,publisher_platform,4,10,"[""CS-SR01"", ""CS-SR03"", ""CS-SR04"", ""CS-SR08""]",[],4
+CS,ACM Digital Library,digital_library_platform,3,10,"[""CS-SR03"", ""CS-SR04"", ""CS-SR10""]",[],3
+CS,Google Scholar,scholarly_search_engine,3,10,"[""CS-SR06"", ""CS-SR07"", ""CS-SR08""]",[],3
+CS,SpringerLink,publisher_platform,3,10,"[""CS-SR04"", ""CS-SR07"", ""CS-SR08""]",[],3
+CS,PubMed,bibliographic_database,2,10,"[""CS-SR05"", ""CS-SR06""]",[],2
+CS,Emerald Insight,publisher_platform,1,10,"[""CS-SR04""]",[],1
+SPED,ERIC,bibliographic_database,7,10,"[""SPED-001"", ""SPED-002"", ""SPED-005"", ""SPED-007"", ""SPED-008"", ""SPED-009"", ""SPED-010""]",[],7
+SPED,APA PsycInfo,bibliographic_database,6,10,"[""SPED-002"", ""SPED-004"", ""SPED-005"", ""SPED-008"", ""SPED-009"", ""SPED-010""]",[],6
+SPED,Scopus,bibliographic_database,6,10,"[""SPED-001"", ""SPED-003"", ""SPED-007"", ""SPED-008"", ""SPED-009"", ""SPED-010""]",[],6
+SPED,Web of Science (indexes unspecified),platform_or_unspecified_collection,4,10,"[""SPED-001"", ""SPED-002"", ""SPED-009"", ""SPED-010""]",[],4
+SPED,Google Scholar,search_engine,3,10,"[""SPED-005"", ""SPED-006"", ""SPED-008""]",[],3
+SPED,PubMed,bibliographic_database,3,10,"[""SPED-006"", ""SPED-007"", ""SPED-008""]",[],3
+SPED,ProQuest,platform_or_unspecified_collection,2,10,"[""SPED-007"", ""SPED-010""]",[],2
+SPED,ScienceDirect,publisher_platform,2,10,"[""SPED-006"", ""SPED-008""]",[],2
+SPED,APA PsycArticles,bibliographic_database,1,10,"[""SPED-009""]",[],1
+SPED,Academic Search Complete,bibliographic_database,1,10,"[""SPED-010""]",[],1
+SPED,Academic Search Ultimate,bibliographic_database,1,10,"[""SPED-005""]",[],1
+SPED,CAIRN,publisher_platform,1,10,"[""SPED-009""]",[],1
+SPED,Crossref,repository,1,10,"[""SPED-007""]",[],1
+SPED,Education Full Text,bibliographic_database,1,10,"[""SPED-010""]",[],1
+SPED,Education Source,bibliographic_database,1,10,"[""SPED-002""]",[],1
+SPED,Education Source Ultimate,bibliographic_database,1,10,"[""SPED-005""]",[],1
+SPED,FIS,bibliographic_database,1,10,"[""SPED-009""]",[],1
+SPED,Global Health,bibliographic_database,1,10,"[""SPED-004""]",[],1
+SPED,IEEE Xplore,publisher_platform,1,10,"[""SPED-006""]",[],1
+SPED,JSTOR,repository,1,10,"[""SPED-006""]",[],1
+SPED,MEDLINE,bibliographic_database,1,10,"[""SPED-004""]",[],1
+SPED,ProQuest Dissertations & Theses Global,bibliographic_database,1,10,"[""SPED-010""]",[],1
+SPED,PsycNet,platform_or_unspecified_collection,1,10,"[""SPED-007""]",[],1

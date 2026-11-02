@@ -5,6 +5,13 @@
 > governs independent human labels, held-out splits, uncertainty and data rights.
 > Nothing in this document represents completed evaluation or implemented code.
 
+> **Collection revision, 2026-11-02:** The ten-core-field plus supplemental SPED
+> design in [the search protocol](06-benchmark-search-protocol.md) replaces the
+> earlier five-field proposal. The user's requested later model conditions are
+> preserved in [the validation handoff](13-future-validation-conditions.md).
+> Current scope is preparation only. Collection is stopped; no model calls or
+> validation runs are authorized in this handoff.
+
 > **CRITICAL ARCHITECTURAL BOUNDARY (Decision D-005):**
 > The LLM validation step is **strictly an external testing and benchmarking harness (`validation/`)** used by us to evaluate and validate the accuracy of `record-deduplicator`.
 > **It is NOT part of the `record-deduplicator` application or `dedup-core` / `dedup-cli` crates.**
@@ -61,11 +68,12 @@ provenance for any optional model suggestions.
    - The 5 benchmark systematic review datasets from Hair et al. (2023) (`https://github.com/camaradesuk/ASySD`), providing direct comparability with published sensitivity/specificity figures in biomedical literature.
 2. **Multi-Disciplinary Contemporary Benchmarks (Our Public Study):**
    - Real multi-database exports collected using the protocol in [`06-benchmark-search-protocol.md`](06-benchmark-search-protocol.md) across:
-     - **Special Education** (Reading interventions in LD/dyslexia)
-     - **General Education** (Generative AI / ChatGPT in education)
-     - **Psychology** (Social media & adolescent mental health)
-     - **Medicine** (GLP-1 receptor agonists for obesity)
-     - **Nursing / Allied Health** (Nurse burnout & intention to leave)
+     - **Core:** Medicine, Neuroscience, Public Health, Psychology,
+       Pharmacy/Pharmacology, Engineering, Health Science, Environmental Science,
+       Education/Educational Research, and Computer Science.
+     - **Supplemental:** Special Education, reported separately.
+     - Final topics and database selections must come from the current evidence
+       and actual EBSCO search trials; the old topic names are not locked choices.
 3. **Synthetic Perturbation Suite (`testdata/fixtures/synthetic/`):**
    - Deterministic perturbation generator that takes clean seed records and injects controlled rates of:
      - APA/Elsevier copyright trailers, `[Translated Title]` brackets, `[Abstract]` tags, HTML `<i>`/`<sub>` tags;

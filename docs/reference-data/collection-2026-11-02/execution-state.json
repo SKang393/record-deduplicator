@@ -1,0 +1,8 @@
+{
+  "recorded_at_utc": "2026-11-02T20:47:09.746808+00:00",
+  "status": "execution_revoked_preparation_only",
+  "authority": "Latest user instruction: prepare the system for Terra; do not download export files or do collection work.",
+  "execution_enabled": false,
+  "resume_rule": "Future collection requires a separate explicit user-selected run; never resume old sessions or queues.",
+  "validation_started": false
+}

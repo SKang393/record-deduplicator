@@ -1,0 +1,59 @@
+{
+  "generated_at_utc": "2026-11-02T20:47:35.766875+00:00",
+  "status": "collection_in_progress_not_validation",
+  "review_entries": 110,
+  "unique_review_dois": 109,
+  "reviews_by_field": {
+    "MED": 10,
+    "NEU": 10,
+    "PH": 10,
+    "PHA": 10,
+    "HS": 10,
+    "ENG": 10,
+    "ENV": 10,
+    "CS": 10,
+    "PSY": 10,
+    "EDU": 10,
+    "SPED": 10
+  },
+  "cross_field_reviews": {
+    "10.3389/feduc.2025.1527851": [
+      "EDU-003",
+      "SPED-003"
+    ]
+  },
+  "ranking_rows_by_field": {
+    "MED": 10,
+    "NEU": 10,
+    "PH": 10,
+    "PHA": 10,
+    "HS": 10,
+    "ENG": 10,
+    "ENV": 10,
+    "CS": 10,
+    "PSY": 10,
+    "EDU": 10,
+    "SPED": 11
+  },
+  "topic_evidence_rows_by_field": {
+    "MED": 10,
+    "NEU": 10,
+    "PH": 10,
+    "PHA": 9,
+    "HS": 10,
+    "ENG": 10,
+    "ENV": 10,
+    "CS": 10,
+    "PSY": 20,
+    "EDU": 20,
+    "SPED": 11
+  },
+  "topic_count_note": "Rows can include alternate papers or multiple metrics; not a completion count.",
+  "search_observation_rows": 18,
+  "export_request_rows": 6,
+  "private_input_sha256": {
+    "biomedical-research.json": "fb3bd7aa3d948e58ccaec94e1c27b08262b0821eab7956b6246450012d1a3095",
+    "physical-research.json": "86035258d6e541a47a3adedfc3f8e3b7b45e7e8b40bc85526940b226f21d82e8",
+    "education-psych-research.json": "c099efdad2380fb4ebd66f83ec0d639fe10747febb93ae2b385bb4952e083af3"
+  }
+}

@@ -9,8 +9,10 @@ The capabilities below for record-deduplicator are proposed until tested.
 **Remove duplicate records while preserving distinct reports, with an inspectable
 history of every retained, merged, and linked record.**
 
-Start with librarians and systematic reviewers handling Education, Special
-Education, and Psychology exports. Deliver a local desktop application and CLI
+Serve librarians and systematic reviewers with source-aware imports, beginning
+with the documented EBSCO export dialects. The revised benchmark covers ten
+core fields plus supplemental special education; broad validation coverage is
+planned, not established by the collection itself. Deliver a local desktop application and CLI
 that work from the same engine, with no runtime LLM or network dependency.
 The intended advantage is the integrated workflow and its published evidence,
 not a claim that individual matching techniques are novel.
@@ -32,7 +34,7 @@ not a claim that individual matching techniques are novel.
 
 | Proposed distinction | Concrete behavior | Required proof |
 |---|---|---|
-| Education/Psychology export fidelity | ERIC page counts, PsycINFO trailers, translated titles, truncated abstracts, ambiguous names, explicit vendor dialect status. | Synthetic regression cases plus legally obtained representative exports; per-dialect parse-loss and matching results. |
+| Source-aware export fidelity | ERIC page counts, PsycINFO trailers, translated titles, truncated abstracts, ambiguous names, explicit vendor dialect status and reconciliation of search versus delivered records. | Synthetic regression cases plus representative exports; per-dialect parse-loss and matching results across the prespecified fields. |
 | Protected report relationships | Separate duplicate clusters and typed relationships; full DOI identity; no trial-ID-only merge; retain protocols, dissertations, abstracts and versions. | Hard-negative fixtures, three-record bridge tests, and independent report-level labels. |
 | Replayable field provenance | Immutable sources, selected and alternate field values, rule/guard reasons, config hashes, reversible decisions and deterministic results. | Replay after save/reload, undo recovery, source hash checks, cross-OS/thread-count golden hashes. |
 | Practical local delivery | One core in CLI and native Windows/macOS app, no required account or network during import-to-export. | Clean-machine install and offline native workflow tests on both platforms. |
@@ -58,5 +60,5 @@ Do not publish "first", "best", "more accurate", "zero false positives",
 without the relevant evidence. A defensible present-tense statement is:
 
 > The project is building an auditable local deduplication workflow with an
-> initial Education/Psychology focus. Its report-protection and provenance
+> explicit handling of source formats. Its report-protection and provenance
 > requirements are specified, and comparative validation is planned.

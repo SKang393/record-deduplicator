@@ -1,0 +1,66 @@
+field,field_role,source_id,topic,ebsco_supplement_note
+MED,core,EBSCO:cmedm,GLP-1 therapies for obesity and weight loss,
+MED,core,PUBMED,GLP-1 therapies for obesity and weight loss,
+MED,core,EMBASE_COM,GLP-1 therapies for obesity and weight loss,
+MED,core,WOS_CORE,GLP-1 therapies for obesity and weight loss,
+MED,core,CENTRAL,GLP-1 therapies for obesity and weight loss,
+NEU,core,EBSCO:psyh,Microglial and inflammatory mechanisms in Alzheimer disease,PsycInfo2/10 is the most frequently named available EBSCO index; nativePubMed replaces the earlier MEDLINE proxy.
+NEU,core,PUBMED,Microglial and inflammatory mechanisms in Alzheimer disease,PsycInfo2/10 is the most frequently named available EBSCO index; nativePubMed replaces the earlier MEDLINE proxy.
+NEU,core,EMBASE_COM,Microglial and inflammatory mechanisms in Alzheimer disease,PsycInfo2/10 is the most frequently named available EBSCO index; nativePubMed replaces the earlier MEDLINE proxy.
+NEU,core,WOS_CORE,Microglial and inflammatory mechanisms in Alzheimer disease,PsycInfo2/10 is the most frequently named available EBSCO index; nativePubMed replaces the earlier MEDLINE proxy.
+PH,core,EBSCO:cmedm,"Implementation science frameworks, barriers and facilitators",
+PH,core,EBSCO:psyh,"Implementation science frameworks, barriers and facilitators",
+PH,core,EBSCO:cin20,"Implementation science frameworks, barriers and facilitators",
+PH,core,PUBMED,"Implementation science frameworks, barriers and facilitators",
+PH,core,EMBASE_COM,"Implementation science frameworks, barriers and facilitators",
+PH,core,SCOPUS,"Implementation science frameworks, barriers and facilitators",
+PH,core,WOS_CORE,"Implementation science frameworks, barriers and facilitators",
+PSY,core,EBSCO:psyh,Attentional capture and control,
+PSY,core,EBSCO:cmedm,Attentional capture and control,
+PSY,core,PUBMED,Attentional capture and control,
+PSY,core,EMBASE_COM,Attentional capture and control,
+PSY,core,SCOPUS,Attentional capture and control,
+PSY,core,WOS_CORE,Attentional capture and control,
+PHA,core,EBSCO:cmedm,Inflammasome-targeted pharmacological inhibition,
+PHA,core,PUBMED,Inflammasome-targeted pharmacological inhibition,
+PHA,core,EMBASE_COM,Inflammasome-targeted pharmacological inhibition,
+PHA,core,WOS_CORE,Inflammasome-targeted pharmacological inhibition,
+ENG,core,EBSCO:a9h,Green hydrogen production and implementation,"ASC and AppliedScienceTechnologyFullText are explicit subject/general coverage supplements, not reported common-source equivalents."
+ENG,core,EBSCO:asf,Green hydrogen production and implementation,"ASC and AppliedScienceTechnologyFullText are explicit subject/general coverage supplements, not reported common-source equivalents."
+ENG,core,SCOPUS,Green hydrogen production and implementation,"ASC and AppliedScienceTechnologyFullText are explicit subject/general coverage supplements, not reported common-source equivalents."
+ENG,core,WOS_CORE,Green hydrogen production and implementation,"ASC and AppliedScienceTechnologyFullText are explicit subject/general coverage supplements, not reported common-source equivalents."
+ENG,core,SCIENCEDIRECT,Green hydrogen production and implementation,"ASC and AppliedScienceTechnologyFullText are explicit subject/general coverage supplements, not reported common-source equivalents."
+HS,core,EBSCO:cin20,Exercise and cognitive outcomes,
+HS,core,PUBMED,Exercise and cognitive outcomes,
+HS,core,EMBASE_COM,Exercise and cognitive outcomes,
+HS,core,SCOPUS,Exercise and cognitive outcomes,
+HS,core,WOS_CORE,Exercise and cognitive outcomes,
+ENV,core,EBSCO:a9h,Carbon emissions mitigation and decarbonization,ASC andGreenFILE eachnamed1/10; mostcommonScopusWoScollectednatively.
+ENV,core,EBSCO:8gh,Carbon emissions mitigation and decarbonization,ASC andGreenFILE eachnamed1/10; mostcommonScopusWoScollectednatively.
+ENV,core,SCOPUS,Carbon emissions mitigation and decarbonization,ASC andGreenFILE eachnamed1/10; mostcommonScopusWoScollectednatively.
+ENV,core,WOS_CORE,Carbon emissions mitigation and decarbonization,ASC andGreenFILE eachnamed1/10; mostcommonScopusWoScollectednatively.
+EDU,core,EBSCO:eric,Generative artificial intelligence in teaching and learning,ERIC/PsycInfo are common; remaining user-provided six-source set retained explicitly.
+EDU,core,EBSCO:psyh,Generative artificial intelligence in teaching and learning,ERIC/PsycInfo are common; remaining user-provided six-source set retained explicitly.
+EDU,core,EBSCO:a9h,Generative artificial intelligence in teaching and learning,ERIC/PsycInfo are common; remaining user-provided six-source set retained explicitly.
+EDU,core,EBSCO:pdh,Generative artificial intelligence in teaching and learning,ERIC/PsycInfo are common; remaining user-provided six-source set retained explicitly.
+EDU,core,EBSCO:eue,Generative artificial intelligence in teaching and learning,ERIC/PsycInfo are common; remaining user-provided six-source set retained explicitly.
+EDU,core,EBSCO:eft,Generative artificial intelligence in teaching and learning,ERIC/PsycInfo are common; remaining user-provided six-source set retained explicitly.
+EDU,core,SCOPUS,Generative artificial intelligence in teaching and learning,ERIC/PsycInfo are common; remaining user-provided six-source set retained explicitly.
+EDU,core,WOS_CORE,Generative artificial intelligence in teaching and learning,ERIC/PsycInfo are common; remaining user-provided six-source set retained explicitly.
+CS,core,EBSCO:a9h,"Large language model security, privacy and trust","ASC andAppliedScienceTechnologyFullText are coverage supplements, not substitutes forIEEE/ACM/Scopus/WoS."
+CS,core,EBSCO:asf,"Large language model security, privacy and trust","ASC andAppliedScienceTechnologyFullText are coverage supplements, not substitutes forIEEE/ACM/Scopus/WoS."
+CS,core,SCOPUS,"Large language model security, privacy and trust","ASC andAppliedScienceTechnologyFullText are coverage supplements, not substitutes forIEEE/ACM/Scopus/WoS."
+CS,core,WOS_CORE,"Large language model security, privacy and trust","ASC andAppliedScienceTechnologyFullText are coverage supplements, not substitutes forIEEE/ACM/Scopus/WoS."
+CS,core,IEEE_XPLORE,"Large language model security, privacy and trust","ASC andAppliedScienceTechnologyFullText are coverage supplements, not substitutes forIEEE/ACM/Scopus/WoS."
+CS,core,ACM_DL,"Large language model security, privacy and trust","ASC andAppliedScienceTechnologyFullText are coverage supplements, not substitutes forIEEE/ACM/Scopus/WoS."
+CS,core,SCIENCEDIRECT,"Large language model security, privacy and trust","ASC andAppliedScienceTechnologyFullText are coverage supplements, not substitutes forIEEE/ACM/Scopus/WoS."
+CS,core,SPRINGER_LINK,"Large language model security, privacy and trust","ASC andAppliedScienceTechnologyFullText are coverage supplements, not substitutes forIEEE/ACM/Scopus/WoS."
+SPED,supplemental,EBSCO:eric,"Individualized education programs, goal quality and progress monitoring for students with disabilities",Userprovided sixEBSCOindexes retained alongsidecommonScopus/WoS/PubMed.
+SPED,supplemental,EBSCO:psyh,"Individualized education programs, goal quality and progress monitoring for students with disabilities",Userprovided sixEBSCOindexes retained alongsidecommonScopus/WoS/PubMed.
+SPED,supplemental,EBSCO:eue,"Individualized education programs, goal quality and progress monitoring for students with disabilities",Userprovided sixEBSCOindexes retained alongsidecommonScopus/WoS/PubMed.
+SPED,supplemental,EBSCO:a9h,"Individualized education programs, goal quality and progress monitoring for students with disabilities",Userprovided sixEBSCOindexes retained alongsidecommonScopus/WoS/PubMed.
+SPED,supplemental,EBSCO:eft,"Individualized education programs, goal quality and progress monitoring for students with disabilities",Userprovided sixEBSCOindexes retained alongsidecommonScopus/WoS/PubMed.
+SPED,supplemental,EBSCO:pdh,"Individualized education programs, goal quality and progress monitoring for students with disabilities",Userprovided sixEBSCOindexes retained alongsidecommonScopus/WoS/PubMed.
+SPED,supplemental,PUBMED,"Individualized education programs, goal quality and progress monitoring for students with disabilities",Userprovided sixEBSCOindexes retained alongsidecommonScopus/WoS/PubMed.
+SPED,supplemental,SCOPUS,"Individualized education programs, goal quality and progress monitoring for students with disabilities",Userprovided sixEBSCOindexes retained alongsidecommonScopus/WoS/PubMed.
+SPED,supplemental,WOS_CORE,"Individualized education programs, goal quality and progress monitoring for students with disabilities",Userprovided sixEBSCOindexes retained alongsidecommonScopus/WoS/PubMed.

@@ -2,8 +2,12 @@
 
 Welcome! This file (`AGENT.md` / `AGENTS.md`) is the primary entry point for any AI coding agent taking over development of **`record-deduplicator`**. Read this document and [`TASKS.md`](TASKS.md) before making changes.
 
-## Current execution contract (2026-11-01)
+## Current execution contract (revised 2026-11-02)
 
+- **Preparation only:** the user's latest instruction stops research execution
+  and export acquisition. Finish the Terra setup and handoff. Do not initiate
+  searches, exports, downloads, mailbox retrieval or file-copy watchers. Preserve
+  existing partial evidence. See [the current handoff](docs/14-terra-handoff.md).
 - The repository is a foundation build, not a working deduplicator. Follow the
   bounded batches in [the development plan](docs/08-development-plan.md) and
   [Terra 6.1 runbook](docs/09-terra-execution.md).
@@ -31,7 +35,7 @@ Welcome! This file (`AGENT.md` / `AGENTS.md`) is the primary entry point for any
 
 ## 1. Project Mission & Scope
 
-**`record-deduplicator`** is a high-speed, offline-first, explainable bibliographic record deduplication engine and desktop application for systematic reviews and meta-analyses across Education, Special Education, Psychology, Medicine/Allied Health, and broader social/applied sciences.
+**`record-deduplicator`** is a high-speed, offline-first, explainable bibliographic record deduplication engine and desktop application for systematic reviews and meta-analyses across the ten core benchmark fields, with special education reported as a supplemental field.
 
 - **Core Architecture:** Hybrid Multi-Stage Deterministic and Fuzzy Record Linkage Pipeline (Rule-Based Multi-Key Blocking + String Similarity Matching + False-Positive Guards + Provenance-Preserving Merge).
 - **Tech Stack:**
@@ -52,9 +56,16 @@ Welcome! This file (`AGENT.md` / `AGENTS.md`) is the primary entry point for any
 2. **LLM Validation Is External Only (NOT Part of the Program):**
    - The shipped `record-deduplicator` binary and `dedup-core` / `dedup-cli` crates are **100% deterministic, rule-based + fuzzy algorithmic**, and **offline-first**.
    - The LLM validation step exists **only** in the external `validation/` harness (never shipped to end users) to benchmark and validate our system's accuracy against gold sets.
-3. **No Autonomous Keyword Testing / Topic Investigation:**
-   - **Do NOT spend turns doing topic investigation or running Boolean keyword yield tests by yourself.** All background research, journal trend analysis, and Boolean search protocols have already been gathered and recorded in [`docs/06-benchmark-search-protocol.md`](docs/06-benchmark-search-protocol.md) and [`docs/reference-data/`](docs/reference-data/).
-   - Focus directly on engineering tasks in [`TASKS.md`](TASKS.md).
+3. **Setup scope and stopped collection, latest instruction 2026-11-02:**
+   - Earlier collection instructions are historical, not continuing authority.
+     Do not resume prior Aside sessions, queues, exports or receipt watchers.
+   - The [search protocol](docs/06-benchmark-search-protocol.md) is a prepared
+     procedure for a future user-selected collection run. B01 and subsequent
+     development batches do not authorize acquisition or validation experiments.
+   - Preserve all existing files and label partial, superseded and unverified
+     evidence accurately. No validation or manuscript results have been produced.
+   - Close completed task-owned tabs at phase boundaries. Reuse active tabs;
+     do not leave idle agent tabs or close unrelated user tabs.
 4. **Use `aside` CLI for Manuscript & University Library Access:**
    - Whenever you need to access a manuscript (e.g., full-text PDF/HTML to verify literature claims in M0) or access university library / subscription database resources, **use the `aside` CLI**.
    - If `aside` is not on the default shell `PATH` in a sandboxed session, check user binary locations or run outside the sandbox / ask the user for the `aside` binary path before attempting workarounds.
@@ -77,7 +88,8 @@ All gathered research, domain schemas, algorithmic specifications, and architect
 | [`docs/03-database-schemas-and-formats.md`](docs/03-database-schemas-and-formats.md) | Target database metadata schemas & RIS/internal tags across Education, Special Education, Psychology, Medicine/Allied Health, and expansion disciplines, plus file format & encoding rules. |
 | [`docs/04-architecture-and-ui-spec.md`](docs/04-architecture-and-ui-spec.md) | Rust workspace layout, crate responsibilities, CLI JSON contract, Tauri 2 + React minimalist chic UI specification, and macOS readiness checklist. |
 | [`docs/05-validation-and-llm-oracle.md`](docs/05-validation-and-llm-oracle.md) | External `validation/` harness design, Tier 3 LLM Oracle rubric, human dual-labeling + Cohen's kappa protocol, benchmark datasets, and target accuracy metrics. |
-| [`docs/06-benchmark-search-protocol.md`](docs/06-benchmark-search-protocol.md) | Pre-researched benchmark topics, Boolean search strings, platform translations, and export rules (do not re-investigate autonomously). |
+| [`docs/06-benchmark-search-protocol.md`](docs/06-benchmark-search-protocol.md) | Prepared field-specific research, raw-count refinement and original-export audit procedure; execution stopped. |
+| [`docs/14-terra-handoff.md`](docs/14-terra-handoff.md) | Current scope, B01 launch, stopped collection state and future execution gates. |
 | [`docs/reference-data/`](docs/reference-data/) | Raw OpenAlex 2023–2026 top-cited journal outputs and ERIC API yield probe logs collected during planning. |
 
 ---

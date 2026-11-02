@@ -1,0 +1,678 @@
+{
+  "protocol_id": "RD-COLLECTION-2026-11-02-v2",
+  "generated_at_utc": "2026-11-02T20:47:36.141566+00:00",
+  "scope": "Observed counts only; source semantics, final query approval and received exports remain separate gates",
+  "input_hashes": {
+    "ebsco-expanded-counts.json": "ef728205465c1943fc9342b0c5f5c7cbd3a85543649839613ca076f7e1371b0d",
+    "native-biomedical-counts.json": "fb9d2b80f570f67504e7fe1cdb5dd3c5e1c11b335b7a603d3dbead5f8a816b07",
+    "native-crossdisciplinary-counts.json": "1d5d0961ea9804d2c80f528945c70037b1d9f355b3f068af5ba527cb1c9a8ddd",
+    "native-wos-counts.json": "b5e9319a533cf4b309be3e6a59c4fb552596ba170c2e4ea858cb8cca1e934273"
+  },
+  "trials": [
+    {
+      "field": "MED",
+      "trial_id": "MED-X01",
+      "expected_sources": 5,
+      "observed_sources": 5,
+      "observed_subtotal": 71322,
+      "complete_raw_sum": 71322,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:cmedm": 12638,
+        "PUBMED": 14380,
+        "EMBASE_COM": 24970,
+        "WOS_CORE": 14758,
+        "CENTRAL": 4576
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "MED",
+      "trial_id": "MED-X02",
+      "expected_sources": 5,
+      "observed_sources": 5,
+      "observed_subtotal": 19804,
+      "complete_raw_sum": 19804,
+      "in_target": true,
+      "missing_sources": [],
+      "repeat_counts": {
+        "EMBASE_COM": [
+          6759,
+          6769
+        ]
+      },
+      "source_counts": {
+        "EBSCO:cmedm": 2938,
+        "PUBMED": 3219,
+        "EMBASE_COM": 6769,
+        "WOS_CORE": 3062,
+        "CENTRAL": 3816
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "NEU",
+      "trial_id": "NEU-X01",
+      "expected_sources": 4,
+      "observed_sources": 4,
+      "observed_subtotal": 41638,
+      "complete_raw_sum": 41638,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:psyh": 2705,
+        "PUBMED": 12394,
+        "EMBASE_COM": 15445,
+        "WOS_CORE": 11094
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "NEU",
+      "trial_id": "NEU-X02",
+      "expected_sources": 4,
+      "observed_sources": 4,
+      "observed_subtotal": 7389,
+      "complete_raw_sum": 7389,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:psyh": 409,
+        "PUBMED": 2305,
+        "EMBASE_COM": 2714,
+        "WOS_CORE": 1961
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "NEU",
+      "trial_id": "NEU-X03",
+      "expected_sources": 4,
+      "observed_sources": 4,
+      "observed_subtotal": 10048,
+      "complete_raw_sum": 10048,
+      "in_target": true,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:psyh": 541,
+        "PUBMED": 3104,
+        "EMBASE_COM": 3722,
+        "WOS_CORE": 2681
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "PH",
+      "trial_id": "PH-X01",
+      "expected_sources": 7,
+      "observed_sources": 7,
+      "observed_subtotal": 81002,
+      "complete_raw_sum": 81002,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:cmedm": 12492,
+        "EBSCO:psyh": 3110,
+        "EBSCO:cin20": 5161,
+        "PUBMED": 17480,
+        "EMBASE_COM": 14436,
+        "SCOPUS": 14619,
+        "WOS_CORE": 13704
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "PH",
+      "trial_id": "PH-X02",
+      "expected_sources": 7,
+      "observed_sources": 7,
+      "observed_subtotal": 15609,
+      "complete_raw_sum": 15609,
+      "in_target": true,
+      "missing_sources": [],
+      "repeat_counts": {
+        "EMBASE_COM": [
+          3255,
+          3259
+        ]
+      },
+      "source_counts": {
+        "EBSCO:cmedm": 2717,
+        "EBSCO:psyh": 517,
+        "EBSCO:cin20": 890,
+        "PUBMED": 2768,
+        "EMBASE_COM": 3259,
+        "SCOPUS": 2755,
+        "WOS_CORE": 2703
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "PSY",
+      "trial_id": "PSY-X01",
+      "expected_sources": 6,
+      "observed_sources": 6,
+      "observed_subtotal": 33814,
+      "complete_raw_sum": 33814,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:psyh": 5326,
+        "EBSCO:cmedm": 4921,
+        "PUBMED": 5257,
+        "EMBASE_COM": 5814,
+        "SCOPUS": 6350,
+        "WOS_CORE": 6146
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "PSY",
+      "trial_id": "PSY-X02",
+      "expected_sources": 6,
+      "observed_sources": 6,
+      "observed_subtotal": 4283,
+      "complete_raw_sum": 4283,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:psyh": 724,
+        "EBSCO:cmedm": 604,
+        "PUBMED": 619,
+        "EMBASE_COM": 750,
+        "SCOPUS": 806,
+        "WOS_CORE": 780
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "PSY",
+      "trial_id": "PSY-X03",
+      "expected_sources": 6,
+      "observed_sources": 6,
+      "observed_subtotal": 8293,
+      "complete_raw_sum": 8293,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:psyh": 1310,
+        "EBSCO:cmedm": 1223,
+        "PUBMED": 1254,
+        "EMBASE_COM": 1525,
+        "SCOPUS": 1514,
+        "WOS_CORE": 1467
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "PSY",
+      "trial_id": "PSY-X04",
+      "expected_sources": 6,
+      "observed_sources": 6,
+      "observed_subtotal": 18826,
+      "complete_raw_sum": 18826,
+      "in_target": true,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:psyh": 2989,
+        "EBSCO:cmedm": 2779,
+        "PUBMED": 2945,
+        "EMBASE_COM": 3324,
+        "SCOPUS": 3467,
+        "WOS_CORE": 3322
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "PHA",
+      "trial_id": "PHA-X01",
+      "expected_sources": 4,
+      "observed_sources": 4,
+      "observed_subtotal": 109701,
+      "complete_raw_sum": 109701,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:cmedm": 24571,
+        "PUBMED": 26444,
+        "EMBASE_COM": 32387,
+        "WOS_CORE": 26299
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "PHA",
+      "trial_id": "PHA-X02",
+      "expected_sources": 4,
+      "observed_sources": 4,
+      "observed_subtotal": 2101,
+      "complete_raw_sum": 2101,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:cmedm": 463,
+        "PUBMED": 510,
+        "EMBASE_COM": 654,
+        "WOS_CORE": 474
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "PHA",
+      "trial_id": "PHA-X03",
+      "expected_sources": 4,
+      "observed_sources": 4,
+      "observed_subtotal": 39420,
+      "complete_raw_sum": 39420,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:cmedm": 8434,
+        "PUBMED": 9312,
+        "EMBASE_COM": 12579,
+        "WOS_CORE": 9095
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "PHA",
+      "trial_id": "PHA-X04",
+      "expected_sources": 4,
+      "observed_sources": 4,
+      "observed_subtotal": 24225,
+      "complete_raw_sum": 24225,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:cmedm": 5241,
+        "PUBMED": 5840,
+        "EMBASE_COM": 7520,
+        "WOS_CORE": 5624
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "PHA",
+      "trial_id": "PHA-X05",
+      "expected_sources": 4,
+      "observed_sources": 4,
+      "observed_subtotal": 18802,
+      "complete_raw_sum": 18802,
+      "in_target": true,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:cmedm": 4123,
+        "PUBMED": 4598,
+        "EMBASE_COM": 5652,
+        "WOS_CORE": 4429
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "ENG",
+      "trial_id": "ENG-X01",
+      "expected_sources": 5,
+      "observed_sources": 5,
+      "observed_subtotal": 51124,
+      "complete_raw_sum": 51124,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:a9h": 8455,
+        "EBSCO:asf": 3049,
+        "SCOPUS": 17005,
+        "WOS_CORE": 13400,
+        "SCIENCEDIRECT": 9215
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "ENG",
+      "trial_id": "ENG-X02",
+      "expected_sources": 5,
+      "observed_sources": 5,
+      "observed_subtotal": 8632,
+      "complete_raw_sum": 8632,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:a9h": 1451,
+        "EBSCO:asf": 483,
+        "SCOPUS": 2739,
+        "WOS_CORE": 2100,
+        "SCIENCEDIRECT": 1859
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "ENG",
+      "trial_id": "ENG-X03",
+      "expected_sources": 5,
+      "observed_sources": 5,
+      "observed_subtotal": 10218,
+      "complete_raw_sum": 10218,
+      "in_target": true,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:a9h": 1705,
+        "EBSCO:asf": 566,
+        "SCOPUS": 3292,
+        "WOS_CORE": 2476,
+        "SCIENCEDIRECT": 2179
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "HS",
+      "trial_id": "HS-X01",
+      "expected_sources": 5,
+      "observed_sources": 5,
+      "observed_subtotal": 146179,
+      "complete_raw_sum": 146179,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:cin20": 9500,
+        "PUBMED": 26039,
+        "EMBASE_COM": 39011,
+        "SCOPUS": 39296,
+        "WOS_CORE": 32333
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "HS",
+      "trial_id": "HS-X02",
+      "expected_sources": 5,
+      "observed_sources": 5,
+      "observed_subtotal": 11438,
+      "complete_raw_sum": 11438,
+      "in_target": true,
+      "missing_sources": [],
+      "repeat_counts": {
+        "EMBASE_COM": [
+          3671,
+          3672
+        ]
+      },
+      "source_counts": {
+        "EBSCO:cin20": 870,
+        "PUBMED": 2350,
+        "EMBASE_COM": 3672,
+        "SCOPUS": 2389,
+        "WOS_CORE": 2157
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "ENV",
+      "trial_id": "ENV-X01",
+      "expected_sources": 4,
+      "observed_sources": 4,
+      "observed_subtotal": 74531,
+      "complete_raw_sum": 74531,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:a9h": 9499,
+        "EBSCO:8gh": 3503,
+        "SCOPUS": 43424,
+        "WOS_CORE": 18105
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "ENV",
+      "trial_id": "ENV-X02",
+      "expected_sources": 4,
+      "observed_sources": 4,
+      "observed_subtotal": 12673,
+      "complete_raw_sum": 12673,
+      "in_target": true,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:a9h": 1652,
+        "EBSCO:8gh": 505,
+        "SCOPUS": 7418,
+        "WOS_CORE": 3098
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "EDU",
+      "trial_id": "EDU-X01",
+      "expected_sources": 8,
+      "observed_sources": 8,
+      "observed_subtotal": 514309,
+      "complete_raw_sum": 514309,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:eric": 7415,
+        "EBSCO:psyh": 7719,
+        "EBSCO:a9h": 60540,
+        "EBSCO:pdh": 113,
+        "EBSCO:eue": 21669,
+        "EBSCO:eft": 21529,
+        "SCOPUS": 252999,
+        "WOS_CORE": 142325
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "EDU",
+      "trial_id": "EDU-X02",
+      "expected_sources": 8,
+      "observed_sources": 8,
+      "observed_subtotal": 35829,
+      "complete_raw_sum": 35829,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:eric": 1558,
+        "EBSCO:psyh": 870,
+        "EBSCO:a9h": 3329,
+        "EBSCO:pdh": 8,
+        "EBSCO:eue": 4202,
+        "EBSCO:eft": 4182,
+        "SCOPUS": 13360,
+        "WOS_CORE": 8320
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "EDU",
+      "trial_id": "EDU-X03",
+      "expected_sources": 8,
+      "observed_sources": 8,
+      "observed_subtotal": 18353,
+      "complete_raw_sum": 18353,
+      "in_target": true,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:eric": 885,
+        "EBSCO:psyh": 402,
+        "EBSCO:a9h": 1593,
+        "EBSCO:pdh": 5,
+        "EBSCO:eue": 2419,
+        "EBSCO:eft": 2402,
+        "SCOPUS": 6681,
+        "WOS_CORE": 3966
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "CS",
+      "trial_id": "CS-X01",
+      "expected_sources": 8,
+      "observed_sources": 7,
+      "observed_subtotal": 405073,
+      "complete_raw_sum": null,
+      "in_target": null,
+      "missing_sources": [
+        "SPRINGER_LINK"
+      ],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:a9h": 31163,
+        "EBSCO:asf": 20107,
+        "SCOPUS": 167334,
+        "WOS_CORE": 109556,
+        "IEEE_XPLORE": 38496,
+        "ACM_DL": 16637,
+        "SCIENCEDIRECT": 21780
+      },
+      "status": "partial_source_counts",
+      "corpus_admitted": false
+    },
+    {
+      "field": "CS",
+      "trial_id": "CS-X02",
+      "expected_sources": 8,
+      "observed_sources": 7,
+      "observed_subtotal": 38178,
+      "complete_raw_sum": null,
+      "in_target": null,
+      "missing_sources": [
+        "SPRINGER_LINK"
+      ],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:a9h": 2395,
+        "EBSCO:asf": 2374,
+        "SCOPUS": 15939,
+        "WOS_CORE": 8715,
+        "IEEE_XPLORE": 5212,
+        "ACM_DL": 1733,
+        "SCIENCEDIRECT": 1810
+      },
+      "status": "partial_source_counts",
+      "corpus_admitted": false
+    },
+    {
+      "field": "CS",
+      "trial_id": "CS-X03",
+      "expected_sources": 8,
+      "observed_sources": 8,
+      "observed_subtotal": 25354,
+      "complete_raw_sum": 25354,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:a9h": 381,
+        "EBSCO:asf": 668,
+        "SCOPUS": 5117,
+        "WOS_CORE": 2755,
+        "IEEE_XPLORE": 2046,
+        "ACM_DL": 563,
+        "SCIENCEDIRECT": 412,
+        "SPRINGER_LINK": 13412
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "CS",
+      "trial_id": "CS-X04",
+      "expected_sources": 8,
+      "observed_sources": 8,
+      "observed_subtotal": 3978,
+      "complete_raw_sum": 3978,
+      "in_target": false,
+      "missing_sources": [],
+      "repeat_counts": {},
+      "source_counts": {
+        "EBSCO:a9h": 66,
+        "EBSCO:asf": 95,
+        "SCOPUS": 1135,
+        "WOS_CORE": 614,
+        "IEEE_XPLORE": 307,
+        "ACM_DL": 86,
+        "SCIENCEDIRECT": 68,
+        "SPRINGER_LINK": 1607
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    },
+    {
+      "field": "SPED",
+      "trial_id": "SPED-X01",
+      "expected_sources": 9,
+      "observed_sources": 9,
+      "observed_subtotal": 12743,
+      "complete_raw_sum": 12743,
+      "in_target": true,
+      "missing_sources": [],
+      "repeat_counts": {
+        "PUBMED": [
+          253,
+          253
+        ]
+      },
+      "source_counts": {
+        "EBSCO:eric": 3179,
+        "EBSCO:psyh": 1835,
+        "EBSCO:eue": 2116,
+        "EBSCO:a9h": 1115,
+        "EBSCO:eft": 1992,
+        "EBSCO:pdh": 5,
+        "PUBMED": 253,
+        "SCOPUS": 1281,
+        "WOS_CORE": 967
+      },
+      "status": "all_source_counts_observed",
+      "corpus_admitted": false
+    }
+  ]
+}

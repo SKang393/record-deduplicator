@@ -2,7 +2,14 @@
 
 This file tracks the ordered engineering tasks for **`record-deduplicator`**.
 
-## Execution tracker (2026-11-01)
+## Execution tracker (revised 2026-11-02)
+
+Current task: **prepare the system for Terra only**. The latest user instruction
+stops live research, export requests and downloads. Existing partial collection
+work is preserved with its limitations. Do not resume old browser queues or
+watchers. The [current handoff](docs/14-terra-handoff.md) is the entry point.
+The user will start development with Terra 6.1 max; B01 is the next coding batch.
+Collection, validation and manuscript writing remain separate future runs.
 
 Follow [the full development plan](docs/08-development-plan.md) and
 [Terra 6.1 runbook](docs/09-terra-execution.md). The B-batches are the executable
@@ -19,19 +26,24 @@ order; the M0-M9 inventory below remains for coverage. The
 | B05a-c remaining formats | Pending B04 | Per-format parser/export evidence. |
 | B06 normalization/candidates | Pending B05a | Candidate recall, resource limits and stress results. |
 | B07 fuzzy/cluster safety | Pending B06 | Guard regressions and cross-OS determinism. |
-| B08 independent evaluation | Design can start; runner after B04 | Human reference labels, held-out splits, metrics and uncertainty. |
+| B08a evaluation preparation | Runner contracts after B04; split freeze before corpus-based B07 tuning | Human reference protocol, family-disjoint split manifest, harness arithmetic self-check. |
+| B08b final evaluation | After completed B11 production candidate | Frozen held-out metrics, comparator evidence and later external model conditions. |
 | B09 desktop shell | Pending B04 | Native Windows/macOS import/cancel smoke tests. |
-| B10 review/recovery UI | Pending B07/B09 and B08 schema/protocol | Native undo/resume/export evidence; completed B08 evaluation gates beta acceptance. |
+| B10 review/recovery UI | Pending B07/B09 and B08a schema/protocol | Native undo/resume/export evidence; B08b gates validated-beta acceptance. |
 | B11 packaging | Pending B10 | Installers, clean-machine workflows, signing evidence. |
-| B12 release evidence | Pending B08/B11 | Verified claims and independent evaluation; optional external LLM. |
+| B12 release evidence | Pending B08b/B11 | Verified claims and independent evaluation; requested external LLM conditions remain a separate experiment. |
 | B13 expansion | Post-v1 | Measured benefit and no safety regressions. |
 
-External gates: proprietary sample exports and independent human labels are not
-supplied; signing credentials and native desktop test hosts are not yet assessed.
+External gates: six EBSCO pilot originals are received and verified; expanded
+source-panel exports are stopped and incomplete. The [collection report](docs/12-collection-evidence.md)
+and its dated receipt ledgers track admission separately from search counts.
+Independent human labels are not supplied; signing credentials and native
+desktop test hosts are not yet assessed.
 M0.3 is partial: Bramer, Jiang and Qi were checked via Aside, but remaining
 specific manuscript attributions are pending. Do not block synthetic B01-B04 on
-these gates. No new topic/keyword investigation is authorized.
-> **Agent Note:** Read [`AGENT.md`](AGENT.md) first. Do **not** perform autonomous keyword/topic investigation (already completed in [`docs/06-benchmark-search-protocol.md`](docs/06-benchmark-search-protocol.md)). When accessing manuscripts or university library resources, use the **`aside` CLI**.
+these gates. The [prepared protocol](docs/06-benchmark-search-protocol.md) records
+future collection steps; it does not authorize continued acquisition.
+> **Agent Note:** Read [`AGENT.md`](AGENT.md) first. Prepare only; no live collection, validation or manuscript writing in this handoff. Future manuscript/library access uses **`aside` CLI**.
 
 ---
 
@@ -62,6 +74,7 @@ these gates. No new topic/keyword investigation is authorized.
   - **Tool instruction:** Use the **`aside` CLI** when accessing full-text manuscripts or university library subscriptions.
 
 - [ ] **Task M0.4 — Ingest User-Provided Sample Database Exports**
+  - Partial collection evidence: original MED/NEU EBSCO pilot files and incomplete expanded native/RIS/NBIB files are preserved privately. Collection is stopped. No production importer exists yet. Receipt verification is not completed application ingestion or parser support.
   - Place user-provided sample exports (50–200 records per database across Academic Search Complete, Education Source, Education Full Text, ERIC, APA PsycINFO, APA PsycARTICLES, plus any medical/expansion samples) into `testdata/`.
 
 ---

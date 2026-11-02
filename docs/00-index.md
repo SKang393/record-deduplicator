@@ -4,15 +4,22 @@ This `docs/` directory records all domain knowledge, methodological evidence, al
 
 ## Start here for implementation
 
+- [Current preparation-only Terra handoff and next batch](14-terra-handoff.md)
 - [Product positioning and competitor evidence](07-product-positioning.md)
 - [Full development plan and release gates](08-development-plan.md)
 - [GPT-6.1 Terra launch and handoff prompts](09-terra-execution.md)
 - [Engine contract and specification corrections](10-engine-contract.md)
 - [Preparation review and verification evidence](11-preparation-review.md)
+- [Prepared database research and original-export protocol](06-benchmark-search-protocol.md)
+- [Dated collection evidence, source tables and remaining gaps](12-collection-evidence.md)
+- [Requested later model conditions and APA manuscript handoff](13-future-validation-conditions.md)
 
-The original 01-06 documents below are research/design notes, not proof of
+The original 01-05 documents below are research/design notes, not proof of
 implementation or validated accuracy. The engine contract resolves conflicts.
-Reference-data files are historical planning snapshots, not current API results.
+The two original text files in reference-data are historical planning snapshots.
+The dated collection subdirectory contains observed research and process metadata.
+Document 06 is the prepared collection protocol; execution has stopped at the
+user's direction. Its previous versions remain historical in reference-data.
 
 ## Contents
 
@@ -47,6 +54,6 @@ Reference-data files are historical planning snapshots, not current API results.
    - Benchmark datasets (ASySD, Education/Psychology gold sets, Synthetic perturbation sets), evaluation metrics, and target accuracy thresholds.
 
 6. **[`06-benchmark-search-protocol.md`](06-benchmark-search-protocol.md)**
-   - Contemporary, high-yield Boolean search combinations for Special Education, Education (sole AI topic), Psychology, Medicine, Nursing/Allied Health, and Phase-2 expansion fields.
-   - Platform-specific syntax translations, database lists, and reproducible export rules.
+   - Ten core fields plus supplemental special education; sampled database-use evidence and ranked-journal topic selection.
+   - Raw sums of 10,000-20,000, all publication years, exact EBSCOhost search iterations and original RIS export verification.
    - Raw supporting data in [`reference-data/`](reference-data/).

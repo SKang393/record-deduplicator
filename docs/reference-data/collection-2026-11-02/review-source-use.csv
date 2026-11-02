@@ -1,0 +1,488 @@
+field,review_id,reported_source,normalized_source,source_type,internally_conflicting
+MED,MED01,PubMed,PubMed,bibliographic_database,False
+MED,MED01,Embase,Embase,bibliographic_database,False
+MED,MED01,the Cochrane Library,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+MED,MED02,EBSCOhost,EBSCOhost (databases unspecified),platform_or_unspecified_collection,False
+MED,MED02,PubMed,PubMed,bibliographic_database,False
+MED,MED02,Scopus,Scopus,bibliographic_database,False
+MED,MED02,Ovid LWW Total Access,Ovid LWW Total Access,publisher_collection,False
+MED,MED02,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+MED,MED02,Cochrane Central Register of Controlled Trials (CENTRAL),CENTRAL,bibliographic_database,False
+MED,MED02,OpenGrey,OpenGrey,grey_literature_database,False
+MED,MED02,ProQuest Dissertations & Theses Global,ProQuest Dissertations & Theses Global,bibliographic_database,False
+MED,MED02,ClinicalTrials.gov,ClinicalTrials.gov,trial_registry,False
+MED,MED03,PubMed,PubMed,bibliographic_database,False
+MED,MED03,Embase,Embase,bibliographic_database,False
+MED,MED03,Cochrane Library,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+MED,MED04,PubMed,PubMed,bibliographic_database,False
+MED,MED04,Embase,Embase,bibliographic_database,False
+MED,MED04,Springer,Springer,publisher_collection,False
+MED,MED04,Cochrane Controlled Register of Trials (CENTRAL),CENTRAL,bibliographic_database,False
+MED,MED04,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+MED,MED05,PubMed,PubMed,bibliographic_database,False
+MED,MED05,Cochrane Library,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+MED,MED05,Embase,Embase,bibliographic_database,False
+MED,MED05,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+MED,MED05,PsycINFO,APA PsycInfo,bibliographic_database,False
+MED,MED06,PubMed,PubMed,bibliographic_database,False
+MED,MED06,Embase,Embase,bibliographic_database,False
+MED,MED06,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+MED,MED06,Cochrane,Cochrane database (unspecified),platform_or_unspecified_collection,False
+MED,MED07,MEDLINE®,MEDLINE,bibliographic_database,False
+MED,MED07,Embase,Embase,bibliographic_database,False
+MED,MED07,the Cochrane Central Register of Controlled Trials (CENTRAL),CENTRAL,bibliographic_database,False
+MED,MED07,US and European trial registries,US and European trial registries,specialized_collection_or_other_source,False
+MED,MED07,specified dermatology conference abstracts,specified dermatology conference abstracts,specialized_collection_or_other_source,False
+MED,MED08,MEDLINE,MEDLINE,bibliographic_database,False
+MED,MED08,Embase,Embase,bibliographic_database,False
+MED,MED08,EMCare,EmCare,bibliographic_database,False
+MED,MED08,Maternity and Infant Care Database (MIC/MIDIRS),Maternity and Infant Care,bibliographic_database,False
+MED,MED08,Allied and Complementary Medicine Database (AMED),AMED,bibliographic_database,False
+MED,MED08,The Cochrane Library for Cochrane Reviews,Cochrane Library (Cochrane Reviews specified),platform_or_unspecified_collection,False
+MED,MED08,CINAHL,CINAHL (edition unspecified),bibliographic_database,False
+MED,MED08,Global Index Medicus,Global Index Medicus,bibliographic_database,False
+MED,MED08,the ICTRP trial registry,WHO ICTRP,trial_registry,False
+MED,MED08,AIM database of candidate medicines for priority maternal conditions,AIM database of candidate medicines for priority maternal conditions,specialized_collection_or_other_source,False
+MED,MED08,the ICTRP trial registry,WHO ICTRP,trial_registry,False
+MED,MED08,AIM database of candidate medicines for priority maternal conditions,AIM database of candidate medicines for priority maternal conditions,specialized_collection_or_other_source,False
+MED,MED09,Ovid MEDLINE,MEDLINE,bibliographic_database,False
+MED,MED09,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+MED,MED09,PubMed,PubMed,bibliographic_database,False
+MED,MED09,Cochrane CENTRAL,CENTRAL,bibliographic_database,False
+MED,MED10,PubMed,PubMed,bibliographic_database,False
+MED,MED10,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+MED,MED10,reference lists,reference lists,citation_followup,False
+NEU,NEU01,Wanfang,Wanfang (collection unspecified),platform_or_unspecified_collection,False
+NEU,NEU01,China National Knowledge Infrastructure (CNKI),CNKI (collection unspecified),platform_or_unspecified_collection,False
+NEU,NEU01,China Science and Technology Journal Database (VIP),VIP,bibliographic_database,False
+NEU,NEU01,China Biology Medicine (CBM),China Biology Medicine,bibliographic_database,False
+NEU,NEU01,PubMed,PubMed,bibliographic_database,False
+NEU,NEU01,Cochrane Database,Cochrane database (unspecified),platform_or_unspecified_collection,False
+NEU,NEU01,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+NEU,NEU01,Embase,Embase,bibliographic_database,False
+NEU,NEU02,PubMed,PubMed,bibliographic_database,False
+NEU,NEU02,ScienceDirect,ScienceDirect,publisher_collection,False
+NEU,NEU02,Cochrane Central Register of Controlled Trials,CENTRAL,bibliographic_database,False
+NEU,NEU03,PubMed,PubMed,bibliographic_database,False
+NEU,NEU03,Scopus,Scopus,bibliographic_database,False
+NEU,NEU03,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+NEU,NEU03,the Cochrane Library,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+NEU,NEU04,Cochrane Central Register of Controlled Trials (CENTRAL),CENTRAL,bibliographic_database,False
+NEU,NEU04,PsycInfo,APA PsycInfo,bibliographic_database,False
+NEU,NEU04,PubMed,PubMed,bibliographic_database,False
+NEU,NEU04,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+NEU,NEU04,Embase,Embase,bibliographic_database,False
+NEU,NEU05,PubMed,PubMed,bibliographic_database,False
+NEU,NEU05,Embase,Embase,bibliographic_database,False
+NEU,NEU05,Scopus,Scopus,bibliographic_database,False
+NEU,NEU05,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+NEU,NEU06,Pubmed,PubMed,bibliographic_database,False
+NEU,NEU06,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+NEU,NEU07,PUBMED,PubMed,bibliographic_database,False
+NEU,NEU07,EMBASE,Embase,bibliographic_database,False
+NEU,NEU07,Google scholar,Google Scholar,search_engine,False
+NEU,NEU07,reference lists,reference lists,citation_followup,False
+NEU,NEU08,PubMed,PubMed,bibliographic_database,False
+NEU,NEU09,PubMed,PubMed,bibliographic_database,False
+NEU,NEU09,PsycINFO,APA PsycInfo,bibliographic_database,False
+NEU,NEU09,CINAHL,CINAHL (edition unspecified),bibliographic_database,False
+NEU,NEU10,PubMed,PubMed,bibliographic_database,False
+NEU,NEU10,Embase,Embase,bibliographic_database,False
+NEU,NEU10,Cochrane Library,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+NEU,NEU10,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+NEU,NEU10,Pedro,PEDro,bibliographic_database,False
+PH,PH01,MEDLINE (Ovid),MEDLINE,bibliographic_database,False
+PH,PH01,EMBASE (Ovid),Embase,bibliographic_database,False
+PH,PH01,PsycINFO (Ovid),APA PsycInfo,bibliographic_database,False
+PH,PH01,CINAHL (EBSCOhost),CINAHL (edition unspecified),bibliographic_database,False
+PH,PH01,"Google Scholar, for backward and forward citation searches",Google Scholar,search_engine,False
+PH,PH02,PubMed,PubMed,bibliographic_database,False
+PH,PH02,Ovid Medline,MEDLINE,bibliographic_database,False
+PH,PH02,Scopus,Scopus,bibliographic_database,False
+PH,PH02,the Cochrane database,Cochrane database (unspecified),platform_or_unspecified_collection,False
+PH,PH03,MEDLINE,MEDLINE,bibliographic_database,False
+PH,PH03,Embase,Embase,bibliographic_database,False
+PH,PH03,PsycINFO,APA PsycInfo,bibliographic_database,False
+PH,PH03,Cochrane,Cochrane database (unspecified),platform_or_unspecified_collection,False
+PH,PH03,SPORTDiscus,SPORTDiscus,bibliographic_database,False
+PH,PH03,CINAHL,CINAHL (edition unspecified),bibliographic_database,False
+PH,PH03,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PH,PH04,ISI Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PH,PH04,Embase,Embase,bibliographic_database,False
+PH,PH04,PubMed/MEDLINE,PubMed/MEDLINE (as reported),combined_database_interface_label,False
+PH,PH05,Ovid MEDLINE,MEDLINE,bibliographic_database,False
+PH,PH05,Embase,Embase,bibliographic_database,False
+PH,PH05,Scopus,Scopus,bibliographic_database,False
+PH,PH05,Cochrane Library,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+PH,PH05,BIOSIS Citation Index,BIOSIS Citation Index,bibliographic_database,False
+PH,PH06,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PH,PH06,CINAHL,CINAHL (edition unspecified),bibliographic_database,False
+PH,PH06,PubMed,PubMed,bibliographic_database,False
+PH,PH06,Embase,Embase,bibliographic_database,False
+PH,PH06,Scopus,Scopus,bibliographic_database,False
+PH,PH06,PsycINFO,APA PsycInfo,bibliographic_database,False
+PH,PH06,ProQuest Policy File,ProQuest Policy File,bibliographic_database,False
+PH,PH06,MEDLINE,MEDLINE,bibliographic_database,False
+PH,PH06,ERIC,ERIC,bibliographic_database,False
+PH,PH06,GovInfo,GovInfo,specialized_collection_or_other_source,False
+PH,PH06,CDC stacks,CDC stacks,specialized_collection_or_other_source,False
+PH,PH06,Health Evidence,Health Evidence,specialized_collection_or_other_source,False
+PH,PH06,MEdRxiv,MEdRxiv,specialized_collection_or_other_source,False
+PH,PH06,SSRN,SSRN,specialized_collection_or_other_source,False
+PH,PH07,PubMed,PubMed,bibliographic_database,False
+PH,PH07,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PH,PH08,PubMed/MEDLINE,PubMed/MEDLINE (as reported),combined_database_interface_label,False
+PH,PH08,Scopus,Scopus,bibliographic_database,False
+PH,PH08,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PH,PH08,Cochrane,Cochrane database (unspecified),platform_or_unspecified_collection,False
+PH,PH08,Embase,Embase,bibliographic_database,False
+PH,PH08,African journal online (AJOL),African Journals Online,journal_platform,False
+PH,PH08,Ethiopian Ministry of Health,Ethiopian Ministry of Health,specialized_collection_or_other_source,False
+PH,PH08,WHO,WHO,specialized_collection_or_other_source,False
+PH,PH08,UNICEF,UNICEF,specialized_collection_or_other_source,False
+PH,PH08,Ethiopian Demographic and Health Surveys repositories,Ethiopian Demographic and Health Surveys repositories,specialized_collection_or_other_source,False
+PH,PH09,Scopus,Scopus,bibliographic_database,False
+PH,PH09,PubMed,PubMed,bibliographic_database,False
+PH,PH09,Web of Science (WOS),Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PH,PH10,Scopus,Scopus,bibliographic_database,False
+PH,PH10,PubMed,PubMed,bibliographic_database,False
+PH,PH10,Google Scholar,Google Scholar,search_engine,False
+PHA,PHA01,Medline,MEDLINE,bibliographic_database,False
+PHA,PHA01,Embase,Embase,bibliographic_database,False
+PHA,PHA02,Cochrane Central Register of Controlled Trials (CENTRAL),CENTRAL,bibliographic_database,False
+PHA,PHA02,MEDLINE(R) ALL,MEDLINE,bibliographic_database,False
+PHA,PHA02,Embase Online,Embase,bibliographic_database,False
+PHA,PHA02,PsycINFO,APA PsycInfo,bibliographic_database,False
+PHA,PHA03,PubMed,PubMed,bibliographic_database,False
+PHA,PHA03,Embase,Embase,bibliographic_database,False
+PHA,PHA03,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PHA,PHA04,MEDLINE,MEDLINE,bibliographic_database,False
+PHA,PHA04,Embase,Embase,bibliographic_database,False
+PHA,PHA04,PsycINFO,APA PsycInfo,bibliographic_database,False
+PHA,PHA04,CENTRAL,CENTRAL,bibliographic_database,False
+PHA,PHA04,CINAHL,CINAHL (edition unspecified),bibliographic_database,False
+PHA,PHA04,Food and Drug Administration and European Medicines Agency regulatory databases,Food and Drug Administration and European Medicines Agency regulatory databases,specialized_collection_or_other_source,False
+PHA,PHA04,clinicaltrials.gov,ClinicalTrials.gov,trial_registry,False
+PHA,PHA04,World Health Organization’s International Clinical Trials Registry Platform,WHO ICTRP,trial_registry,False
+PHA,PHA05,The Cochrane Library,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+PHA,PHA05,PubMed,PubMed,bibliographic_database,False
+PHA,PHA05,Scopus,Scopus,bibliographic_database,False
+PHA,PHA05,Embase,Embase,bibliographic_database,False
+PHA,PHA06,PubMed,PubMed,bibliographic_database,False
+PHA,PHA06,Embase,Embase,bibliographic_database,False
+PHA,PHA06,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PHA,PHA06,the Cochrane Library,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+PHA,PHA07,EMBASE,Embase,bibliographic_database,False
+PHA,PHA07,MEDLINE,MEDLINE,bibliographic_database,False
+PHA,PHA07,CINAHL,CINAHL (edition unspecified),bibliographic_database,False
+PHA,PHA07,ISI Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PHA,PHA07,ClinicalTrials.gov,ClinicalTrials.gov,trial_registry,False
+PHA,PHA07,International Trials Registry Platform (ICTRP),WHO ICTRP,trial_registry,False
+PHA,PHA08,MEDLINE,MEDLINE,bibliographic_database,False
+PHA,PHA08,Embase,Embase,bibliographic_database,False
+PHA,PHA08,Cochrane databases,Cochrane database (unspecified),platform_or_unspecified_collection,False
+PHA,PHA08,references,references,citation_followup,False
+PHA,PHA08,unnamed trials databases,unnamed trials databases,specialized_collection_or_other_source,False
+PHA,PHA09,Living Overview of the Evidence COVID-19 Repository (COVID-19 L-OVE),Living Overview of the Evidence COVID-19 Repository (COVID-19 L-OVE),specialized_collection_or_other_source,False
+PHA,PHA09,World Health Organization (WHO) covid-19 database,World Health Organization (WHO) covid-19 database,specialized_collection_or_other_source,False
+PHA,PHA09,US Centers for Disease Control and Prevention (CDC) COVID-19 Research Articles Downloadable Database,US Centers for Disease Control and Prevention (CDC) COVID-19 Research Articles Downloadable Database,specialized_collection_or_other_source,False
+PHA,PHA09,Wanfang,Wanfang (collection unspecified),platform_or_unspecified_collection,False
+PHA,PHA09,Chinese Biomedical Literature,Chinese Biomedical Literature (as reported),bibliographic_database,False
+PHA,PHA09,China National Knowledge Infrastructure,CNKI (collection unspecified),platform_or_unspecified_collection,False
+PHA,PHA09,VIP,VIP,bibliographic_database,False
+PHA,PHA09,Chinese Medical Journal Net,Chinese Medical Journal Net,specialized_collection_or_other_source,False
+PHA,PHA09,ChinaXiv,ChinaXiv,preprint_server,False
+PHA,PHA10,Pubmed,PubMed,bibliographic_database,False
+PHA,PHA10,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PHA,PHA10,Scopus,Scopus,bibliographic_database,False
+PHA,PHA10,Embase,Embase,bibliographic_database,False
+HS,HS01,MEDLINE,MEDLINE,bibliographic_database,False
+HS,HS01,EMBASE,Embase,bibliographic_database,False
+HS,HS01,LILACS,LILACS,bibliographic_database,False
+HS,HS01,the Cochrane Central Register of Controlled Trials,CENTRAL,bibliographic_database,False
+HS,HS01,PEDro,PEDro,bibliographic_database,False
+HS,HS01,CINAHL,CINAHL (edition unspecified),bibliographic_database,False
+HS,HS02,PubMed,PubMed,bibliographic_database,False
+HS,HS02,CINAHL (Cumulative Index to Nursing and Allied Health Literature),CINAHL (edition unspecified),bibliographic_database,False
+HS,HS02,Embase,Embase,bibliographic_database,False
+HS,HS02,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+HS,HS03,Scopus,Scopus,bibliographic_database,False
+HS,HS03,EMBASE,Embase,bibliographic_database,False
+HS,HS03,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+HS,HS03,Cochrane CENTRAL,CENTRAL,bibliographic_database,False
+HS,HS03,PubMed/MEDLINE,PubMed/MEDLINE (as reported),combined_database_interface_label,False
+HS,HS04,CINAHL,CINAHL (edition unspecified),bibliographic_database,False
+HS,HS04,ProQuest,ProQuest (databases unspecified),platform_or_unspecified_collection,False
+HS,HS04,PubMed,PubMed,bibliographic_database,False
+HS,HS04,ScienceDirect,ScienceDirect,publisher_collection,False
+HS,HS04,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+HS,HS04,Google Scholar,Google Scholar,search_engine,False
+HS,HS04,reference lists,reference lists,citation_followup,False
+HS,HS05,Scopus,Scopus,bibliographic_database,False
+HS,HS05,PubMed,PubMed,bibliographic_database,False
+HS,HS05,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+HS,HS05,Embase,Embase,bibliographic_database,False
+HS,HS06,PubMed (National Center for Biotechnology Information),PubMed,bibliographic_database,False
+HS,HS06,Web of Science Core Collection,Web of Science Core Collection,bibliographic_database_collection,False
+HS,HS06,Scopus,Scopus,bibliographic_database,False
+HS,HS06,EBSCOhost,EBSCOhost (databases unspecified),platform_or_unspecified_collection,False
+HS,HS06,ProQuest,ProQuest (databases unspecified),platform_or_unspecified_collection,False
+HS,HS06,Cochrane Library,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+HS,HS06,CINAHL,CINAHL (edition unspecified),bibliographic_database,False
+HS,HS07,PubMed (MEDLINE),PubMed/MEDLINE (as reported),combined_database_interface_label,False
+HS,HS07,EMBASE,Embase,bibliographic_database,False
+HS,HS07,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+HS,HS08,PubMed,PubMed,bibliographic_database,False
+HS,HS08,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+HS,HS08,Google Scholar,Google Scholar,search_engine,False
+HS,HS08,Embase,Embase,bibliographic_database,False
+HS,HS09,PubMed,PubMed,bibliographic_database,False
+HS,HS09,Scopus,Scopus,bibliographic_database,False
+HS,HS09,Cochrane Library,Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+HS,HS09,CINAHL,CINAHL (edition unspecified),bibliographic_database,False
+HS,HS09,Google Scholar,Google Scholar,search_engine,False
+HS,HS10,Scopus,Scopus,bibliographic_database,False
+HS,HS10,CINAHL,CINAHL (edition unspecified),bibliographic_database,False
+HS,HS10,EBSCO,EBSCOhost (databases unspecified),platform_or_unspecified_collection,False
+HS,HS10,EMBASE,Embase,bibliographic_database,False
+HS,HS10,PubMed,PubMed,bibliographic_database,False
+ENG,ENG-SR01,Scopus,Scopus,bibliographic_database,False
+ENG,ENG-SR01,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENG,ENG-SR02,Scopus,Scopus,bibliographic_database,False
+ENG,ENG-SR02,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENG,ENG-SR03,Scopus,Scopus,bibliographic_database,False
+ENG,ENG-SR03,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENG,ENG-SR03,ScienceDirect,ScienceDirect,publisher_platform,True
+ENG,ENG-SR03,PubMed,PubMed,bibliographic_database,False
+ENG,ENG-SR03,Embase,Embase,bibliographic_database,True
+ENG,ENG-SR04,Scopus,Scopus,bibliographic_database,False
+ENG,ENG-SR04,Springer,SpringerLink,publisher_platform,True
+ENG,ENG-SR04,ScienceDirect,ScienceDirect,publisher_platform,True
+ENG,ENG-SR04,MDPI,MDPI,publisher_platform,True
+ENG,ENG-SR04,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,True
+ENG,ENG-SR05,ScienceDirect,ScienceDirect,publisher_platform,False
+ENG,ENG-SR05,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENG,ENG-SR05,Google Scholar,Google Scholar,scholarly_search_engine,False
+ENG,ENG-SR06,Scopus,Scopus,bibliographic_database,False
+ENG,ENG-SR06,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENG,ENG-SR06,ScienceDirect,ScienceDirect,publisher_platform,False
+ENG,ENG-SR07,scopus,Scopus,bibliographic_database,False
+ENG,ENG-SR07,web of science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENG,ENG-SR08,Scopus,Scopus,bibliographic_database,False
+ENG,ENG-SR08,ScienceDirect,ScienceDirect,publisher_platform,False
+ENG,ENG-SR08,PubMed,PubMed,bibliographic_database,False
+ENG,ENG-SR08,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENG,ENG-SR09,ScienceDirect,ScienceDirect,publisher_platform,False
+ENG,ENG-SR09,Google Scholar,Google Scholar,scholarly_search_engine,False
+ENG,ENG-SR09,Scopus,Scopus,bibliographic_database,False
+ENG,ENG-SR10,Scopus,Scopus,bibliographic_database,False
+ENG,ENG-SR10,Emerald,Emerald Insight,publisher_platform,False
+ENG,ENG-SR10,Google Scholar,Google Scholar,scholarly_search_engine,False
+ENV,ENV-SR01,google scholar,Google Scholar,scholarly_search_engine,False
+ENV,ENV-SR01,Scopus,Scopus,bibliographic_database,False
+ENV,ENV-SR01,Semantic Scholar,Semantic Scholar,scholarly_search_engine,False
+ENV,ENV-SR02,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENV,ENV-SR02,Scopus,Scopus,bibliographic_database,False
+ENV,ENV-SR02,Google Scholar,Google Scholar,scholarly_search_engine,False
+ENV,ENV-SR02,Academic Search Complete,Academic Search Complete,bibliographic_database,False
+ENV,ENV-SR02,Environment Complete,Environment Complete,bibliographic_database,False
+ENV,ENV-SR02,Science Direct,ScienceDirect,publisher_platform,False
+ENV,ENV-SR02,GreenFILE,GreenFILE,bibliographic_database,False
+ENV,ENV-SR03,Scopus,Scopus,bibliographic_database,False
+ENV,ENV-SR03,Google Scholar,Google Scholar,scholarly_search_engine,False
+ENV,ENV-SR04,Scopus,Scopus,bibliographic_database,False
+ENV,ENV-SR05,Google Scholar,Google Scholar,scholarly_search_engine,False
+ENV,ENV-SR05,ScienceDirect,ScienceDirect,publisher_platform,False
+ENV,ENV-SR05,National Center for Biotechnology Information (PubMed),PubMed,bibliographic_database,False
+ENV,ENV-SR06,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENV,ENV-SR07,SCOPUS,Scopus,bibliographic_database,False
+ENV,ENV-SR07,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENV,ENV-SR08,ISI Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENV,ENV-SR08,Scopus,Scopus,bibliographic_database,False
+ENV,ENV-SR09,Scopus,Scopus,bibliographic_database,False
+ENV,ENV-SR10,Scopus,Scopus,bibliographic_database,False
+ENV,ENV-SR10,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+ENV,ENV-SR10,Dimensions.ai,Dimensions,bibliographic_discovery_index,False
+CS,CS-SR01,IEEE Xplore,IEEE Xplore,digital_library_platform,False
+CS,CS-SR01,Science Direct,ScienceDirect,publisher_platform,False
+CS,CS-SR01,Scopus,Scopus,bibliographic_database,False
+CS,CS-SR01,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+CS,CS-SR02,SCOPUS,Scopus,bibliographic_database,False
+CS,CS-SR02,Web of Science (WOS),Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+CS,CS-SR03,IEEE Xplore,IEEE Xplore,digital_library_platform,False
+CS,CS-SR03,ACM Digital Library,ACM Digital Library,digital_library_platform,False
+CS,CS-SR03,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+CS,CS-SR03,Science Direct,ScienceDirect,publisher_platform,False
+CS,CS-SR04,IEEE Xplore,IEEE Xplore,digital_library_platform,False
+CS,CS-SR04,ACM Digital Library,ACM Digital Library,digital_library_platform,False
+CS,CS-SR04,Emerald Insight,Emerald Insight,publisher_platform,False
+CS,CS-SR04,Springer Link,SpringerLink,publisher_platform,False
+CS,CS-SR04,ScienceDirect,ScienceDirect,publisher_platform,False
+CS,CS-SR05,Scopus,Scopus,bibliographic_database,False
+CS,CS-SR05,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+CS,CS-SR05,PubMed,PubMed,bibliographic_database,False
+CS,CS-SR06,PubMed,PubMed,bibliographic_database,False
+CS,CS-SR06,Web of Science,Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+CS,CS-SR06,Google Scholar,Google Scholar,scholarly_search_engine,False
+CS,CS-SR07,SpringerLink,SpringerLink,publisher_platform,False
+CS,CS-SR07,IEEE Xplore,IEEE Xplore,digital_library_platform,False
+CS,CS-SR07,Scopus,Scopus,bibliographic_database,False
+CS,CS-SR07,Google Scholar,Google Scholar,scholarly_search_engine,False
+CS,CS-SR08,Google Scholar,Google Scholar,scholarly_search_engine,False
+CS,CS-SR08,IEEE Xplore,IEEE Xplore,digital_library_platform,False
+CS,CS-SR08,ScienceDirect,ScienceDirect,publisher_platform,False
+CS,CS-SR08,Springer Link,SpringerLink,publisher_platform,False
+CS,CS-SR08,Scopus,Scopus,bibliographic_database,False
+CS,CS-SR08,Web of Science (WoS),Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+CS,CS-SR09,Scopus,Scopus,bibliographic_database,False
+CS,CS-SR10,Scopus,Scopus,bibliographic_database,False
+CS,CS-SR10,IEEE Xplore,IEEE Xplore,digital_library_platform,False
+CS,CS-SR10,ACM Digital Library,ACM Digital Library,digital_library_platform,False
+PSY,PSY-001,"[""Cochrane Library"", ""EBSCO"", ""Embase"", ""LILACS"", ""PubMed"", ""Web of Science"", ""China Biomedical Literature Database (CBM)"", ""China National Knowledge Infrastructure (CNKI)"", ""Wanfang Database"", ""China Science and Technology Journal Database (VIP)""]",Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+PSY,PSY-001,"[""Cochrane Library"", ""EBSCO"", ""Embase"", ""LILACS"", ""PubMed"", ""Web of Science"", ""China Biomedical Literature Database (CBM)"", ""China National Knowledge Infrastructure (CNKI)"", ""Wanfang Database"", ""China Science and Technology Journal Database (VIP)""]",EBSCOhost,platform_or_unspecified_collection,False
+PSY,PSY-001,"[""Cochrane Library"", ""EBSCO"", ""Embase"", ""LILACS"", ""PubMed"", ""Web of Science"", ""China Biomedical Literature Database (CBM)"", ""China National Knowledge Infrastructure (CNKI)"", ""Wanfang Database"", ""China Science and Technology Journal Database (VIP)""]",Embase,bibliographic_database,False
+PSY,PSY-001,"[""Cochrane Library"", ""EBSCO"", ""Embase"", ""LILACS"", ""PubMed"", ""Web of Science"", ""China Biomedical Literature Database (CBM)"", ""China National Knowledge Infrastructure (CNKI)"", ""Wanfang Database"", ""China Science and Technology Journal Database (VIP)""]",LILACS,bibliographic_database,False
+PSY,PSY-001,"[""Cochrane Library"", ""EBSCO"", ""Embase"", ""LILACS"", ""PubMed"", ""Web of Science"", ""China Biomedical Literature Database (CBM)"", ""China National Knowledge Infrastructure (CNKI)"", ""Wanfang Database"", ""China Science and Technology Journal Database (VIP)""]",PubMed,bibliographic_database,False
+PSY,PSY-001,"[""Cochrane Library"", ""EBSCO"", ""Embase"", ""LILACS"", ""PubMed"", ""Web of Science"", ""China Biomedical Literature Database (CBM)"", ""China National Knowledge Infrastructure (CNKI)"", ""Wanfang Database"", ""China Science and Technology Journal Database (VIP)""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PSY,PSY-001,"[""Cochrane Library"", ""EBSCO"", ""Embase"", ""LILACS"", ""PubMed"", ""Web of Science"", ""China Biomedical Literature Database (CBM)"", ""China National Knowledge Infrastructure (CNKI)"", ""Wanfang Database"", ""China Science and Technology Journal Database (VIP)""]",China Biomedical Literature Database (CBM),bibliographic_database,False
+PSY,PSY-001,"[""Cochrane Library"", ""EBSCO"", ""Embase"", ""LILACS"", ""PubMed"", ""Web of Science"", ""China Biomedical Literature Database (CBM)"", ""China National Knowledge Infrastructure (CNKI)"", ""Wanfang Database"", ""China Science and Technology Journal Database (VIP)""]",China National Knowledge Infrastructure (CNKI),bibliographic_database,False
+PSY,PSY-001,"[""Cochrane Library"", ""EBSCO"", ""Embase"", ""LILACS"", ""PubMed"", ""Web of Science"", ""China Biomedical Literature Database (CBM)"", ""China National Knowledge Infrastructure (CNKI)"", ""Wanfang Database"", ""China Science and Technology Journal Database (VIP)""]",Wanfang Database,bibliographic_database,False
+PSY,PSY-001,"[""Cochrane Library"", ""EBSCO"", ""Embase"", ""LILACS"", ""PubMed"", ""Web of Science"", ""China Biomedical Literature Database (CBM)"", ""China National Knowledge Infrastructure (CNKI)"", ""Wanfang Database"", ""China Science and Technology Journal Database (VIP)""]",China Science and Technology Journal Database (VIP),bibliographic_database,False
+PSY,PSY-002,"[""MEDLINE"", ""Embase"", ""PsycINFO"", ""Web of Science"", ""Cochrane Library"", ""Google"", ""Bing""]",MEDLINE,bibliographic_database,False
+PSY,PSY-002,"[""MEDLINE"", ""Embase"", ""PsycINFO"", ""Web of Science"", ""Cochrane Library"", ""Google"", ""Bing""]",Embase,bibliographic_database,False
+PSY,PSY-002,"[""MEDLINE"", ""Embase"", ""PsycINFO"", ""Web of Science"", ""Cochrane Library"", ""Google"", ""Bing""]",APA PsycInfo,bibliographic_database,False
+PSY,PSY-002,"[""MEDLINE"", ""Embase"", ""PsycINFO"", ""Web of Science"", ""Cochrane Library"", ""Google"", ""Bing""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PSY,PSY-002,"[""MEDLINE"", ""Embase"", ""PsycINFO"", ""Web of Science"", ""Cochrane Library"", ""Google"", ""Bing""]",Cochrane Library (constituent unspecified),platform_or_unspecified_collection,False
+PSY,PSY-002,"[""MEDLINE"", ""Embase"", ""PsycINFO"", ""Web of Science"", ""Cochrane Library"", ""Google"", ""Bing""]",Google,search_engine,False
+PSY,PSY-002,"[""MEDLINE"", ""Embase"", ""PsycINFO"", ""Web of Science"", ""Cochrane Library"", ""Google"", ""Bing""]",Bing,search_engine,False
+PSY,PSY-003,"[""PubMed"", ""Google Scholar"", ""PsycNet""]",PubMed,bibliographic_database,False
+PSY,PSY-003,"[""PubMed"", ""Google Scholar"", ""PsycNet""]",Google Scholar,search_engine,False
+PSY,PSY-003,"[""PubMed"", ""Google Scholar"", ""PsycNet""]",PsycNet,platform_or_unspecified_collection,False
+PSY,PSY-004,"[""PubMed"", ""EBSCOhost (CINHAHL/PsycINFO/PsycArticles)"", ""Web of Science"", ""Google Scholar""]",PubMed,bibliographic_database,False
+PSY,PSY-004,"[""PubMed"", ""EBSCOhost (CINHAHL/PsycINFO/PsycArticles)"", ""Web of Science"", ""Google Scholar""]",EBSCOhost,platform_or_unspecified_collection,False
+PSY,PSY-004,"[""PubMed"", ""EBSCOhost (CINHAHL/PsycINFO/PsycArticles)"", ""Web of Science"", ""Google Scholar""]",CINAHL (edition unspecified),bibliographic_database,False
+PSY,PSY-004,"[""PubMed"", ""EBSCOhost (CINHAHL/PsycINFO/PsycArticles)"", ""Web of Science"", ""Google Scholar""]",APA PsycInfo,bibliographic_database,False
+PSY,PSY-004,"[""PubMed"", ""EBSCOhost (CINHAHL/PsycINFO/PsycArticles)"", ""Web of Science"", ""Google Scholar""]",APA PsycArticles,bibliographic_database,False
+PSY,PSY-004,"[""PubMed"", ""EBSCOhost (CINHAHL/PsycINFO/PsycArticles)"", ""Web of Science"", ""Google Scholar""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PSY,PSY-004,"[""PubMed"", ""EBSCOhost (CINHAHL/PsycINFO/PsycArticles)"", ""Web of Science"", ""Google Scholar""]",Google Scholar,search_engine,False
+PSY,PSY-005,"[""Scopus"", ""Web of Science"", ""ScienceDirect"", ""PubMed""]",Scopus,bibliographic_database,False
+PSY,PSY-005,"[""Scopus"", ""Web of Science"", ""ScienceDirect"", ""PubMed""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PSY,PSY-005,"[""Scopus"", ""Web of Science"", ""ScienceDirect"", ""PubMed""]",ScienceDirect,publisher_platform,False
+PSY,PSY-005,"[""Scopus"", ""Web of Science"", ""ScienceDirect"", ""PubMed""]",PubMed,bibliographic_database,False
+PSY,PSY-006,"[""Web of Science"", ""Scopus"", ""EBSCOhost"", ""PubMed"", ""ScienceDirect"", ""CNKI"", ""Wanfang"", ""VIP""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PSY,PSY-006,"[""Web of Science"", ""Scopus"", ""EBSCOhost"", ""PubMed"", ""ScienceDirect"", ""CNKI"", ""Wanfang"", ""VIP""]",Scopus,bibliographic_database,False
+PSY,PSY-006,"[""Web of Science"", ""Scopus"", ""EBSCOhost"", ""PubMed"", ""ScienceDirect"", ""CNKI"", ""Wanfang"", ""VIP""]",EBSCOhost,platform_or_unspecified_collection,False
+PSY,PSY-006,"[""Web of Science"", ""Scopus"", ""EBSCOhost"", ""PubMed"", ""ScienceDirect"", ""CNKI"", ""Wanfang"", ""VIP""]",PubMed,bibliographic_database,False
+PSY,PSY-006,"[""Web of Science"", ""Scopus"", ""EBSCOhost"", ""PubMed"", ""ScienceDirect"", ""CNKI"", ""Wanfang"", ""VIP""]",ScienceDirect,publisher_platform,False
+PSY,PSY-006,"[""Web of Science"", ""Scopus"", ""EBSCOhost"", ""PubMed"", ""ScienceDirect"", ""CNKI"", ""Wanfang"", ""VIP""]",China National Knowledge Infrastructure (CNKI),bibliographic_database,False
+PSY,PSY-006,"[""Web of Science"", ""Scopus"", ""EBSCOhost"", ""PubMed"", ""ScienceDirect"", ""CNKI"", ""Wanfang"", ""VIP""]",Wanfang Database,bibliographic_database,False
+PSY,PSY-006,"[""Web of Science"", ""Scopus"", ""EBSCOhost"", ""PubMed"", ""ScienceDirect"", ""CNKI"", ""Wanfang"", ""VIP""]",China Science and Technology Journal Database (VIP),bibliographic_database,False
+PSY,PSY-007,"[""Web of Science"", ""Applied Social Sciences Index & Abstracts (ASSIA)"", ""PsycINFO"", ""MEDLINE"", ""Embase"", ""Education Resources Information Center (ERIC)"", ""IEEE Xplore"", ""ACM Digital Library""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PSY,PSY-007,"[""Web of Science"", ""Applied Social Sciences Index & Abstracts (ASSIA)"", ""PsycINFO"", ""MEDLINE"", ""Embase"", ""Education Resources Information Center (ERIC)"", ""IEEE Xplore"", ""ACM Digital Library""]",ASSIA,bibliographic_database,False
+PSY,PSY-007,"[""Web of Science"", ""Applied Social Sciences Index & Abstracts (ASSIA)"", ""PsycINFO"", ""MEDLINE"", ""Embase"", ""Education Resources Information Center (ERIC)"", ""IEEE Xplore"", ""ACM Digital Library""]",APA PsycInfo,bibliographic_database,False
+PSY,PSY-007,"[""Web of Science"", ""Applied Social Sciences Index & Abstracts (ASSIA)"", ""PsycINFO"", ""MEDLINE"", ""Embase"", ""Education Resources Information Center (ERIC)"", ""IEEE Xplore"", ""ACM Digital Library""]",MEDLINE,bibliographic_database,False
+PSY,PSY-007,"[""Web of Science"", ""Applied Social Sciences Index & Abstracts (ASSIA)"", ""PsycINFO"", ""MEDLINE"", ""Embase"", ""Education Resources Information Center (ERIC)"", ""IEEE Xplore"", ""ACM Digital Library""]",Embase,bibliographic_database,False
+PSY,PSY-007,"[""Web of Science"", ""Applied Social Sciences Index & Abstracts (ASSIA)"", ""PsycINFO"", ""MEDLINE"", ""Embase"", ""Education Resources Information Center (ERIC)"", ""IEEE Xplore"", ""ACM Digital Library""]",ERIC,bibliographic_database,False
+PSY,PSY-007,"[""Web of Science"", ""Applied Social Sciences Index & Abstracts (ASSIA)"", ""PsycINFO"", ""MEDLINE"", ""Embase"", ""Education Resources Information Center (ERIC)"", ""IEEE Xplore"", ""ACM Digital Library""]",IEEE Xplore,publisher_platform,False
+PSY,PSY-007,"[""Web of Science"", ""Applied Social Sciences Index & Abstracts (ASSIA)"", ""PsycINFO"", ""MEDLINE"", ""Embase"", ""Education Resources Information Center (ERIC)"", ""IEEE Xplore"", ""ACM Digital Library""]",ACM Digital Library,publisher_platform,False
+PSY,PSY-008,"[""APA PsycInfo"", ""APA PsycArticles"", ""Criminology Collection"", ""ERIC"", ""Social Science Database"", ""ASSIA (Applied Social Sciences Index and Abstracts)"", ""PubMed"", ""Web of Science""]",APA PsycInfo,bibliographic_database,False
+PSY,PSY-008,"[""APA PsycInfo"", ""APA PsycArticles"", ""Criminology Collection"", ""ERIC"", ""Social Science Database"", ""ASSIA (Applied Social Sciences Index and Abstracts)"", ""PubMed"", ""Web of Science""]",APA PsycArticles,bibliographic_database,False
+PSY,PSY-008,"[""APA PsycInfo"", ""APA PsycArticles"", ""Criminology Collection"", ""ERIC"", ""Social Science Database"", ""ASSIA (Applied Social Sciences Index and Abstracts)"", ""PubMed"", ""Web of Science""]",Criminology Collection,bibliographic_database,False
+PSY,PSY-008,"[""APA PsycInfo"", ""APA PsycArticles"", ""Criminology Collection"", ""ERIC"", ""Social Science Database"", ""ASSIA (Applied Social Sciences Index and Abstracts)"", ""PubMed"", ""Web of Science""]",ERIC,bibliographic_database,False
+PSY,PSY-008,"[""APA PsycInfo"", ""APA PsycArticles"", ""Criminology Collection"", ""ERIC"", ""Social Science Database"", ""ASSIA (Applied Social Sciences Index and Abstracts)"", ""PubMed"", ""Web of Science""]",Social Science Database,bibliographic_database,False
+PSY,PSY-008,"[""APA PsycInfo"", ""APA PsycArticles"", ""Criminology Collection"", ""ERIC"", ""Social Science Database"", ""ASSIA (Applied Social Sciences Index and Abstracts)"", ""PubMed"", ""Web of Science""]",ASSIA,bibliographic_database,False
+PSY,PSY-008,"[""APA PsycInfo"", ""APA PsycArticles"", ""Criminology Collection"", ""ERIC"", ""Social Science Database"", ""ASSIA (Applied Social Sciences Index and Abstracts)"", ""PubMed"", ""Web of Science""]",PubMed,bibliographic_database,False
+PSY,PSY-008,"[""APA PsycInfo"", ""APA PsycArticles"", ""Criminology Collection"", ""ERIC"", ""Social Science Database"", ""ASSIA (Applied Social Sciences Index and Abstracts)"", ""PubMed"", ""Web of Science""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PSY,PSY-009,"[""Psychology and Behavioral Sciences Collection"", ""PubMed"", ""Scopus"", ""Web of Science""]",Psychology and Behavioral Sciences Collection,bibliographic_database,False
+PSY,PSY-009,"[""Psychology and Behavioral Sciences Collection"", ""PubMed"", ""Scopus"", ""Web of Science""]",PubMed,bibliographic_database,False
+PSY,PSY-009,"[""Psychology and Behavioral Sciences Collection"", ""PubMed"", ""Scopus"", ""Web of Science""]",Scopus,bibliographic_database,False
+PSY,PSY-009,"[""Psychology and Behavioral Sciences Collection"", ""PubMed"", ""Scopus"", ""Web of Science""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+PSY,PSY-010,"[""PubMed"", ""Medline"", ""Embase"", ""the Cochrane Central Register of Controlled Trials"", ""Web of Science""]",PubMed,bibliographic_database,False
+PSY,PSY-010,"[""PubMed"", ""Medline"", ""Embase"", ""the Cochrane Central Register of Controlled Trials"", ""Web of Science""]",MEDLINE,bibliographic_database,False
+PSY,PSY-010,"[""PubMed"", ""Medline"", ""Embase"", ""the Cochrane Central Register of Controlled Trials"", ""Web of Science""]",Embase,bibliographic_database,False
+PSY,PSY-010,"[""PubMed"", ""Medline"", ""Embase"", ""the Cochrane Central Register of Controlled Trials"", ""Web of Science""]",CENTRAL,bibliographic_database,False
+PSY,PSY-010,"[""PubMed"", ""Medline"", ""Embase"", ""the Cochrane Central Register of Controlled Trials"", ""Web of Science""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+EDU,EDU-001,"[""JSTOR"", ""Web of Science""]",JSTOR,repository,False
+EDU,EDU-001,"[""JSTOR"", ""Web of Science""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+EDU,EDU-002,"[""Web of Science"", ""Scopus"", ""Google Scholar""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+EDU,EDU-002,"[""Web of Science"", ""Scopus"", ""Google Scholar""]",Scopus,bibliographic_database,False
+EDU,EDU-002,"[""Web of Science"", ""Scopus"", ""Google Scholar""]",Google Scholar,search_engine,False
+EDU,EDU-003,"[""Scopus""]",Scopus,bibliographic_database,False
+EDU,EDU-004,"[""Springer Link"", ""ACM"", ""IEEE Xplore"", ""Science Direct"", ""Wiley""]",SpringerLink,publisher_platform,False
+EDU,EDU-004,"[""Springer Link"", ""ACM"", ""IEEE Xplore"", ""Science Direct"", ""Wiley""]",ACM,publisher_platform,False
+EDU,EDU-004,"[""Springer Link"", ""ACM"", ""IEEE Xplore"", ""Science Direct"", ""Wiley""]",IEEE Xplore,publisher_platform,False
+EDU,EDU-004,"[""Springer Link"", ""ACM"", ""IEEE Xplore"", ""Science Direct"", ""Wiley""]",ScienceDirect,publisher_platform,False
+EDU,EDU-004,"[""Springer Link"", ""ACM"", ""IEEE Xplore"", ""Science Direct"", ""Wiley""]",Wiley,publisher_platform,False
+EDU,EDU-007,"[""EBSCO"", ""ERIC"", ""Academic Search Complete"", ""PsycINFO"", ""OmniFile Full Text Select (H.W. Wilson)"", ""Open Dissertations"", ""ProQuest Dissertations"", ""Conference Proceedings Citation Index-Science""]",EBSCOhost,platform_or_unspecified_collection,False
+EDU,EDU-007,"[""EBSCO"", ""ERIC"", ""Academic Search Complete"", ""PsycINFO"", ""OmniFile Full Text Select (H.W. Wilson)"", ""Open Dissertations"", ""ProQuest Dissertations"", ""Conference Proceedings Citation Index-Science""]",ERIC,bibliographic_database,False
+EDU,EDU-007,"[""EBSCO"", ""ERIC"", ""Academic Search Complete"", ""PsycINFO"", ""OmniFile Full Text Select (H.W. Wilson)"", ""Open Dissertations"", ""ProQuest Dissertations"", ""Conference Proceedings Citation Index-Science""]",Academic Search Complete,bibliographic_database,False
+EDU,EDU-007,"[""EBSCO"", ""ERIC"", ""Academic Search Complete"", ""PsycINFO"", ""OmniFile Full Text Select (H.W. Wilson)"", ""Open Dissertations"", ""ProQuest Dissertations"", ""Conference Proceedings Citation Index-Science""]",APA PsycInfo,bibliographic_database,False
+EDU,EDU-007,"[""EBSCO"", ""ERIC"", ""Academic Search Complete"", ""PsycINFO"", ""OmniFile Full Text Select (H.W. Wilson)"", ""Open Dissertations"", ""ProQuest Dissertations"", ""Conference Proceedings Citation Index-Science""]",OmniFile Full Text Select,bibliographic_database,False
+EDU,EDU-007,"[""EBSCO"", ""ERIC"", ""Academic Search Complete"", ""PsycINFO"", ""OmniFile Full Text Select (H.W. Wilson)"", ""Open Dissertations"", ""ProQuest Dissertations"", ""Conference Proceedings Citation Index-Science""]",Open Dissertations,repository,False
+EDU,EDU-007,"[""EBSCO"", ""ERIC"", ""Academic Search Complete"", ""PsycINFO"", ""OmniFile Full Text Select (H.W. Wilson)"", ""Open Dissertations"", ""ProQuest Dissertations"", ""Conference Proceedings Citation Index-Science""]",ProQuest Dissertations,platform_or_unspecified_collection,False
+EDU,EDU-007,"[""EBSCO"", ""ERIC"", ""Academic Search Complete"", ""PsycINFO"", ""OmniFile Full Text Select (H.W. Wilson)"", ""Open Dissertations"", ""ProQuest Dissertations"", ""Conference Proceedings Citation Index-Science""]",Conference Proceedings Citation Index-Science,bibliographic_database,False
+EDU,EDU-008,"[""ERIC"", ""APA PsycINFO"", ""Web of Science""]",ERIC,bibliographic_database,False
+EDU,EDU-008,"[""ERIC"", ""APA PsycINFO"", ""Web of Science""]",APA PsycInfo,bibliographic_database,False
+EDU,EDU-008,"[""ERIC"", ""APA PsycINFO"", ""Web of Science""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+EDU,EDU-009,"[""Scopus"", ""ProQuest Education collection"", ""EBSCO APA PsycArticles""]",Scopus,bibliographic_database,False
+EDU,EDU-009,"[""Scopus"", ""ProQuest Education collection"", ""EBSCO APA PsycArticles""]",ProQuest Education Collection,bibliographic_database,False
+EDU,EDU-009,"[""Scopus"", ""ProQuest Education collection"", ""EBSCO APA PsycArticles""]",EBSCOhost,platform_or_unspecified_collection,False
+EDU,EDU-009,"[""Scopus"", ""ProQuest Education collection"", ""EBSCO APA PsycArticles""]",APA PsycArticles,bibliographic_database,False
+EDU,EDU-010,"[""PsycInfo"", ""Education Resources Information Centre (ERIC)"", ""British Education Index (BEI)""]",APA PsycInfo,bibliographic_database,False
+EDU,EDU-010,"[""PsycInfo"", ""Education Resources Information Centre (ERIC)"", ""British Education Index (BEI)""]",ERIC,bibliographic_database,False
+EDU,EDU-010,"[""PsycInfo"", ""Education Resources Information Centre (ERIC)"", ""British Education Index (BEI)""]",British Education Index,bibliographic_database,False
+EDU,EDU-011,"[""ERIC"", ""Proquest Central"", ""Proquest Dissertations and Thesis""]",ERIC,bibliographic_database,False
+EDU,EDU-011,"[""ERIC"", ""Proquest Central"", ""Proquest Dissertations and Thesis""]",ProQuest Central,bibliographic_database,False
+EDU,EDU-011,"[""ERIC"", ""Proquest Central"", ""Proquest Dissertations and Thesis""]",ProQuest Dissertations,platform_or_unspecified_collection,False
+EDU,EDU-012,"[""Eric"", ""PsychINFO"", ""Educational Research Complete"", ""Scopus""]",ERIC,bibliographic_database,False
+EDU,EDU-012,"[""Eric"", ""PsychINFO"", ""Educational Research Complete"", ""Scopus""]",APA PsycInfo,bibliographic_database,False
+EDU,EDU-012,"[""Eric"", ""PsychINFO"", ""Educational Research Complete"", ""Scopus""]",Educational Research Complete,bibliographic_database,False
+EDU,EDU-012,"[""Eric"", ""PsychINFO"", ""Educational Research Complete"", ""Scopus""]",Scopus,bibliographic_database,False
+SPED,SPED-001,"[""SCOPUS"", ""Web of Science (WoS)"", ""Education Resources Information Center (ERIC)""]",Scopus,bibliographic_database,False
+SPED,SPED-001,"[""SCOPUS"", ""Web of Science (WoS)"", ""Education Resources Information Center (ERIC)""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+SPED,SPED-001,"[""SCOPUS"", ""Web of Science (WoS)"", ""Education Resources Information Center (ERIC)""]",ERIC,bibliographic_database,False
+SPED,SPED-002,"[""ERIC"", ""Education Source"", ""PsycINFO"", ""Web of Science""]",ERIC,bibliographic_database,False
+SPED,SPED-002,"[""ERIC"", ""Education Source"", ""PsycINFO"", ""Web of Science""]",Education Source,bibliographic_database,False
+SPED,SPED-002,"[""ERIC"", ""Education Source"", ""PsycINFO"", ""Web of Science""]",APA PsycInfo,bibliographic_database,False
+SPED,SPED-002,"[""ERIC"", ""Education Source"", ""PsycINFO"", ""Web of Science""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+SPED,SPED-003,"[""Scopus""]",Scopus,bibliographic_database,False
+SPED,SPED-004,"[""MEDLINE"", ""Excerpta Medica database Educational Resources Information Center"", ""Global Health"", ""PsycINFO""]",MEDLINE,bibliographic_database,False
+SPED,SPED-004,"[""MEDLINE"", ""Excerpta Medica database Educational Resources Information Center"", ""Global Health"", ""PsycINFO""]",Global Health,bibliographic_database,False
+SPED,SPED-004,"[""MEDLINE"", ""Excerpta Medica database Educational Resources Information Center"", ""Global Health"", ""PsycINFO""]",APA PsycInfo,bibliographic_database,False
+SPED,SPED-005,"[""ERIC"", ""PsycINFO"", ""Education Source Ultimate"", ""Academic Search Ultimate"", ""Google Scholar""]",ERIC,bibliographic_database,False
+SPED,SPED-005,"[""ERIC"", ""PsycINFO"", ""Education Source Ultimate"", ""Academic Search Ultimate"", ""Google Scholar""]",APA PsycInfo,bibliographic_database,False
+SPED,SPED-005,"[""ERIC"", ""PsycINFO"", ""Education Source Ultimate"", ""Academic Search Ultimate"", ""Google Scholar""]",Education Source Ultimate,bibliographic_database,False
+SPED,SPED-005,"[""ERIC"", ""PsycINFO"", ""Education Source Ultimate"", ""Academic Search Ultimate"", ""Google Scholar""]",Academic Search Ultimate,bibliographic_database,False
+SPED,SPED-005,"[""ERIC"", ""PsycINFO"", ""Education Source Ultimate"", ""Academic Search Ultimate"", ""Google Scholar""]",Google Scholar,search_engine,False
+SPED,SPED-006,"[""Google Scholar"", ""JSTOR"", ""Science Direct (WoS)"", ""Pub Med"", ""IEEE XPLORE""]",Google Scholar,search_engine,False
+SPED,SPED-006,"[""Google Scholar"", ""JSTOR"", ""Science Direct (WoS)"", ""Pub Med"", ""IEEE XPLORE""]",JSTOR,repository,False
+SPED,SPED-006,"[""Google Scholar"", ""JSTOR"", ""Science Direct (WoS)"", ""Pub Med"", ""IEEE XPLORE""]",ScienceDirect,publisher_platform,False
+SPED,SPED-006,"[""Google Scholar"", ""JSTOR"", ""Science Direct (WoS)"", ""Pub Med"", ""IEEE XPLORE""]",PubMed,bibliographic_database,False
+SPED,SPED-006,"[""Google Scholar"", ""JSTOR"", ""Science Direct (WoS)"", ""Pub Med"", ""IEEE XPLORE""]",IEEE Xplore,publisher_platform,False
+SPED,SPED-007,"[""APA PsycNet"", ""Crossref"", ""ERIC"", ""PubMed"", ""ProQuest"", ""Scopus""]",PsycNet,platform_or_unspecified_collection,False
+SPED,SPED-007,"[""APA PsycNet"", ""Crossref"", ""ERIC"", ""PubMed"", ""ProQuest"", ""Scopus""]",Crossref,repository,False
+SPED,SPED-007,"[""APA PsycNet"", ""Crossref"", ""ERIC"", ""PubMed"", ""ProQuest"", ""Scopus""]",ERIC,bibliographic_database,False
+SPED,SPED-007,"[""APA PsycNet"", ""Crossref"", ""ERIC"", ""PubMed"", ""ProQuest"", ""Scopus""]",PubMed,bibliographic_database,False
+SPED,SPED-007,"[""APA PsycNet"", ""Crossref"", ""ERIC"", ""PubMed"", ""ProQuest"", ""Scopus""]",ProQuest,platform_or_unspecified_collection,False
+SPED,SPED-007,"[""APA PsycNet"", ""Crossref"", ""ERIC"", ""PubMed"", ""ProQuest"", ""Scopus""]",Scopus,bibliographic_database,False
+SPED,SPED-008,"[""Google Scholar"", ""ScienceDirect"", ""APA PsycInfo"", ""ERIC"", ""Scopus"", ""PubMed""]",Google Scholar,search_engine,False
+SPED,SPED-008,"[""Google Scholar"", ""ScienceDirect"", ""APA PsycInfo"", ""ERIC"", ""Scopus"", ""PubMed""]",ScienceDirect,publisher_platform,False
+SPED,SPED-008,"[""Google Scholar"", ""ScienceDirect"", ""APA PsycInfo"", ""ERIC"", ""Scopus"", ""PubMed""]",APA PsycInfo,bibliographic_database,False
+SPED,SPED-008,"[""Google Scholar"", ""ScienceDirect"", ""APA PsycInfo"", ""ERIC"", ""Scopus"", ""PubMed""]",ERIC,bibliographic_database,False
+SPED,SPED-008,"[""Google Scholar"", ""ScienceDirect"", ""APA PsycInfo"", ""ERIC"", ""Scopus"", ""PubMed""]",Scopus,bibliographic_database,False
+SPED,SPED-008,"[""Google Scholar"", ""ScienceDirect"", ""APA PsycInfo"", ""ERIC"", ""Scopus"", ""PubMed""]",PubMed,bibliographic_database,False
+SPED,SPED-009,"[""ERIC"", ""PsychInfo"", ""PsychArticles"", ""SCOPUS"", ""Web of Science"", ""CAIRN"", ""FIS""]",ERIC,bibliographic_database,False
+SPED,SPED-009,"[""ERIC"", ""PsychInfo"", ""PsychArticles"", ""SCOPUS"", ""Web of Science"", ""CAIRN"", ""FIS""]",APA PsycInfo,bibliographic_database,False
+SPED,SPED-009,"[""ERIC"", ""PsychInfo"", ""PsychArticles"", ""SCOPUS"", ""Web of Science"", ""CAIRN"", ""FIS""]",APA PsycArticles,bibliographic_database,False
+SPED,SPED-009,"[""ERIC"", ""PsychInfo"", ""PsychArticles"", ""SCOPUS"", ""Web of Science"", ""CAIRN"", ""FIS""]",Scopus,bibliographic_database,False
+SPED,SPED-009,"[""ERIC"", ""PsychInfo"", ""PsychArticles"", ""SCOPUS"", ""Web of Science"", ""CAIRN"", ""FIS""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+SPED,SPED-009,"[""ERIC"", ""PsychInfo"", ""PsychArticles"", ""SCOPUS"", ""Web of Science"", ""CAIRN"", ""FIS""]",CAIRN,publisher_platform,False
+SPED,SPED-009,"[""ERIC"", ""PsychInfo"", ""PsychArticles"", ""SCOPUS"", ""Web of Science"", ""CAIRN"", ""FIS""]",FIS,bibliographic_database,False
+SPED,SPED-010,"[""Academic Search Complete"", ""Educational Resources Information Center"", ""Education Full Text"", ""PsychINFO"", ""Scopus"", ""Web of Science"", ""Dissertations & Theses Global"", ""Proquest""]",Academic Search Complete,bibliographic_database,False
+SPED,SPED-010,"[""Academic Search Complete"", ""Educational Resources Information Center"", ""Education Full Text"", ""PsychINFO"", ""Scopus"", ""Web of Science"", ""Dissertations & Theses Global"", ""Proquest""]",ERIC,bibliographic_database,False
+SPED,SPED-010,"[""Academic Search Complete"", ""Educational Resources Information Center"", ""Education Full Text"", ""PsychINFO"", ""Scopus"", ""Web of Science"", ""Dissertations & Theses Global"", ""Proquest""]",Education Full Text,bibliographic_database,False
+SPED,SPED-010,"[""Academic Search Complete"", ""Educational Resources Information Center"", ""Education Full Text"", ""PsychINFO"", ""Scopus"", ""Web of Science"", ""Dissertations & Theses Global"", ""Proquest""]",APA PsycInfo,bibliographic_database,False
+SPED,SPED-010,"[""Academic Search Complete"", ""Educational Resources Information Center"", ""Education Full Text"", ""PsychINFO"", ""Scopus"", ""Web of Science"", ""Dissertations & Theses Global"", ""Proquest""]",Scopus,bibliographic_database,False
+SPED,SPED-010,"[""Academic Search Complete"", ""Educational Resources Information Center"", ""Education Full Text"", ""PsychINFO"", ""Scopus"", ""Web of Science"", ""Dissertations & Theses Global"", ""Proquest""]",Web of Science (indexes unspecified),platform_or_unspecified_collection,False
+SPED,SPED-010,"[""Academic Search Complete"", ""Educational Resources Information Center"", ""Education Full Text"", ""PsychINFO"", ""Scopus"", ""Web of Science"", ""Dissertations & Theses Global"", ""Proquest""]",ProQuest Dissertations & Theses Global,bibliographic_database,False
+SPED,SPED-010,"[""Academic Search Complete"", ""Educational Resources Information Center"", ""Education Full Text"", ""PsychINFO"", ""Scopus"", ""Web of Science"", ""Dissertations & Theses Global"", ""Proquest""]",ProQuest,platform_or_unspecified_collection,False

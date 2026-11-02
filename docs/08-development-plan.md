@@ -1,11 +1,27 @@
 # Full development plan
 
-Owner: SKang393. Date: 2026-11-01. Execution target: GPT-6.1 Terra.
+Owner: SKang393. Revised: 2026-11-02. Execution target: GPT-6.1 Terra, max reasoning.
 This is the execution order; [TASKS.md](../TASKS.md) retains the original M0-M9
 task inventory. [Engine contract](10-engine-contract.md) resolves older design
 conflicts. [Terra runbook](09-terra-execution.md) contains launch and handoff prompts.
 
 ## Starting state and delivery boundaries
+
+Current activity is **Terra setup only**. Collection is stopped at the user's
+direction. The [current handoff](14-terra-handoff.md) supersedes earlier execution
+authority; the [collection protocol](06-benchmark-search-protocol.md) is retained
+for a future user-selected collection run.
+The ten core validation fields are medicine, neuroscience, public health,
+psychology, pharmacy/pharmacology, engineering, health science, environmental
+science, education/educational research and computer science. Special education
+is supplemental. The prior five-field topic proposal is superseded.
+
+Use existing observations to specify parser fixtures, source manifests and
+evaluation design. Do not acquire more samples as a prerequisite for B01.
+Missing samples do not prevent synthetic implementation, but incomplete format
+evidence must remain visible in the handoff. No validation experiment starts
+automatically during development. The
+requested later five-model conditions are in [the validation handoff](13-future-validation-conditions.md).
 
 The foundation has two Rust workspace members, a truthful help/version CLI,
 documentation checks, and Windows/macOS CI. No parser, matcher, benchmark, or GUI
@@ -15,14 +31,16 @@ checks. Current scaffolding introduces no third-party runtime dependency.
 | Delivery | Batches | User-visible result | Acceptance gate |
 |---|---|---|---|
 | CLI alpha | B01-B04 | RIS import, conservative exact-identifier matching, retained conflicts, reversible audit, RIS/JSON output. | Real end-to-end fixture run, source hashes unchanged, count reconciliation and no unsafe merges in adversarial suite. No fuzzy-accuracy claim. |
-| Evaluation-ready CLI | B05-B08 | NBIB and broader formats, bounded fuzzy candidates, guarded clusters, independent evaluation. | Held-out metrics with uncertainty, deterministic artifacts on Windows/macOS, documented format coverage and limitations. |
-| Desktop beta | B09-B10, B08 acceptance | Add files, inspect/resolve, undo/resume, export through the same engine. | Native smoke evidence on both platforms, recovery/accessibility checks and completed independent evaluation. |
-| V1 release | B11-B12 | Installable artifacts, published evidence and documented operating limits. | Release gates below. Blocked signing/data/OS evidence remains explicitly blocked. |
+| Evaluation-ready CLI | B05-B07, B08a | NBIB and broader formats, bounded fuzzy candidates, guarded clusters, frozen evaluation protocol. | Deterministic artifacts on Windows/macOS, documented format coverage and frozen family-disjoint splits. Accuracy remains unmeasured until B08b. |
+| Desktop candidate | B09-B11 | Add files, inspect/resolve, undo/resume, export through the same engine. | Native workflows, recovery/accessibility checks and candidate installers on both platforms. |
+| Validated beta / V1 release | B08b, B12 | Completed program, measured evidence and documented operating limits. | Independent evaluation after the production candidate is complete; release gates below. |
 | Later expansion | B13 | New discipline profiles and search-update workflow. | Measured incremental value without relaxing safety or contaminating held-out evaluation. |
 
 No calendar estimate is asserted before B04 produces an actual vertical slice.
 Use one bounded batch per Terra run, splitting a batch further if it cannot be
 implemented and verified together. Do not start all milestones at once.
+The sequential route is B01-B06, B08a, B07, B09-B11, B08b, B12, then B13.
+B08a may start earlier after B04; the split freeze must precede corpus tuning.
 
 ```mermaid
 flowchart LR
@@ -32,19 +50,21 @@ flowchart LR
   B03 --> B04[CLI alpha and audit]
   B04 --> B05[NBIB and formats]
   B05 --> B06[Normalization and candidates]
+  B04 --> B08a[Reference protocol and frozen splits]
   B06 --> B07[Fuzzy and cluster guards]
-  B07 --> B08[Independent evaluation]
+  B08a --> B07
   B04 --> B09[Desktop shell]
   B09 --> B10[Review and recovery]
   B07 --> B10
-  B08 -. Schema and protocol only .-> B10
-  B08 --> B12
+  B08a -. Schema and protocol .-> B10
   B10 --> B11[Native packaging]
-  B11 --> B12[Release evidence]
+  B11 --> B08b[Final independent evaluation]
+  B08b --> B12[Release evidence]
   B12 --> B13[Measured expansion]
 ```
 
-Human-label design and permitted sample collection can proceed alongside B01-B07.
+Human-label protocol design can proceed alongside B01-B07. Actual collection
+requires a separate user-selected run and is currently stopped.
 Missing proprietary data blocks vendor support and accuracy claims, not synthetic
 implementation. Exact manuscript attributions remain gated by verification via
 Aside; they do not block code that is clearly identified as our design choice.
@@ -86,6 +106,14 @@ regression tests to the existing Cargo suite or an explicitly introduced tool.
   repeated tags retained; malformed inputs return useful diagnostics without
   panics or silent record loss. A parser cannot silently return zero records for
   a recognized broken file. Real dialect support waits for real sample evidence.
+  The first observed EBSCO exports contain repeated `ID`/`N1` and sparse `AB`/`DO`
+  fields; use the [dated tag inventory](03-database-schemas-and-formats.md) to
+  define synthetic cases. Original occurrence identity must not depend on one
+  vendor `ID` value or on the presence of an abstract.
+  Received WoS Full Record RIS files retain a UTF-8 BOM; some records lack
+  abstracts, and the inspected first MED batch contains neither `AN` nor `UT`.
+  Accept declared source provenance without requiring an accession tag, count
+  the first BOM-prefixed record correctly, and preserve the original bytes.
 - Validate: Cargo suite with parser golden cases and source-hash assertions.
 
 ### B03: Conservative exact-identity pipeline
@@ -161,7 +189,9 @@ regression tests to the existing Cargo suite or an explicitly introduced tool.
 
 ### B07: Fuzzy scoring and constrained clusters
 
-- Depends on B06. Maps to M4 and remaining M5 behavior.
+- Depends on B06 and the B08a split freeze before any corpus-based tuning. Maps
+  to M4 and remaining M5 behavior. Synthetic safety cases can be implemented
+  before labels are available; held-out records cannot be used to tune thresholds.
 - Own: `scoring.rs`, policy thresholds, guard/classifier/cluster extensions and
   adversarial fixtures. Do not alter parsers in this batch unless a tested defect
   blocks these cases.
@@ -176,24 +206,48 @@ regression tests to the existing Cargo suite or an explicitly introduced tool.
 - Validate: Cargo suite plus serial/parallel and Windows/macOS golden artifact
   comparisons. A matching failure blocks accuracy claims, not just a test badge.
 
-### B08: Independent benchmark harness
+### B08a: Reference protocol, split freeze and harness preparation
 
-- Depends on B04 for runner, B07 for final evaluation. Maps to M6.1.
+- Depends on B04 for runner contracts; complete the split gate before corpus-based
+  B07 tuning. Maps to preparation for M6.1. This is protocol/reference work, not
+  the final program or LLM experiment.
 - Own only `validation/`, human-label templates, permitted dataset manifests and
   reviewed evidence reports. No production dependency on Python or model APIs.
 - Create independent reference labels, review/family-level splits, blinded dual
   labeling and adjudication, disagreement/abstention records, sampling strata and
   inclusion probabilities. Pin comparator versions/settings and dataset hashes.
-- Measure automatic precision and recall, candidate completeness, cluster errors,
+  Preserve pre-dedup database counts, requested/delivered RIS counts and platform
+  suppression evidence. Keep SPED out of primary core-field aggregates, and
+  resolve overlapping reports across fields before creating held-out splits.
+- Define measurements for automatic precision and recall, candidate completeness, cluster errors,
   incorrect report merges, retained kin reports, review-assisted outcomes, unique
   records/cluster queue size, reviewer minutes, parse losses, runtime and memory.
   Include uncertainty and sample sizes; report unevaluated strata.
 - Acceptance: validate metric calculations against a tiny hand-calculated
   confusion matrix including a blocking miss and an erroneous cluster bridge.
-  Frozen held-out data is not used to choose thresholds. A report is reproducible
-  from CLI outputs and saved reference labels without an LLM call.
-- Validate: harness self-check and frozen-fixture evaluation using commands
-  introduced/documented in this batch. These scripts do not exist yet.
+  Freeze a versioned, hashed development/test manifest by report family, resolving
+  cross-field overlap before B07 tuning. Access to test labels stays separate from
+  threshold selection. A future report must be reproducible from saved outputs
+  and reference labels without an LLM call.
+- Validate: harness arithmetic self-check against the tiny hand-calculated fixture.
+  This is a harness test, not final corpus validation. Commands are introduced in
+  this batch and do not exist yet.
+
+### B08b: Final independent evaluation after the program is complete
+
+- Depends on B07, B08a and B11 production-candidate completion, including native
+  Windows/macOS workflows. Execute this batch after B11, despite its grouping
+  with evaluation preparation. Freeze the candidate revision and policy first.
+- Run the independent held-out evaluation, comparator conditions and uncertainty
+  analysis defined in B08a. Report every prespecified field and missing stratum.
+  Do not tune on final results. Any subsequent change requires a new revision and
+  an explicitly documented evaluation decision.
+- Run the user's external LLM conditions only in this later phase after actual
+  availability/settings verification. Keep model agreement separate from engine
+  accuracy against human reference labels; no LLM enters the shipped program.
+- Acceptance: dated outputs, input/output hashes, reproducible analysis, actual
+  failure/retry records and independently checked counts. B12 and public accuracy
+  claims require this evidence. Native implementation checks alone do not suffice.
 
 ### B09: Native desktop shell and import
 
@@ -214,9 +268,10 @@ regression tests to the existing Cargo suite or an explicitly introduced tool.
 
 ### B10: Review, recovery and reporting UI
 
-- Implementation depends on B07/B09 and B08 schema/protocol contracts, not
-  unavailable final human labels. Completed B08 evaluation gates desktop-beta
-  acceptance and release. Maps to remaining M7.
+- Implementation depends on B07/B09 and B08a schema/protocol contracts, not
+  final evaluation results. Completed B08b gates validated-beta acceptance and
+  public release; B10 workflow completion can proceed to B11 candidate packaging.
+  Maps to remaining M7.
 - Own review/export UI, project persistence integration, accessibility tests.
 - Implement side-by-side field differences, conflict/guard explanations,
   merge/keep/link/skip, undo/redo, session resume, source/field provenance, virtual
@@ -247,7 +302,7 @@ regression tests to the existing Cargo suite or an explicitly introduced tool.
 
 ### B12: Release evidence and optional LLM assistance
 
-- Depends on B08 and B11. Maps to M6.2 and publication/release closeout.
+- Depends on B08b and B11. Maps to M6.2 and publication/release closeout.
 - Re-run a frozen evaluation only for changed engine/policy or unresolved defects.
   Publish versioned metrics, methods, limits, comparator conditions and admitted
   public fixtures. Audit every README claim against evidence.

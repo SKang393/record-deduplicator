@@ -1,141 +1,235 @@
-# 06 — Benchmark Search Protocol (Public Validation Datasets)
+# Benchmark search and RIS collection protocol
 
-> Historical planning snapshot. The stored citation counts and yield probes have
-> not been rerun in this preparation. They are not current counts or admitted
-> benchmark datasets. Use [the engine contract](10-engine-contract.md) and
-> [development plan](08-development-plan.md) for validation and data-rights gates.
+Protocol: RD-COLLECTION-2026-11-02-v2. Status: **execution stopped; preparation only**.
+The latest user instruction supersedes earlier collection authority: do not run
+searches, request exports, download files or retrieve pending export mail.
+The procedure below is retained for a future user-selected collection run, not
+as an instruction to execute it now. See [the current handoff](14-terra-handoff.md).
 
-> **Note for Coding Agents:**
-> This protocol and all supporting journal trend/yield data have **already been gathered**. **Do NOT spend turns re-running keyword investigations or API yield tests by yourself.** When accessing manuscripts or university library subscriptions, **use the `aside` CLI** (see [`AGENT.md`](../AGENT.md)).
+Earlier on 2026-11-02, the user confirmed the counting basis and date coverage,
+and selected commonly used native databases alongside EBSCOhost.
+The [EBSCO-only protocol](reference-data/search-protocol-2026-11-02-v1.md)
+and its collected files remain pilot evidence. Expanded-panel counts determine
+final field admission; existing pilot files are preserved, not silently reused
+as the final expanded corpus. The previous five-field proposal is preserved as a
+[historical snapshot](reference-data/search-protocol-2026-11-01.md). Its ERIC
+probes and 2023-2026 topic counts do not establish this collection.
 
----
+## Scope and fixed choices
 
-## 1. Purpose & Design Rules
+| ID | Field | Role |
+|---|---|---|
+| MED | Medicine | Core |
+| NEU | Neuroscience | Core |
+| PH | Public health | Core |
+| PSY | Psychology | Core |
+| PHA | Pharmacy/pharmacology | Core |
+| ENG | Engineering, including general, chemical, energy and materials | Core; record the journal-category mapping explicitly |
+| HS | Health science | Core; distinguish allied health, nursing and rehabilitation from medicine |
+| ENV | Environmental science | Core |
+| EDU | Education and educational research | Core |
+| CS | Computer science | Core |
+| SPED | Special education | Supplemental; report separately from the core aggregate |
 
-- **Goal:** Construct contemporary, high-yield, multi-database systematic review search sets across Special Education, Education, Psychology, Medicine, Nursing/Allied Health (plus optional Phase-2 disciplines) so we can publicly report real-world deduplication performance.
-- **Strict AI Non-Overlap Rule:** Because "Artificial Intelligence / ChatGPT" overlaps across every discipline right now, **only General Education (`EDU-1`) uses an AI topic**. Every other field uses its strongest contemporary non-AI research topic.
-- **Evidence Base:** Topics were selected by querying OpenAlex for the most-cited 2023–2026 articles and systematic reviews across 30 top-ranked journals (raw output preserved in [`reference-data/openalex_top_cited_2023_2026.txt`](reference-data/openalex_top_cited_2023_2026.txt)) and verifying exact 2015–2026 search yields against the ERIC API (preserved in [`reference-data/eric_yield_probe_2015_2026.txt`](reference-data/eric_yield_probe_2015_2026.txt)).
+The target for each field is **10,000-20,000 raw records**, calculated by summing
+counts from all individually searched native and EBSCO sources before our
+cross-source deduplication. Native integrated collections can already suppress
+records internally; record that behavior and do not claim recovery of their
+pre-ingestion records. Search all records available through the observation date,
+using all publication years. Preserve already indexed forthcoming issue dates.
+The 2025-2026 window applies to topic-selection evidence, not the retrieved
+benchmark records. Retain cross-database duplicates and distinct related reports.
+No model validation, performance experiment or manuscript results are produced
+in this phase.
 
----
+## Database-use evidence
 
-## 2. Primary & Reserve Benchmark Topics
+Build a documented purposive sample targeting ten completed systematic reviews
+or meta-analyses per field. Prefer 2025-2026 publications; log older substitutions
+and their reason. Save each discovery query, date, selection order and exclusion.
+Exclude protocols, withdrawn reports and narrative reviews from the database-use
+denominator. A narrative paper may still provide topical evidence separately.
 
-### 2.1 Primary Topics (5 Core Fields)
+For each eligible review, record DOI or stable ID, title, authors, journal, year,
+field assignment, Methods/supplement URL, section/page/table locator, exact
+reported database/platform labels, normalized labels, and observation timestamps.
+Read manuscripts through **Aside CLI**. A search snippet alone cannot verify a
+Methods extraction. Missing/inaccessible methods are unknown, not absence of a
+database. Keep overlapping reviews identifiable across field samples.
 
-| Code | Field | Primary Topic | Top-Journal Trend Evidence (2023–2026 Citations) | Verified ERIC Yield (2015–2026) | Deduplication Hard Cases Exercised |
-|---|---|---|---|---|---|
-| **`SPED-1`** | **Special Education** | **Reading & literacy interventions for students with or at risk for learning disabilities / dyslexia** | *J Learning Disabilities* "Reading Interventions for Students in Grades 3–12 With Significant Word Reading Difficulties" (2023); *Learning Disability Quarterly* morphological awareness reviews & dyslexia trials (2023–2024); *Review of Educational Research* Bayesian network meta-analysis on struggling readers (48 citations); *JLD* spelling interventions meta-analysis (2025) | **2,960** | ERIC `EJ` articles vs. `ED` reports (`15p.`), ProQuest dissertations later published in *JLD*/*EC*/*RASE*, PsycINFO copyright trailers, EBSCO triple-indexing across ASC / Education Source / Education Full Text |
-| **`EDU-1`** | **General Education (Sole AI Field)** | **Generative AI / ChatGPT / LLMs & chatbots in teaching and learning** | *Computers & Education* "Does ChatGPT enhance student learning? A systematic review and meta-analysis of experimental studies" (533 citations); "Impact of AI assistance on student agency" (548); "Influence of ChatGPT on student engagement" SR (393); *Review of Educational Research* chatbot language learning meta-analysis (64); *Educational Psychology Review* "Looking Beyond the Hype" (153) | **4,287** | Massive volume of 2023–2026 Online First -> print issue transitions, `arXiv`/`EdArXiv` preprints -> journal articles, IEEE/ACM conference papers vs. extended journal versions |
-| **`PSY-1`** | **Psychology** | **Social media / smartphone use and adolescent mental health, depression, anxiety & loneliness** | *Psychological Bulletin* "Feeds, feelings, and focus" short-form video meta-analysis (2025, 79 citations); *J Affective Disorders* "Social media use, mental health and sleep: A systematic review with meta-analyses" (186); *JAD* academic pressure & adolescent mental health SR (373); *Annual Review of Psychology* "Social Media and Morality" (119) | 311 *(PsycINFO & MEDLINE are primary)* | Heavy cross-indexing across APA PsycINFO, PsycARTICLES, MEDLINE/PubMed, and Academic Search Complete; APA copyright trailers; author initial vs. full name variations |
-| **`MED-1`** | **Medicine** | **GLP-1 / incretin receptor agonists (semaglutide, tirzepatide, liraglutide, retatrutide) for obesity & weight management** | *NEJM* Semaglutide SELECT CV trial in obesity (3,233 citations); Retatrutide Phase 2 trial (1,174); Semaglutide in HFpEF & obesity (1,667); Tirzepatide in HFpEF & obesity (1,012); *JAMA* Tirzepatide weight maintenance (859) | n/a *(MEDLINE, Embase, CENTRAL primary)* | Embase conference abstracts (`S12` supplements) vs. full *NEJM*/*Lancet*/*JAMA* articles, Cochrane CENTRAL `NCT########` trial registry links, ISO journal abbreviations (`N Engl J Med` vs. full title), published errata |
-| **`NUR-1`** | **Nursing & Allied Health** | **Nurse burnout, compassion fatigue, staffing & intention to leave / quiet quitting** | *J Advanced Nursing* "Nurses' motivations to leave the nursing profession" (140 citations); *Int J Nursing Studies* "What makes nurses flourish at work?" (108); "Costs and cost-effectiveness of improved nurse staffing levels" SR (82); *JAN* job burnout & quiet quitting in nurses (63) | 71 *(CINAHL & MEDLINE primary)* | CINAHL (EBSCO) <-> MEDLINE (PubMed) <-> APA PsycINFO <-> Academic Search Complete overlap; British vs. American spelling (`burn-out`, `organisation`) |
+Count a database at most once per review. Report n/N and the included review IDs
+for every frequency. Call these frequencies in the sampled reviews, not
+population-wide estimates of database use. Keep PubMed, MEDLINE, Embase and
+Embase-hosted MEDLINE distinct. EBSCOhost, Ovid and ProQuest are platforms unless
+a specific database is named. An unspecified EBSCOhost search cannot establish
+use of Academic Search Complete or another particular database.
 
----
+Map each commonly reported source to Purdue access through EBSCOhost or its
+native interface. Do not relabel MEDLINE as PubMed, or a general index as Scopus,
+Web of Science, Embase or CENTRAL. After frequency extraction and the user
+amendment, the expanded panel includes named databases, bibliographic collections,
+domain digital libraries and publisher search collections reported by at least
+3/10 sampled reviews, plus explicitly identified EBSCO supplements and the
+user-provided six-source education set. This is an analyst-selected rule for a
+purposive sample, not a population prevalence threshold. Search engines remain
+in the frequency table but are excluded from the primary enumerable export
+corpus because stable complete result enumeration and bulk exports are not
+established. Access and export gaps remain explicit and cannot become zero counts.
+The source panels are fixed before expanded-panel yield refinement.
 
-### 2.2 Reserve Topics (If a Primary Topic Is Too Small or Too Large on Target Platforms)
+## Journal and recent-paper evidence
 
-| Code | Field | Reserve Topic | Top-Journal Evidence | Verified ERIC Yield (2015–2026) |
-|---|---|---|---|---|
-| **`SPED-2`** | Special Education | Mathematics interventions for students with learning disabilities / math difficulty | *J Special Education* model-based problem solving (26 citations); *RASE* math vocabulary interventions SR (2024); *LDQ* rational number interventions SR/MA (2024) | **1,634** |
-| **`EDU-2`** | General Education (Non-AI) | Digital game-based learning & gamification in education | *Review of Educational Research* "Effect of Digital Game-Based Learning Interventions... A Meta-Analysis" (134 citations); *Educational Research Review* teacher scaffolding in game-based learning SR (83) | **6,694** |
-| **`PSY-2`** | Psychology | Loneliness & social isolation interventions | *J Affective Disorders* emotional and social loneliness (160 citations); *Campbell Systematic Reviews* digital interventions to reduce social isolation and loneliness EGM (103) | **950** |
-| **`MED-2`** | Medicine | Long COVID / Post-Acute Sequelae of SARS-CoV-2 (`PASC`) | *JAMA* Definition of Postacute Sequelae of SARS-CoV-2 Infection (851 citations) | 27 |
+For every field, record ten ranked journals with ranking source, metric,
+completed metric year, subject area/category, rank, journal name, ISSN and source
+URL. Prefer a reproducible latest completed-year SCImago SJR table; a JCR
+category is acceptable where it matches the field better. Disclose metric changes
+and category limitations. Do not infer a top-ten rank from reputation, an impact
+factor on a publisher page, or a hand-picked list.
 
----
+For umbrella fields, document how component categories were combined, resolve
+repeated journals by ISSN, and rank by the same metric. Keep narrow categories
+explicit rather than calling them an entire discipline. A special-education
+ranking requires an appropriate category or a disclosed alternative sampling
+frame. Preserve blocked ranking access as an unresolved item.
 
-### 2.3 Phase-2 Expansion Disciplines (Optional, Based on Institutional EBSCO/Library Access)
+Inspect 2025-2026 papers from these journals and target one supported topic seed
+per journal. Record the article title, DOI, publication date, citation/read
+metric, metric provider, observation date, within-source sorting/selection rule,
+and keywords supported by the paper. Use citation and readership measures as
+separate metrics. A paper without a verifiable popularity metric may be recorded
+as topic evidence, but cannot be called highly cited/read. Save exceptions when a
+journal has no eligible paper or source metrics are inaccessible.
 
-| Code | Discipline | Topic | Top-Journal Evidence (2023–2026) | Target Databases | Specific Deduplication Stress Test |
-|---|---|---|---|---|---|
-| **`SPORT-1`** | Sport & Exercise Science | Sport-related concussion recovery & prevention | *British J Sports Medicine* Amsterdam Consensus Statement (1,239 citations) + 3 *BJSM* concussion SR/MAs (162–181 citations) | `SPORTDiscus` (EBSCO), `MEDLINE`, `Embase` | Consensus statements co-published across multiple journals simultaneously |
-| **`CRIM-1`** | Criminology & Policing | Procedural justice and police legitimacy | *J Experimental Criminology* "A systematic review and meta-analysis of procedural justice and legitimacy in policing" (54 citations) | `Criminal Justice Abstracts` (EBSCO), `SocINDEX`, `PsycINFO` | Government agency reports (NCJRS) later published in criminology journals |
-| **`SW-1`** | Social Welfare & Economics | Guaranteed basic income & cash transfer interventions | *Campbell Systematic Reviews* "Effects of guaranteed basic income interventions on poverty-related outcomes" SR/MA (2024) | `SocINDEX` (EBSCO), `EconLit` (EBSCO), `Business Source Complete` | NBER / SSRN / World Bank working papers circulating 2–5 years before journal publication |
-| **`ENV-1`** | Environmental Health | Microplastics / nanoplastics and human health toxicity | *NEJM* "Microplastics and Nanoplastics in Atheromas" (1,221 citations); *Science of the Total Environment* reviews (355–506 citations) | `GreenFILE` (EBSCO), `MEDLINE`, `Web of Science`, `Scopus` | Embedded HTML tags (`<sub>`, `<i>`) and chemical formulas in titles |
+Record first-online and issue/volume dates separately when they differ. A
+2025-2026 issue-year paper can provide a seed even if first online in 2024, but
+that exception must be explicit. The OpenAlex date-filtered selections and a
+publisher's "Most Read in 2025" list have different selection frames. Neither
+should be described as the same citation ranking or first-online cohort.
 
----
+Choose one coherent topic per field after reviewing this evidence. Record why it
+fits the field and the database coverage. Do not mix unrelated topics simply to
+hit a numerical target. The original proposal's AI-only-in-education rule is not
+a requirement of this revised collection. Cross-field topic overlap is allowed
+but must be identified when preparing later evaluation splits.
 
-## 3. Portable Boolean Search Strings (Title + Abstract Scope)
+## Purdue native and EBSCOhost search procedure
 
-All strings avoid truncation inside quoted phrases so they behave consistently across EBSCOhost, Ovid, ProQuest, ERIC, PubMed, and Embase.
+Use **Aside CLI browser** for every manuscript and Purdue/library action, including
+EBSCOhost, native source searches, publisher abstracts and downloads. Record the actual interface and institutional route. Never put
+session cookies, signed URLs, institutional account details or the recipient
+email address in public documentation.
 
-### `SPED-1`: Reading Interventions for Learning Disabilities / Dyslexia
-```text
-("learning disability" OR "learning disabilities" OR "reading disability" OR "reading disabilities" OR dyslexi* OR "reading difficulty" OR "reading difficulties" OR "struggling readers" OR "at-risk readers")
-AND (intervention* OR instruction* OR tutoring)
-AND (reading OR literacy OR decoding OR phonics OR "phonological awareness" OR fluency OR comprehension)
-```
+1. Select the prescribed native/EBSCO sources and record exact names, collections
+   and interface IDs. Save the selection before the first query. WoS Core
+   Collection is one source with its selected editions recorded. Embase.com
+   integrated Embase/MEDLINE/Classic is one source; never add overlapping
+   membership counts as separate source totals.
+   Label any added EBSCO subject index as an analyst-selected supplement, separately
+   from a database named in the sampled reviews. Native access supplies common
+   sources missing from EBSCO; the supplement is not their equivalent.
+2. Record search mode and every expander/limiter. For EBSCO, prefer Boolean/Phrase mode,
+   explicit title/abstract fields, no full-text-only limiter, no language,
+   peer-review or publication-type restriction, and no publication-year cutoff.
+   If the interface prevents a setting, record the actual behavior.
+3. Start with a broad concept/synonym OR block. Add a coherent AND block such as
+   population, intervention/material, objective/outcome, setting or experiment
+   type only when the raw summed count exceeds 20,000. Record every intermediate
+   query and result, including zero or low-yield attempts. Do not discard failed
+   attempts or retrospectively invent a search sequence.
+4. Translate the shared concept blocks into actual source-specific field codes or
+   interface selectors. Save the exact executed expression, not merely a portable
+   sketch. Record unequal field scope: PubMed tiab also includes other abstract
+   and author-keyword material; a native title/abstract/keyword or full-text search
+   is not identical to EBSCO TI OR AB. Check how
+   truncation, phrases, nesting and automatic subject expansion behave.
+5. Capture EBSCO's per-database facet counts and the combined displayed count.
+   Record whether the facet is before or after suppression; do not assume this.
+   Run the same expression and settings individually in each selected database
+   to establish independent raw counts when facet semantics are uncertain.
+6. Calculate `raw_total = sum(selected_native_and_EBSCO_source_counts)` only when
+   every selected source has an observed count. A blocked source stays unknown.
+   Also retain EBSCO's
+   combined total and observed duplicate-removal setting. A difference between
+   totals alone is not proof of how EBSCO deduplicates.
+7. Stop narrowing when the raw sum is 10,000-20,000. If a coherent topic remains
+   below 10,000, broaden the most recent concept or record a reasoned alternative
+   supported by the trend evidence. Recheck counts immediately before export.
+8. Freeze the concept blocks, every translated expression, source panel, settings
+   and query-history IDs. All source exports for one field use that finalized
+   concept set; document syntax/field-scope translations and time gaps. Re-run
+   all affected sources after a substantive query revision, then check the total
+   before exporting. No field is accepted from a partial source sum.
 
-### `EDU-1`: Generative AI in Teaching & Learning
-```text
-("generative artificial intelligence" OR "generative AI" OR GenAI OR ChatGPT OR "large language model" OR "large language models" OR chatbot*)
-AND (education OR teaching OR learning OR student* OR teacher* OR classroom* OR university OR school*)
-```
+The search is a deliberate construction of deduplication test data. It is not
+claimed to be an exhaustive clinical or disciplinary systematic-review search.
+Tuning to corpus size must be disclosed in the later validation manuscript.
 
-### `PSY-1`: Social Media & Adolescent Mental Health
-```text
-("social media" OR "social networking" OR Instagram OR TikTok OR Snapchat OR "short-form video" OR "smartphone addiction" OR "problematic smartphone use")
-AND (adolescen* OR teen* OR youth OR "young people")
-AND (depress* OR anxiety OR "mental health" OR "psychological distress" OR "well-being" OR wellbeing OR loneliness OR "self-harm" OR suicid*)
-```
+## RIS export and receipt
 
-### `MED-1`: GLP-1 Receptor Agonists for Obesity
-```text
-("glucagon-like peptide-1" OR "GLP-1" OR semaglutide OR tirzepatide OR liraglutide OR retatrutide OR cagrilintide)
-AND (obesity OR obese OR overweight OR "weight loss" OR "weight management" OR "body weight")
-```
-- *Optional Clinical Trial Filter (if unfiltered yield exceeds 10,000 export limit in PubMed/Embase):*
-  ```text
-  AND (randomized OR randomised OR placebo OR trial)
-  ```
+Prefer a separate original **RIS** export for each source so inter-source duplicates
+remain available and source provenance is explicit. Use the actual metadata
+options exposed by EBSCO and record whether abstracts/all fields are included.
+Do not claim a full-record export if the interface provides no such guarantee.
+In a future collection run explicitly selected by the user, use EBSCO email
+exports to the connected user's Gmail and verify receipt there. Do not retrieve
+mail or download exports during setup. Native platforms may provide direct downloads instead; record
+that delivery route. PubMed's observed original is NBIB, not RIS. The user
+explicitly chose to retain original NBIB alongside the other sources' RIS files;
+do not convert it for this collection. Never call a converted file an original
+vendor RIS.
+The user selected native CSV for Springer Nature Link after its search-results
+export exposed a 1,000-record limit and individual-article RIS. Preserve native
+CSV if that future route is used. Full-coverage partitioning or another supported
+bulk route remains unresolved; no CSV has been collected. Individual RIS is an
+alternative, not an executed complete-set export. Never relabel CSV as RIS.
+A source with no established complete export route remains an explicit coverage gap.
 
-### `NUR-1`: Nurse Burnout & Intention to Leave
-```text
-(nurse OR nurses OR nursing)
-AND (burnout OR "burn-out" OR "compassion fatigue" OR "intention to leave" OR "intent to leave" OR "turnover intention" OR "turnover intentions" OR "quiet quitting")
-```
+The observed EBSCO bulk dialog on 2026-11-02 states a maximum of 25,000 records
+per export and 100,000 in 24 hours. It also warns that delivered counts can be
+lower because of duplicates or publisher restrictions. These are observed UI
+limits, not a guarantee of delivery. The former EBSCO-only panel would exceed
+100,000 at the eleven-field minimum. Under the expanded panel, only its EBSCO
+portion consumes that quota; the 31,240 requested pilot records still count in
+the current window. Track every request and native-platform batch limit. Use
+additional windows if needed; do not change accounts or bypass limits.
 
----
+For each export record field/query ID, database, selected/requested count,
+request UTC and Eastern time, format, metadata settings, confirmation text,
+email receipt time/message ID, attachment or download-link identity, download
+time, original filename, local path, byte size, SHA-256, decoded encoding, RIS
+start/end record counts, and any discrepancy. Keep expiring links private.
+Download only observed provider links or real attachments through the supported
+access path. Never manufacture a RIS file from snippets to replace a missing
+export. A sent request is not a delivered or verified file.
 
-## 4. Platform-Specific Syntax Translations
+The admitted dataset consists of verified original per-source exports with
+explicit original-versus-derived format status. Record
+raw UI counts, requested counts, delivered records and excluded/unavailable
+records separately. Preserve original bytes. Any combined convenient copy must
+have its own manifest and must not replace the individual sources.
 
-1. **EBSCOhost (`Academic Search Complete`, `Education Source`, `Education Full Text`, `ERIC`, `PsycINFO`, `PsycARTICLES`, `CINAHL`, `SPORTDiscus`, `Criminal Justice Abstracts`, `SocINDEX`, `EconLit`, `GreenFILE`):**
-   - Wrap each concept block $B_i$ in `(TI (B_i) OR AB (B_i))` so the search is strictly Title + Abstract across all EBSCO databases.
-   - **Important EBSCO Setting:** Before running or exporting, **uncheck / disable** EBSCO's automatic "Linked Full Text" or "Apply equivalent subjects" expansion, and **disable** EBSCO's built-in multi-database duplicate removal (export each database separately so we have exact per-database PRISMA counts!).
-2. **ERIC Native (`eric.ed.gov`):**
-   - Paste the generic string with `publicationdateyear:[2015 TO 2026]`.
-3. **PubMed (`pubmed.ncbi.nlm.nih.gov`):**
-   - Append `[tiab]` to every term/phrase and add `AND 2015:2026[dp]`. Export in both **PubMed (`.nbib`)** and **RIS** formats (up to 10,000 records per file).
-4. **Embase (`embase.com`):**
-   - Append `:ti,ab` to every term/phrase (using single quotes for phrases) and `[2015-2026]/py`. Keep all publication types enabled (especially *Conference Abstract* and *Article in Press*).
+## Audit trail and completion
 
----
+Private evidence and RIS files live in `testdata/benchmarks/2026-11-02/`, which
+is ignored by Git. `collection-manifest.json` records the protocol choices;
+`events.jsonl` is append-only. Research extracts and browser evidence are in
+`evidence/`, originals in `ris/`. Public documentation may contain reviewed
+bibliographic citations, methods, query strings, counts and artifact hashes,
+without proprietary abstracts, private mail identifiers or session URLs.
 
-## 5. Reproducible Export & File Naming Protocol
+Every observed event needs UTC and America/New_York timestamp, actor/tool,
+source/locator, action, field/database/query/export IDs, result and evidence path.
+Distinguish observation time from an article date or an email's sent time.
+Corrections append a superseding event rather than erasing the original event.
 
-1. **Date Window:** Export all databases for a given topic within a **7-day window**.
-2. **Publication Year Filter:** `2015–2026` (no language, document-type, or peer-review restrictions — we want raw, realistic noise).
-3. **Export Content:** Always choose **"All fields" / "Full record + Abstract"** (never Citation-only).
-4. **Directory Structure in Workspace:**
-   ```text
-   testdata/
-   ├── samples/                              # Small 50-200 record samples for M1 parser unit tests
-   └── benchmarks/
-       ├── SPED-1_reading_ld/
-       │   ├── academic_search_complete/
-       │   ├── education_source/
-       │   ├── education_full_text/
-       │   ├── eric/
-       │   ├── psycinfo/
-       │   └── psycarticles/
-       ├── EDU-1_genai/
-       ├── PSY-1_social_media_youth/
-       ├── MED-1_glp1_obesity/
-       ├── NUR-1_nurse_burnout/
-       └── search_log.csv                    # Date, platform, database, exact query, raw hit count
-   ```
-5. **Public Distribution & Licensing Rule:**
-   - Raw abstracts from proprietary databases (PsycINFO, Embase, EBSCO, Scopus, WoS) are **not** committed to the public GitHub repository.
-   - Instead, `.gitignore` excludes raw proprietary exports in `testdata/benchmarks/`, while we publicly release:
-     - Synthetic perturbation datasets (`testdata/fixtures/synthetic/`),
-     - Public open-access benchmarks (ERIC / PubMed / OpenAlex IDs),
-     - Anonymized record-ID pair lists (`DOI`, `PMID`, `AN`/`UID` hashes), our system's classification output, and the full verification metrics report.
+A field is complete only when database-use evidence, ten-journal ranking, recent
+paper/topic evidence, every search trial, final in-range all-source raw counts,
+and verified source exports with the recorded format decisions are reconciled. Otherwise name the incomplete element and exact
+access, quota, evidence or delivery issue. Never fill a missing count with zero.
+
+After collection, revise the development and evaluation plans against observed
+RIS dialects, metadata gaps, scale and platform losses. Keep a frozen copy of the
+collection manifest before tuning algorithms. Later model comparisons follow
+[the planned conditions](13-future-validation-conditions.md). The APA manuscript
+will be written after program and validation results exist, with the Humanizer
+skill applied to prose while preserving sources, numbers and limitations.

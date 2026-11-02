@@ -5,6 +5,38 @@
 > [engine contract](10-engine-contract.md) for namespaced IDs, unknown database
 > labels, decoding warnings and preservation. No parsers are implemented yet.
 
+## Observed RIS evidence, 2026-11-02
+
+The three original EBSCO medicine **pilot** exports below have been received and
+structurally inventoried. These observations apply to those files, not every
+export edition or the later expanded-panel corpus. Three additional neuroscience
+pilot files are recorded in the same ledger. PubMed's original NBIB format is
+preserved separately; the user declined a conversion to RIS.
+The [received-file ledger](reference-data/collection-2026-11-02/received-exports.csv)
+contains hashes and the [tag profile](reference-data/collection-2026-11-02/ris-tag-profile.csv)
+contains counts. All three decode as UTF-8-compatible text.
+
+| Source | Records | AB tags | DO tags | ID tags | N1 tags |
+|---|---:|---:|---:|---:|---:|
+| MEDLINE | 12,638 | 12,009 | 12,411 | 12,638 | 36,822 |
+| CINAHL | 3,036 | 2,086 | 2,607 | 6,164 | 6,072 |
+| APA PsycInfo | 417 | 417 | 385 | 417 | 1,227 |
+
+Each record has `DB`, `DP`, `AN` and `Y1` tags in these files. Repeated `ID` and
+`N1` tags must remain ordered and lossless; `ID` is not automatically the
+program's unique record ID. A missing `AB` or `DO` is observed source sparsity,
+not evidence of an importer defect. Do not manufacture missing values or treat
+missing abstracts as perfect matches. B01/B02 should include corresponding
+synthetic cases and compare against private originals without committing them.
+
+The later native WoS Full Record RIS deliveries retain a UTF-8 BOM. The first
+MED batch has 1,000 complete records but no `AN` or `UT` tags; later observed
+batches contain missing abstracts. The importer must accept a declared source
+and stable file/ordinal occurrence identity without requiring a vendor
+accession. Some original PubMed NBIB and CENTRAL RIS files were received before
+collection stopped; receipt checks do not establish production parser support. See the
+[expanded file ledger](reference-data/collection-2026-11-02/expanded-received-exports.csv).
+
 ---
 
 ## 1. Core Education, Special Education & Psychology Databases
@@ -48,8 +80,8 @@ Biomedical and allied health researchers represent the largest user base for sys
 
 | Database | Host / Format | Unique Identifiers & Metadata Tags | Deduplication Engineering Requirements |
 |---|---|---|---|
-| **MEDLINE** | PubMed (`.nbib` / MEDLINE text) or Ovid | `PMID` (8-digit integer), `PMC` (`PMC#######`), `PII` (Publisher Item ID), `AID` (`[doi]` / `[pii]`), `FAU` (Full Author Name) alongside `AU` (Abbreviated Name, e.g., `Kang SW`), `TA` (ISO Journal Title Abbreviation, e.g., `J Appl Behav Anal`), `JT` (Full Journal Title), `TT` (Transliterated/Vernacular Title), `PT` (`Published Erratum`, `Retracted Publication`, `Clinical Trial`, `Comment`). | Must map `TA` (ISO abbreviation) <-> `JT` (Full title) and `ISSN` <-> `eISSN` via `ISSN-L` so PubMed records match EBSCO/PsycINFO records that only export full journal names. Must unwrap `[Translated Title]` brackets. |
-| **Embase** | Elsevier (Embase.com or Ovid) | Embase Accession Number, `PUI` (Publisher Unique Identifier), Emtree drug/disease headings, specific Publication Type tags (`Conference Abstract`, `Conference Paper`, `Article in Press`). | **Single largest source of "conference abstract vs. full paper" collisions in medicine.** Must inspect `PT`/`M3` (`Conference Abstract`), supplement volume/issue (`Suppl`, `S12`), and short page counts to classify abstract-vs-article pairs as `KIN_REPORT`. |
+| **MEDLINE** | PubMed (`.nbib` / MEDLINE text) or Ovid | `PMID` (preserve the numeric identifier as text; do not assume a fixed width), `PMC` (`PMC#######`), `PII` (Publisher Item ID), `AID` (`[doi]` / `[pii]`), `FAU` (Full Author Name) alongside `AU` (Abbreviated Name, e.g., `Kang SW`), `TA` (ISO Journal Title Abbreviation, e.g., `J Appl Behav Anal`), `JT` (Full Journal Title), `TT` (Transliterated/Vernacular Title), `PT` (`Published Erratum`, `Retracted Publication`, `Clinical Trial`, `Comment`). | Must map `TA` (ISO abbreviation) <-> `JT` (Full title) and `ISSN` <-> `eISSN` via `ISSN-L` so PubMed records match EBSCO/PsycINFO records that only export full journal names. Must unwrap `[Translated Title]` brackets. |
+| **Embase** | Elsevier (Embase.com or Ovid) | Embase Accession Number, `PUI` (Publisher Unique Identifier), Emtree drug/disease headings, specific Publication Type tags (`Conference Abstract`, `Conference Paper`, `Article in Press`). | Conference abstracts and full articles require explicit report-type guards; comparative collision frequency is unmeasured. Must inspect `PT`/`M3` (`Conference Abstract`), supplement volume/issue (`Suppl`, `S12`), and short page counts to classify abstract-vs-article pairs as `KIN_REPORT`. |
 | **Cochrane CENTRAL** | Wiley / CRS | Accession Number (`CN-########`), Trial Registry IDs (`NCT########` from ClinicalTrials.gov, `ISRCTN########`, `EUCTR`, `WHO ICTRP`), source origin tags (`MEDLINE`, `Embase`, `ClinicalTrials.gov`). | Extract Trial Registry IDs (`NCT...`) from ID tags, URLs, and abstract text to link trial registry entries and multiple trial reports as `KIN_REPORT` or `EXACT_DUPLICATE` (when CENTRAL re-indexes a PubMed/Embase record). |
 | **CINAHL** | EBSCOhost | Expected to share common EBSCOhost tags (`AN`, `TI`, `AU`, `SO`, `DO`, `SN`). | Shared parser support is planned; verify dialect behavior using permitted CINAHL fixtures before claiming compatibility. |
 
