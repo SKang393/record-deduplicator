@@ -1,0 +1,14 @@
+[workspace]
+members = ["crates/dedup-core", "crates/dedup-cli"]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0-dev"
+edition = "2024"
+rust-version = "1.85"
+license = "Apache-2.0"
+repository = "https://github.com/SKang393/record-deduplicator"
+authors = ["Sungwoo Kang <200436385+SKang393@users.noreply.github.com>"]
+
+[workspace.lints.rust]
+unsafe_code = "forbid"

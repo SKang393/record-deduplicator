@@ -1,0 +1,20 @@
+[package]
+name = "dedup-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Command-line entry point for record-deduplicator"
+publish = false
+
+[[bin]]
+name = "dedup"
+path = "src/main.rs"
+
+[dependencies]
+dedup-core = { path = "../dedup-core" }
+
+[lints]
+workspace = true

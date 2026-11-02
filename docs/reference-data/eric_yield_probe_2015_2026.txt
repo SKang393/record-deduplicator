@@ -1,0 +1,18 @@
+﻿Years 2015-2026 | columns: ERIC | PubMed[tiab] | OpenAlex title+abstract
+SPED-A reading LD                ERIC=2960     PubMed=1064     OpenAlex=5176
+SPED-B math LD                   ERIC=1634     PubMed=         OpenAlex=0
+SPED-C SPED teacher attrition    ERIC=765      PubMed=         OpenAlex=1421
+EDU-A GenAI                      ERIC=4287     PubMed=         OpenAlex=0
+EDU-B game-based learning        ERIC=6694     PubMed=         OpenAlex=61926
+EDU-C tutoring                   ERIC=2343     PubMed=         OpenAlex=0
+PSY-A social media adolescents   ERIC=311      PubMed=         OpenAlex=0
+PSY-B loneliness intervention    ERIC=950      PubMed=         OpenAlex=0
+PSY-C emotion regulation         ERIC=662      PubMed=         OpenAlex=0
+MED-A GLP-1 obesity              ERIC=0        PubMed=         OpenAlex=0
+MED-B long COVID                 ERIC=27       PubMed=         OpenAlex=0
+NUR-A nurse burnout/leave        ERIC=71       PubMed=         OpenAlex=0
+SPORT concussion                 ERIC=119      PubMed=         OpenAlex=0
+CRIM procedural justice          ERIC=26       PubMed=         OpenAlex=0
+SW basic income                  ERIC=79       PubMed=         OpenAlex=17034
+ENV microplastics health         ERIC=8        PubMed=         OpenAlex=0
+

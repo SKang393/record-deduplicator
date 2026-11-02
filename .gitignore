@@ -1,0 +1,26 @@
+# Build products
+/target/
+**/node_modules/
+**/dist/
+**/target/
+**/__pycache__/
+*.pyc
+.venv/
+
+# Credentials and local state
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+/.local/
+/runs/
+
+# Raw exports and labeler payloads stay private until explicitly cleared.
+/testdata/samples/
+/testdata/benchmarks/
+/validation/private/
+/validation/cache/
+/validation/results/

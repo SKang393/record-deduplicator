@@ -1,0 +1,13 @@
+[package]
+name = "dedup-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Foundation for an offline bibliographic record deduplication engine"
+publish = false
+
+[lints]
+workspace = true

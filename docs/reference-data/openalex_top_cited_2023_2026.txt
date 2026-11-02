@@ -1,0 +1,466 @@
+﻿=== SPED: Exceptional Children (0014-4029) total 2023-26: 118
+  [81] 2023 | Reflexive Quality Criteria: Questions and Indicators for Purpose-Driven Special Education Qualitative Research
+  [49] 2023 | Evidence-Based Assessment in Special Education Research: Advancing the Use of Evidence in Assessment Tools and Empirical Processes
+  [42] 2023 | High-Quality Systematic Literature Reviews in Special Education: Promoting Coherence, Contextualization, Generativity, and Transparency
+  [32] 2023 | The Next Generation of Quality Indicators for Group Design Research in Special Education
+  [23] 2023 | The Exceptionality of Twice-Exceptionality: Examining Combined Prevalence of Giftedness and Disability Using Multivariate Statistical Simulation
+  [20] 2024 | Who Are We Measuring? Teacher Effects in Gifted and Talented Teacher Rating Scales
+  [20] 2023 | Unequal and Increasingly Unfair: How Federal Policy Creates Disparities in Special Education Funding
+  [18] 2024 | When Good Intentions Go Awry: A Critical Policy Analysis of Equity-Focused Policies Intended to Reduce Racial Disparities in Special Education
+  [18] 2023 | A Systematic Review of Social Validation Procedures in Intervention Research With Transition-Age Autistic Youth
+  [17] 2024 | An Open Letter to the Field: Contemplating Special Education's Collaborative Role in Developing Inclusive Education
+  [17] 2023 | Nonconcurrent Multiple-Baseline and Multiple-Probe Designs in Special Education: A Systematic Review of Current Practice and Future Directions
+  [15] 2024 | Ethnoracial Diversity of the Special Educator Workforce Over Time
+  [14] 2023 | A Targeted Review of Open Practices in Special Education Publications
+  [12] 2024 | A Descriptive Portrait of the Paraeducator Workforce in Washington State
+  [12] 2024 | A Review of U.S. Policy Guidance and Legislation on Restraint and Seclusion in Schools: Considerations for Improvement
+=== SPED: Journal of Special Education (0022-4669) total 2023-26: 76
+  [26] 2023 | The Effect of Model-Based Problem Solving on the Performance of Students Who are Struggling in Mathematics
+  [22] 2023 | National Trends in Special Education and Academic Outcomes for English Learners With Disabilities
+  [18] 2024 | Age-Expected Language and Academic Outcomes for Deaf Children With Hearing Caregivers
+  [15] 2023 | An Analysis of Selected Aspects of Functional Behavioral Assessments and Behavior Intervention Plans
+  [12] 2023 | Research Should Focus on Improving Mathematics Proficiency for Students With Disabilities
+  [8] 2024 | Evaluating Augmented Reality to Teach Science for Secondary Students With Intellectual Disability
+  [8] 2024 | The Relationship Between Severity of Disability and Segregated Placements for Students With Complex Support Needs
+  [8] 2023 | The Intersection of Language and Disability Progress of English Learners With Disabilities on NAEP Reading
+  [8] 2023 | A Meta-Analysis of the Graduated Guidance Procedure
+  [8] 2023 | A Research Review of the Zones of Regulation Program
+  [6] 2024 | Barriers and Facilitators for Addressing Sex Education for Autistic Individuals: A Systematic Review
+  [6] 2024 | Unintended Consequences of Special Education and Consideration of Change
+  [6] 2024 | Analysis of Literacy Content in IEPs of Students With Complex Support Needs
+  [6] 2023 | Reported Policies, Guidance, and Related Resources for the Determination of Special Education and Related Services
+  [6] 2023 | Impact of the COVID-19 Pandemic on Instructional Experiences of Students With Intellectual and Developmental Disability
+=== SPED: Remedial and Special Education (0741-9325) total 2023-26: 136
+  [28] 2023 | A Case for Systems Change in Special Education
+  [23] 2024 | The Educational Journey of Students With Disabilities in Saudi Arabia: From Isolation to Inclusive Education
+  [22] 2023 | Prevalence of Research Design in Special Education: A Survey of Peer-Reviewed Journals
+  [17] 2024 | Special Education Researchers’ Knowledge, Attitudes, and Reported Use of Open Practices
+  [14] 2024 | A Systematic Review of Mathematics Vocabulary Interventions for Students With or At-Risk for Mathematics Difficulty
+  [14] 2024 | Leveraging Administrative Data to Study the Special Education Teacher Workforce
+  [14] 2024 | Does Special Education Work? A Systematic Literature Review of Evidence From Administrative Data
+  [14] 2023 | Comparing the Cost–Accuracy Ratios of Multiple Approaches to Reading Screening in Elementary Schools
+  [14] 2023 | The Impact of Professional Development on Data-Based Decision-Making for Students With Extensive Support Needs
+  [12] 2025 | Cognitive and Language Abilities Associated With Reading in Intellectual Disability: A Systematic Review and Meta-Analysis
+  [12] 2024 | Leveraging Large Administrative Data for Special Education Policy Analysis: Recent Contributions and Future Directions
+  [12] 2024 | The Barriers Encountered and Facilitators Desired: A Systematic Review of What Latino/x Families Experience Within Special Education
+  [12] 2023 | Examination of the Factor Structure and Measurement Invariance of the SRSS-IE
+  [12] 2023 | Social and Emotional Intervention Research as Justice: A Case for Accountability
+  [11] 2023 | Type and Dosage of Performance Feedback Following COMPASS Consultation on Teacher and Student Outcomes
+=== SPED: Journal of Learning Disabilities (0022-2194) total 2023-26: 102
+  [37] 2023 | Academic Achievement and Satisfaction Among University Students With Specific Learning Disabilities: The Roles of Soft Skills and Study-Related Factors
+  [25] 2023 | Severe Pandemic Learning Loss and the Promise of Remotely Delivered Intervention in Students With Comorbid Reading and Mathematics Learning Difficulty
+  [21] 2023 | A Model of the Home Literacy Environment and Family Risk of Reading Difficulty in Relation to Children’s Preschool Emergent Literacy
+  [20] 2024 | Dysgraphia Differs Between Children With Developmental Coordination Disorder and/or Reading Disorder
+  [19] 2023 | Are General Anxiety, Reading Anxiety, and Reading Self-Concept Linked to Reading Skills Among Chinese Adolescents With and Without Dyslexia?
+  [18] 2023 | Reading Interventions for Students in Grades 3–12 With Significant Word Reading Difficulties
+  [15] 2025 | Reframing the Most Important Special Education Policy Debate in 50 Years: How Versus Where to Educate Students With Disabilities in America’s Schools
+  [15] 2024 | The Prevalence of Specific Learning Difficulties in Higher Education: A Study of UK Universities Across 12 Academic Years
+  [14] 2023 | Extended Time Accommodation and the Academic, Behavioral, and Psychological Outcomes of Students With Learning Disabilities
+  [13] 2024 | Supporting Teachers’ Data-Based Individualization of Early Writing Instruction: An Efficacy Trial
+  [13] 2023 | Do Special and General Education Teachers’ Mindset Theories About the Malleability of Writing and Intelligence Predict Their Writing Practices?
+  [12] 2023 | Contrasting Direct Instruction in Morphological Decoding and Morphological Inquiry-Analysis Interventions in Grade 3 Children With Poor Morphological Awareness
+  [11] 2025 | A Meta-Analytic Review of Spelling Interventions for Students With or At-Risk for Learning Disabilities
+  [11] 2025 | Effects of Diagnostic Labels for Students With Learning Problems on Teachers’ Stereotypes and Performance Expectations
+  [11] 2023 | Efficacy of a Technology-Based Early Language Comprehension Intervention: A Randomized Control Trial
+=== SPED: Learning Disability Quarterly (0731-9487) total 2023-26: 74
+  [73] 2025 | A Social and Emotional Learning Survey for Students With Learning Disabilities: Reliability and Validity Analyses
+  [18] 2023 | A Systematic Literature Review: The Self-Concept of Students With Learning Disabilities
+  [17] 2023 | A Literature Review of Morphological Awareness Interventions and the Effects on Literacy Outcomes
+  [16] 2024 | Teaching Fifth-Grade Students With Specific Learning Disabilities to Explain Their Mathematical Reasoning Through Written Expression
+  [16] 2023 | Characteristics of Individualized Education Programs for Students With Learning Disabilities: A Systematic Review
+  [13] 2024 | The Effects of a Morphological Awareness Intervention on Reading and Spelling Ability of Children With Dyslexia
+  [12] 2026 | Cognitive Offloading in the Age of Generative AI: What Does It Mean for Students With Learning Disabilities?
+  [12] 2023 | Using CRA-I to Teach Fraction and Decimal Concepts to Students With Learning Disabilities
+  [11] 2025 | Mathematical Error Patterns of Students With Mathematics Difficulty: A Systematic Review
+  [10] 2023 | Effects of Having an IEP on the Reading Achievement of Students With Learning Disabilities and Speech or Language Impairments
+  [9] 2024 | The Relation Between Mathematics Anxiety and Mathematics Competence for Students With Versus Without Mathematics Learning Difficulties
+  [9] 2023 | Relationships Between State Anxiety and Reading Comprehension of Chinese Students With and Without Dyslexia: A Cross-Sectional Design
+  [7] 2024 | Identifying Key Instructional Practices in Rational Number Interventions: A Systematic Review and Meta-Analysis
+  [7] 2023 | Four Best Practices for Meta-Analysis: A Systematic Review of Methodological Rigor in Mathematics Interventions for Students With or at Risk of Disabilities
+  [7] 2023 | Examining the Word-Level Skill and Reading Comprehension Profiles of Adolescents With and Without Specific Learning Disabilities
+=== SPED: J Positive Behavior Interventions (1098-3007) total 2023-26: 85
+  [16] 2023 | Roles and Responsibilities of School-Based Behavior Analysts: A Survey
+  [15] 2024 | Multi-Tiered Systems of Educator Professional Development: A Systematic Literature Review of Responsive, Tiered Professional Development Models
+  [12] 2023 | Evaluating the Effects of Training Plus Practice-Based Coaching Delivered Via Text Message on Teacher Use of Pyramid Model Practices
+  [11] 2024 | Having a Trusted Adult in School: Concurrent and Predictive Relations With Internalizing Problems Across Development
+  [9] 2024 | The Impact of the Missouri School-Wide Positive Behavior Support (MO SW-PBS) on Disciplinary Exclusions
+  [9] 2023 | Effects of the Power Card Strategy on Social Commenting of Children with Autism During Gameplay: Strength-Based Intervention
+  [8] 2024 | The Mystery Motivator Intervention for Challenging Behavior: A Meta-Analysis
+  [6] 2023 | Evaluating the Impact of PWS Smart-Start: A Behavior Analytic Caregiver Training Program for Prader-Willi Syndrome
+  [5] 2024 | Examining an Integrated Factor Structure of Schoolwide MTSS Implementation Measures
+  [5] 2024 | A Systematic Review and Narrative Synthesis of Single-Case Group Contingency Interventions Targeting Prosocial and Antisocial Behavior in School Children
+  [5] 2023 | Finding Common Ground: Using Focus Groups to Define Values Among Prisoners and Staff
+  [5] 2023 | Behavioral Parent Training Via Telehealth for Autistic Children in Rural Appalachia: A Mixed Methods Feasibility Study
+  [5] 2023 | The Impact of Fidget Toys on Story Detail Acquisition and Visual Attention for Elementary Students With Autism
+  [4] 2025 | Demographic Reporting of Students and Implementation Teams in School-Based Single-Case Research for Students With Emotional and Behavioral Disorders: A Systematic Review
+  [4] 2024 | A Systematic Review of the Evaluation of Social Validity in Experimental Examinations of Tier 2 Schoolwide Positive Behavior Interventions
+=== SPED: Behavioral Disorders (0198-7429) total 2023-26: 83
+  [23] 2023 | Self-Efficacy, Burnout, and Intent to Leave for Teachers of Students With Emotional and Behavioral Disorders
+  [19] 2023 | Exploring Extracurricular Activity Participation, School Engagement, and Social Competence for Students With Emotional and Behavioral Disorders
+  [13] 2023 | Behavior Management Training for Newly Graduated Teachers: A Randomized-Controlled Trial
+  [12] 2024 | Perspectives of Behavior Analysts and Mental Health Specialists on Collaborating to Support Students with Intensive Intervention Needs
+  [12] 2023 | Social-Emotional Learning Intervention for K–1 Students at Risk for Emotional and Behavioral Disorders: Mediation Effects of Social-Emotional Learning on School Adjustment
+  [11] 2023 | U.S. Middle and High School Teacher Attributions of Externalizing Student Behavior
+  [9] 2023 | Using Performance Feedback With and Without Goal Setting on Teachers’ Classroom Management Skills
+  [7] 2024 | Check-In/Check-Out (CICO) in High School: Results From a Small Randomized Controlled Trial
+  [7] 2024 | Additional Evidence of Predictive Validity of SRSS-IE Scores With Elementary Students
+  [6] 2025 | Behavioral Reputations of Elementary Students With or at Risk for Emotional and Behavioral Disorders
+  [6] 2023 | Definitions of and Evaluation Procedures for Emotional Disturbance: A Tale of 50 States
+  [6] 2023 | A Meta-Analysis of Behavior Interventions for Students With Emotional-Behavioral Disorders in Self-Contained Settings
+  [5] 2024 | Exploring Facilitator and Student Conversations Within Check-In/Check-Out Intervention: A Systematic Review With Links to Trauma-Informed Conversations
+  [5] 2024 | Comparison of the What Works Clearinghouse Standards for Single-Case Research: Applications for Systematic Reviews
+  [4] 2025 | The Kids’ Behavior in Context Scales (KICS) II: An Instrument for Detecting Social Contexts Relevant to Youth Interventions
+=== EDU: Review of Educational Research (0034-6543) total 2023-26: 192
+  [181] 2023 | Effective Teacher Professional Development: New Theory and a Meta-Analytic Test
+  [134] 2023 | The Effect of Digital Game-Based Learning Interventions on Cognitive, Metacognitive, and Affective-Motivational Learning Outcomes in School: A Meta-Analysis
+  [118] 2023 | Deeper than Wordplay: A Systematic Review of Critical Quantitative Approaches in Education Research (2007–2021)
+  [101] 2024 | “Yes, I Can!” A Systematic Review and Meta-Analysis of Intervention Studies Promoting Teacher Self-Efficacy
+  [90] 2023 | Leveraging What Students Know to Make Sense of Texts: What the Research Says About Prior Knowledge Activation
+  [72] 2024 | Coding and Computational Thinking Across the Curriculum: A Review of Educational Outcomes
+  [66] 2023 | The Relation Between Need for Cognition and Academic Achievement: A Meta-Analysis
+  [64] 2024 | Does Chatting with Chatbots Improve Language Learning Performance? A Meta-Analysis of Chatbot-Assisted Language Learning
+  [61] 2023 | Assessing Teachers’ Culturally Responsive Classroom Practice in PK–12 Schools: A Systematic Review of Teacher-, Student-, and Observer-Report Measures
+  [59] 2023 | Do New Forms of Reading Pay Off? A Meta-Analysis on the Relationship Between Leisure Digital Reading Habits and Text Comprehension
+  [52] 2024 | Robot-Assisted Language Learning: A Meta-Analysis
+  [50] 2023 | Examining Race in LatCrit: A Systematic Review of Latinx Critical Race Theory in Education
+  [48] 2023 | The Active Ingredient in Reading Comprehension Strategy Intervention for Struggling Readers: A Bayesian Network Meta-analysis
+  [45] 2023 | Epistemic Injustice and Legitimacy in U.S. Doctoral Education: A Systematic Review of Literature
+  [45] 2023 | Reading and Writing Relations Are Not Uniform: They Differ by the Linguistic Grain Size, Developmental Phase, and Measurement
+=== EDU: Educational Research Review (1747-938X) total 2023-26: 241
+  [197] 2023 | Let's talk evidence – The case for combining inquiry-based and direct instruction
+  [173] 2023 | The impact of Covid-19 on student achievement: Evidence from a recent meta-analysis
+  [167] 2023 | Synthesizing research evidence on self-regulated learning and academic achievement in online and blended learning environments: A scoping review
+  [118] 2023 | Uncovering important 21st-century skills for sustainable career development of social sciences graduates: A systematic review
+  [112] 2024 | AI-driven learning analytics applications and tools in computer-supported collaborative learning: A systematic review
+  [109] 2023 | Computational thinking in early childhood education: Reviewing the literature and redeveloping the three-dimensional framework
+  [100] 2023 | Conceptualizing mentoring in higher education: A systematic literature review
+  [83] 2024 | Learning with visualizations helps: A meta-analysis of visualization interventions in mathematics education
+  [83] 2023 | A systematic literature review of teacher scaffolding in game-based learning in primary education
+  [70] 2024 | The definition and measurement of sense of belonging in higher education: A systematic literature review with a special focus on students’ ethnicity and generation status in higher education
+  [66] 2024 | Higher education teachers’ understandings of and challenges for inclusion and inclusive learning environments: A systematic literature review
+  [65] 2024 | Self-regulated learning strategies in continuing education: A systematic review and meta-analysis
+  [62] 2023 | Students’ feedback seeking behaviour in undergraduate education: A scoping review
+  [62] 2023 | The effect of feedback on academic achievement in technology-rich learning environments (TREs): A meta-analytic review
+  [61] 2024 | The impacts of open inquiry on students’ learning in science: A systematic literature review
+=== EDU: Computers & Education (0360-1315) total 2023-26: 574
+  [548] 2023 | Impact of AI assistance on student agency
+  [533] 2024 | Does ChatGPT enhance student learning? A systematic review and meta-analysis of experimental studies
+  [400] 2024 | ChatGPT improves creative problem-solving performance in university students: An experimental study
+  [393] 2024 | The influence of ChatGPT on student engagement: A systematic review and future research agenda
+  [294] 2023 | Investigating students’ cognitive processes in generative AI-assisted digital multimodal composing and traditional writing
+  [239] 2023 | Beyond ChatGPT: A conceptual framework and systematic review of speech-recognition chatbots for language learning
+  [238] 2024 | Improving elementary EFL speaking skills with generative AI chatbots: Exploring individual and paired interactions
+  [188] 2023 | Effects of chatbot-assisted in-class debates on students’ argumentation skills and task motivation
+  [155] 2024 | A self-determination theory approach to teacher digital competence development
+  [150] 2024 | Artificial intelligence for teaching and learning in schools: The need for pedagogical intelligence
+  [144] 2023 | Transformational leadership for technology integration in schools: Empowering teachers to use technology in a more demanding way
+  [104] 2024 | Approaches and game elements used to tailor digital gamification for learning: A systematic literature review
+  [101] 2024 | Unpacking help-seeking process through multimodal learning analytics: A comparative study of ChatGPT vs Human expert
+  [101] 2023 | A robot-based digital storytelling approach to enhancing EFL learners’ multimodal storytelling ability and narrative engagement
+  [100] 2023 | Decision-guided chatbots and cognitive styles in interdisciplinary learning
+=== EDU: American Educational Research J (0002-8312) total 2023-26: 158
+  [93] 2024 | The Rise and Fall of the Teaching Profession: Prestige, Interest, Preparation, and Satisfaction Over the Last Half Century
+  [82] 2023 | The Promise of Tutoring for PreK–12 Learning: A Systematic Review and Meta-Analysis of the Experimental Evidence
+  [47] 2024 | Improving Teaching at Scale: Can AI Be Incorporated Into Professional Development to Create Interactive, Personalized Learning for Teachers?
+  [45] 2023 | The Aftermath of Disproportionality Citations: Situating Disability-Race Intersections in Historical, Spatial, and Sociocultural Contexts
+  [38] 2024 | Polarization, Partisan Sorting, and the Politics of Education
+  [36] 2024 | Degrees of Return: Estimating Internal Rates of Return for College Majors Using Quantile Regression
+  [35] 2024 | Time in School: A Conceptual Framework, Synthesis of the Causal Research, and Empirical Exploration
+  [34] 2024 | Teacher-Student Race Match and Identification for Discretionary Educational Services
+  [30] 2023 | From Interest to Entry: The Teacher Pipeline From College Application to Initial Employment
+  [30] 2023 | Uneven Progress: Recent Trends in Academic Performance Among U.S. School Districts
+  [28] 2024 | Teacher Self-Efficacy, Instructional Practice, and Student Outcomes: Evidence from the TALIS Video Study
+  [24] 2023 | “When We Come to Your Class … We Feel Not Like We're in Prison”: Resisting Prison-School’s Dehumanizing and (De)Socializing Mechanisms Through Abolitionist Praxis
+  [22] 2024 | There Is Such a Thing as a Free Lunch: School Meals, Stigma, and Student Discipline
+  [21] 2024 | Dually Noted: Examining the Implications of Dual Enrollment Course Structure for Students’ Course and College Enrollment Outcomes
+  [21] 2023 | Peer Relationships and Chinese Adolescents’ Academic Achievement: Selection and Influence
+=== EDU: Teaching and Teacher Education (0742-051X) total 2023-26: 1379
+  [128] 2023 | Teachers as learners and agents of self-regulated learning: The importance of different teachers competence aspects for promoting metacognition
+  [124] 2024 | Through tensions to identity-based motivations: Exploring teacher professional identity in Artificial Intelligence-enhanced teacher training
+  [119] 2024 | Differentiating instruction: Understanding the key elements for successful teacher preparation and development
+  [112] 2023 | Teachers’ job demands, resources and their job satisfaction: Satisfaction with school, career choice and teaching profession of teachers in different career stages
+  [92] 2023 | Examining the role of student-centered versus teacher-centered pedagogical approaches to self-directed learning through teaching
+  [91] 2024 | Enhancing teachers’ self-efficacy beliefs in AI-based technology integration into English speaking teaching through a professional development program
+  [91] 2023 | Personalized learning: The simple, the complicated, the complex and the chaotic
+  [72] 2025 | A collaborative reflection on the synergy of Artificial Intelligence (AI) and language teacher identity reconstruction
+  [69] 2023 | Mindfulness-based interventions for stress and burnout in teachers: A systematic review
+  [69] 2023 | Teacher educators’ professional agency in facilitating professional digital competence
+  [67] 2023 | Teacher emotions and agency enactment in online teaching
+  [65] 2023 | Exploring the role of teachers’ attitudes towards inclusive education, their self-efficacy, and collective efficacy in behaviour management in teacher behaviour
+  [64] 2023 | Thinking through talk: Using dialogue to develop students’ critical thinking
+  [60] 2024 | The impact of TPACK on teachers’ willingness to integrate generative artificial intelligence (GenAI): The moderating role of negative emotions and the buffering effects of need satisfaction
+  [60] 2023 | Changes in early career teachers’ technology use for teaching: The roles of teacher self-efficacy, ICT literacy, and experience during COVID-19 school closure
+=== EDU: Educational Psychology Review (1040-726X) total 2023-26: 493
+  [579] 2024 | The Past, Present, and Future of the Cognitive Theory of Multimedia Learning
+  [394] 2024 | Control-Value Theory: From Achievement Emotion to a General Theory of Human Emotions
+  [299] 2023 | Theories of Motivation in Education: an Integrative Framework
+  [234] 2024 | The Effects of Problem-Based, Project-Based, and Case-Based Learning on Students’ Motivation: a Meta-Analysis
+  [224] 2023 | A Cognitive Load Theory Approach to Defining and Measuring Task Complexity Through Element Interactivity
+  [220] 2023 | The Development of Cognitive Load Theory: Replication Crises and Incorporation of Other Theories Can Lead to Theory Expansion
+  [200] 2024 | Cognitive Load Theory and Its Relationships with Motivation: a Self-Determination Theory Perspective
+  [166] 2023 | Situating Higher-Order, Critical, and Critical-Analytic Thinking in Problem- and Project-Based Learning Environments: A Systematic Review
+  [161] 2024 | Study Demands–Resources Theory: Understanding Student Well-Being in Higher Education
+  [153] 2025 | Looking Beyond the Hype: Understanding the Effects of AI on Learning
+  [144] 2023 | Effects of Rubrics on Academic Performance, Self-Regulated Learning, and self-Efficacy: a Meta-analytic Review
+  [139] 2023 | Development and Validation of a Theory-Based Questionnaire to Measure Different Types of Cognitive Load
+  [135] 2024 | Factors Associated with Teacher Wellbeing: A Meta-Analysis
+  [135] 2023 | Making Sense of Generative Learning
+  [132] 2024 | The Development, Testing, and Refinement of Eccles, Wigfield, and Colleagues’ Situated Expectancy-Value Model of Achievement Performance and Choice
+=== PSY: Psychological Bulletin (0033-2909) total 2023-26: 146
+  [222] 2023 | Sleep loss and emotion: A systematic review and meta-analysis of over 50 years of experimental research.
+  [221] 2023 | A systematic review of the ambivalent sexism literature: Hostile sexism protects men’s power; benevolent sexism guards traditional gender roles.
+  [178] 2023 | The development of subjective well-being across the life span: A meta-analytic review of longitudinal studies.
+  [151] 2023 | The daily association between affect and alcohol use: A meta-analysis of individual participant data.
+  [131] 2024 | Maternal and paternal sensitivity: Key determinants of child attachment security examined through meta-analysis.
+  [124] 2023 | The first 20,000 strange situation procedures: A meta-analytic review.
+  [120] 2023 | The conspiratorial mind: A meta-analytic review of motivational and personological correlates.
+  [114] 2023 | Cortical, subcortical, and cerebellar contributions to language processing: A meta-analytic review of 403 neuroimaging experiments.
+  [96] 2025 | Teacher–student relationships and student outcomes: A systematic second-order meta-analytic review.
+  [96] 2024 | The stability of cognitive abilities: A meta-analytic review of longitudinal studies.
+  [92] 2024 | Associations between cognitive appraisals and emotions: A meta-analytic review.
+  [90] 2025 | AI aversion or appreciation? A capability–personalization framework and a meta-analytic review.
+  [85] 2023 | Child maltreatment and alexithymia: A meta-analytic review.
+  [79] 2025 | Feeds, feelings, and focus: A systematic review and meta-analysis examining the cognitive and mental health correlates of short-form video use.
+  [76] 2023 | Ignorance by choice: A meta-analytic review of the underlying motives of willful ignorance and its consequences.
+=== PSY: Clinical Psychology Review (0272-7358) total 2023-26: 304
+  [167] 2023 | Risk factors for prolonged grief symptoms: A systematic review and meta-analysis
+  [148] 2025 | Psychiatric comorbidity in children and adolescents with ADHD: A systematic review and meta-analysis
+  [117] 2023 | Disclosure of suicidal ideation and behaviours: A systematic review and meta-analysis of prevalence
+  [105] 2023 | Intolerance of uncertainty and emotion regulation: A meta-analytic and systematic review
+  [93] 2023 | Dyadic coping and mental health in couples: A systematic review
+  [93] 2023 | Associations between paternal versus maternal parenting behaviors and child and adolescent internalizing problems: A systematic review and meta-analysis
+  [90] 2023 | Psychosocial factors associated with camouflaging in autistic people and its relationship with mental health and well-being: A mixed methods systematic review
+  [89] 2024 | Examining domains of psychological flexibility and inflexibility as treatment mechanisms in acceptance and commitment therapy: A comprehensive systematic and meta-analytic review
+  [87] 2025 | A meta-analysis of mortality rates in eating disorders: An update of the literature from 2010 to 2024
+  [86] 2024 | Emotion regulation and emotion dysregulation in children and adolescents with Autism Spectrum Disorder: A meta-analysis of evaluation and intervention studies
+  [84] 2023 | Empirically-based dynamic risk and protective factors for sexual offending
+  [82] 2024 | A meta-analysis of cognitive reappraisal and personal resilience
+  [80] 2023 | Minority stress and mental health in European transgender and gender diverse people: A systematic review of quantitative studies
+  [77] 2023 | Measuring moral distress and moral injury: A systematic review and content analysis of existing scales
+  [74] 2023 | The efficacy of mindfulness apps on symptoms of depression and anxiety: An updated meta-analysis of randomized controlled trials
+=== PSY: Annual Review of Psychology (0066-4308) total 2023-26: 105
+  [256] 2023 | Metacognition and Confidence: A Review and Synthesis
+  [207] 2023 | Cultural Psychology: Beyond East and West
+  [181] 2023 | Norm Dynamics: Interdisciplinary Perspectives on Social Norm Emergence, Persistence, and Change
+  [151] 2023 | The Moral Psychology of Artificial Intelligence
+  [129] 2023 | Resilience and Disaster: Flexible Adaptation in the Face of Uncertain Threat
+  [124] 2024 | The Incentive-Sensitization Theory of Addiction 30 Years On
+  [119] 2023 | Social Media and Morality
+  [112] 2023 | The Neurobiology of Activational Aspects of Motivation: Exertion of Effort, Effort-Based Decision Making, and the Role of Dopamine
+  [109] 2023 | Serial Dependence in Perception
+  [109] 2023 | The Relation Between Attention and Memory
+  [89] 2023 | Music Training and Nonmusical Abilities
+  [88] 2024 | Cognitive Control
+  [86] 2024 | Psychological Determinants of Health Behavior
+  [77] 2024 | Alexithymia: Toward an Experimental, Processual Affective Science with Effective Interventions
+  [72] 2023 | Psychological Flexibility, Chronic Pain, and Health
+=== PSY: Journal of Affective Disorders (0165-0327) total 2023-26: 6564
+  [470] 2023 | The global prevalence of attention deficit hyperactivity disorder in children and adolescents: An umbrella review of meta-analyses
+  [373] 2023 | The association between academic pressure and adolescent mental health problems: A systematic review
+  [305] 2024 | Global burden of depression or depressive symptoms in children and adolescents: A systematic review and meta-analysis
+  [188] 2023 | Association between depression and oxidative balance score: National Health and Nutrition Examination Survey (NHANES) 2005–2018
+  [186] 2024 | Social media use, mental health and sleep: A systematic review with meta-analyses
+  [179] 2024 | The therapeutic effectiveness of artificial intelligence-based chatbots in alleviation of depressive and anxiety symptoms in short-course treatments: A systematic review and meta-analysis
+  [175] 2023 | Single-dose psilocybin for a treatment-resistant episode of major depression: Impact on patient-reported depression severity, anxiety, function, and quality of life
+  [171] 2023 | A network analysis of anxiety and depression symptoms in Chinese disabled elderly
+  [160] 2023 | Emotional and social loneliness and their unique links with social isolation, depression and anxiety
+  [156] 2023 | The effectiveness of compassion focused therapy with clinical populations: A systematic review and meta-analysis
+  [144] 2023 | The development of Non-Suicidal Self-Injury (NSSI) during adolescence: A systematic review and Bayesian meta-analysis
+  [138] 2023 | The association between non-high-density lipoprotein cholesterol to high-density lipoprotein cholesterol ratio (NHHR) and risk of depression among US adults: A cross-sectional NHANES study
+  [136] 2023 | Psychological treatment of depression: A systematic overview of a ‘Meta-Analytic Research Domain’
+  [133] 2023 | Prevalence and associations of challenging, difficult or distressing experiences using classic psychedelics
+  [131] 2023 | Alterations in EEG functional connectivity in individuals with depression: A systematic review
+=== PSY: Computers in Human Behavior (0747-5632) total 2023-26: 1198
+  [450] 2024 | Trust and reliance on AI — An experimental study on the extent and costs of overreliance on AI
+  [336] 2023 | Preparing for AI-enhanced education: Conceptualizing and empirically examining teachers’ AI readiness
+  [330] 2024 | Using AI-driven chatbots to foster Chinese EFL students’ academic engagement: An intervention study
+  [328] 2023 | Virtual influencers’ attractiveness effect on purchase intention: A moderated mediation model of the Product–Endorser fit with the brand
+  [301] 2023 | Chat-GPT; validating Technology Acceptance Model (TAM) in education sector via ubiquitous learning mechanism
+  [274] 2023 | Can AI really help? The double-edged sword effect of AI assistant on employees’ innovation behavior
+  [263] 2024 | Cognitive ease at a cost: LLMs reduce mental effort but compromise depth in student scientific inquiry
+  [258] 2023 | “You are a virtual influencer!”: Understanding the impact of origin disclosure and emotional narratives on parasocial relationships and virtual influencer credibility
+  [228] 2023 | How social anxiety leads to problematic use of conversational AI: The roles of loneliness, rumination, and mind perception
+  [223] 2023 | Artificial intelligence and human behavioral development: A perspective on new skills and competences acquisition for the educational context
+  [223] 2023 | Human or virtual: How influencer type shapes brand attitudes
+  [200] 2023 | Defending humankind: Anthropocentric bias in the appreciation of AI art
+  [189] 2024 | The effect of artificial intelligence tools on EFL learners' engagement, enjoyment, and motivation
+  [187] 2023 | How to leverage anthropomorphism for chatbot service interfaces: The interplay of communication style and personification
+  [179] 2024 | AI-driven personalization: Unraveling consumer perceptions in social media engagement
+=== MED: The Lancet (0140-6736) total 2023-26: 5044
+  [5111] 2024 | Global incidence, prevalence, years lived with disability (YLDs), disability-adjusted life-years (DALYs), and healthy life expectancy (HALE) for 371 diseases and injuries in 204 countries and territories and 811 subnational locations, 1990–2021: a systematic analysis for the Global Burden of Disease Study 2021
+  [4765] 2023 | Global, regional, and national burden of diabetes from 1990 to 2021, with projections of prevalence to 2050: a systematic analysis for the Global Burden of Disease Study 2021
+  [3929] 2024 | Global burden of bacterial antimicrobial resistance 1990–2021: a systematic analysis with forecasts to 2050
+  [3860] 2024 | Dementia prevention, intervention, and care: 2024 report of the Lancet standing Commission
+  [2888] 2024 | Global burden and strength of evidence for 88 risk factors in 204 countries and 811 subnational locations, 1990–2021: a systematic analysis for the Global Burden of Disease Study 2021
+  [2888] 2024 | Global burden of 288 causes of death and life expectancy decomposition in 204 countries and territories and 811 subnational locations, 1990–2021: a systematic analysis for the Global Burden of Disease Study 2021
+  [2544] 2024 | Worldwide trends in underweight and obesity from 1990 to 2022: a pooled analysis of 3663 population-representative studies with 222 million children, adolescents, and adults
+  [1696] 2023 | Ulcerative colitis
+  [1662] 2023 | National, regional, and global estimates of preterm birth in 2020, with trends from 2010: a systematic analysis
+  [1276] 2023 | The 2023 report of the Lancet Countdown on health and climate change: the imperative for a health-centred response in a world facing irreversible harms
+  [1169] 2023 | Pembrolizumab in combination with gemcitabine and cisplatin compared with gemcitabine and cisplatin alone for patients with advanced biliary tract cancer (KEYNOTE-966): a randomised, double-blind, placebo-controlled, phase 3 trial
+  [1155] 2025 | Global, regional, and national prevalence of adult overweight and obesity, 1990–2021, with forecasts to 2050: a forecasting study for the Global Burden of Disease Study 2021
+  [1068] 2024 | Findings from the Global Burden of Disease Study 2021
+  [1048] 2024 | The pathogenesis of Parkinson's disease
+  [1044] 2024 | Global age-sex-specific mortality, life expectancy, and population estimates in 204 countries and territories and 811 subnational locations, 1950–2021, and the impact of the COVID-19 pandemic: a comprehensive demographic analysis for the Global Burden of Disease Study 2021
+=== MED: JAMA (0098-7484) total 2023-26: 6449
+  [2937] 2023 | Donanemab in Early Symptomatic Alzheimer Disease
+  [1723] 2023 | Diabetic Foot Ulcers
+  [1695] 2024 | World Medical Association Declaration of Helsinki
+  [1305] 2023 | Glioblastoma and Other Primary Brain Malignancies in Adults
+  [955] 2023 | Autism Spectrum Disorder
+  [859] 2023 | Continued Treatment With Tirzepatide for Maintenance of Weight Reduction in Adults With Obesity
+  [851] 2023 | Development of a Definition of Postacute Sequelae of SARS-CoV-2 Infection
+  [758] 2023 | Ulcerative Colitis in Adults
+  [757] 2023 | Obesity Management in Adults
+  [713] 2024 | Thyroid Cancer
+  [662] 2024 | Testing and Evaluation of Health Care Applications of Large Language Models
+  [662] 2023 | Heart Failure With Preserved Ejection Fraction
+  [596] 2024 | International Consensus Criteria for Pediatric Sepsis and Septic Shock
+  [572] 2024 | Prevalence of Cardiovascular-Kidney-Metabolic Syndrome Stages in US Adults, 2011-2020
+  [564] 2023 | Surgical Site Infection Prevention
+=== MED: BMJ (0959-8138) total 2023-26: 0
+=== MED: NEJM (0028-4793) total 2023-26: 2847
+  [3233] 2023 | Semaglutide and Cardiovascular Outcomes in Obesity without Diabetes
+  [2087] 2024 | A Phase 3, Randomized, Controlled Trial of Resmetirom in NASH with Liver Fibrosis
+  [1938] 2024 | Effects of Semaglutide on Chronic Kidney Disease in Patients with Type 2 Diabetes
+  [1738] 2023 | Benefits, Limits, and Risks of GPT-4 as an AI Chatbot for Medicine
+  [1667] 2023 | Semaglutide in Patients with Heart Failure with Preserved Ejection Fraction and Obesity
+  [1221] 2024 | Microplastics and Nanoplastics in Atheromas and Cardiovascular Events
+  [1213] 2023 | Artificial Intelligence and Machine Learning in Clinical Medicine, 2023
+  [1180] 2023 | Perioperative Pembrolizumab for Early-Stage Non–Small-Cell Lung Cancer
+  [1174] 2023 | Triple–Hormone-Receptor Agonist Retatrutide for Obesity — A Phase 2 Trial
+  [1133] 2024 | Enfortumab Vedotin and Pembrolizumab in Untreated Advanced Urothelial Cancer
+  [1128] 2023 | Lobar or Sublobar Resection for Peripheral Stage IA Non–Small-Cell Lung Cancer
+  [1119] 2024 | CD19 CAR T-Cell Therapy in Autoimmune Disease — A Case Series with Follow-up
+  [1115] 2025 | Phase 3 Trial of Semaglutide in Metabolic Dysfunction–Associated Steatohepatitis
+  [1012] 2024 | Tirzepatide for Heart Failure with Preserved Ejection Fraction and Obesity
+  [1010] 2023 | Pulsed Field or Conventional Thermal Ablation for Paroxysmal Atrial Fibrillation
+=== NUR: Int J Nursing Studies (0020-7489) total 2023-26: 829
+  [166] 2024 | A new framework for developing and evaluating complex interventions: update of Medical Research Council guidance
+  [127] 2023 | Effectiveness of mindfulness-based interventions on anxiety, depression, and fatigue in people with lung cancer: A systematic review and meta-analysis
+  [126] 2024 | A child-centred research checklist to improve the design and reporting of paediatric research studies: A descriptive mixed methods study
+  [125] 2025 | Revisiting the Delphi technique - Research thinking and practice: A discussion paper
+  [109] 2023 | Peripheral intravenous catheter infection and failure: A systematic review and meta-analysis
+  [108] 2023 | What makes nurses flourish at work? How the perceived clinical work environment relates to nurse motivation and well-being: A cross-sectional study
+  [100] 2023 | Sedentary behavior patterns and the risk of non-communicable diseases and all-cause mortality: A systematic review and meta-analysis
+  [89] 2023 | Prevalence and incidence of pressure injuries among older people living in nursing homes: A systematic review and meta-analysis
+  [87] 2024 | Barriers and facilitators to exercise adherence in community-dwelling older adults: A mixed-methods systematic review using the COM-B model and Theoretical Domains Framework
+  [82] 2023 | Costs and cost-effectiveness of improved nurse staffing levels and skill mix in acute hospitals: A systematic review
+  [80] 2024 | A rapid review on current and potential uses of large language models in nursing
+  [77] 2023 | Frontline Nurses' clinical judgment in recognizing, understanding, and responding to patient deterioration: A qualitative study
+  [76] 2023 | Effects of non-pharmacological interventions on loneliness among community-dwelling older adults: A systematic review, network meta-analysis, and meta-regression
+  [71] 2025 | Digital exclusion in older adults: A scoping review
+  [71] 2023 | Voice, silence, perceived impact, psychological safety, and burnout among nurses: A structural equation modeling analysis
+=== NUR: J Advanced Nursing (0309-2402) total 2023-26: 2195
+  [245] 2023 | The carbon footprint of healthcare settings: A systematic review
+  [156] 2024 | A Worked Example of Qualitative Descriptive Design: A Step‐by‐Step Guide for Novice and Early Career Researchers
+  [140] 2023 | Nurses' motivations to leave the nursing profession: A qualitative meta‐aggregation
+  [123] 2023 | Advanced practice nursing in Europe—Results from a pan‐European survey of 35 countries
+  [89] 2023 | The impact of pandemics on healthcare providers' workloads: A scoping review
+  [75] 2023 | A cross‐sectional study of discipline‐based self‐perceived digital literacy competencies of nursing students
+  [73] 2024 | Paediatric nurses' perspectives on artificial intelligence applications: A cross‐sectional study of concerns, literacy levels and attitudes
+  [67] 2023 | Converting qualitative data into quantitative values using a matched mixed‐methods design: A new methodological approach
+  [64] 2024 | Sentiment of Nurses Towards Artificial Intelligence and Resistance to Change in Healthcare Organisations: A Mixed‐Method Study
+  [63] 2024 | Mediating Effect of Job Burnout on the Relationship Between Organisational Support and Quiet Quitting in Nurses
+  [61] 2024 | A comparative vignette study: Evaluating the potential role of a generative AI model in enhancing clinical decision‐making in nursing
+  [58] 2024 | Authentic Leadership—A Concept Analysis
+  [55] 2023 | The role of family in supporting adherence to diabetes self‐care management practices: An umbrella review
+  [54] 2024 | Healthcare professionals' digital health competence profiles and associated factors: A cross‐sectional study
+  [54] 2023 | Digitizing nursing: A theoretical and holistic exploration to understand the adoption and use of digital technologies by nurses
+=== CRIM: J Experimental Criminology (1573-3750) total 2023-26: 217
+  [54] 2023 | A systematic review and meta-analysis of procedural justice and legitimacy in policing: the effect of social identity and social contexts
+  [30] 2024 | No Man’s Hand: Artificial Intelligence Does Not Improve Police Report Writing Speed
+  [28] 2023 | Are risk-need-responsivity principles golden? A meta-analysis of randomized controlled trials of community correction programs
+  [24] 2024 | A police-clinician co-response team to people with mental illness in a suburban-rural community: a randomized controlled trial
+  [21] 2023 | Can police de-escalation training reduce use of force and citizen injury without compromising officer safety?
+  [19] 2023 | The effect of gunshot detection technology on evidence collection and case clearance in Kansas City, Missouri
+  [19] 2023 | Structural resilience and recovery of a criminal network after disruption: a simulation study
+  [17] 2023 | Criminal justice reform guided by evidence: social control works—The Academy of Experimental Criminology 2022 Joan McCord Lecture
+  [16] 2024 | Staggered deployment of gunshot detection technology in Chicago, IL: a matched quasi-experiment of gun violence outcomes
+  [14] 2024 | Motivating a standardised approach to financial intelligence: a typological scoping review of money laundering methods and trends
+  [14] 2024 | Affect, emotions, and crime decision-making: emerging insights from immersive 360° video experiments
+  [14] 2023 | The impact of police uniforms in changing views of police legitimacy and driving intentions among young people: an experimental trial
+  [14] 2023 | A procedurally just flyer reduces subsequent speeding offences: evidence from the Queensland Speeding Engagement Trial (QSET)
+  [13] 2023 | A systematic review and meta-analysis of the relationship between policing and collective efficacy
+  [12] 2024 | Open science practices in criminology and criminal justice journals
+=== SW: Campbell Systematic Reviews (1891-1803) total 2023-26: 265
+  [103] 2023 | Digital interventions to reduce social isolation and loneliness in older adults: An evidence and gap map
+  [98] 2024 | Searching for studies: A guide to information retrieval for Campbell systematic reviews
+  [82] 2024 | Effectiveness of road safety interventions: An evidence and gap map
+  [76] 2023 | The effects of flipped classrooms to improve learning outcomes in undergraduate health professional education: A systematic review
+  [73] 2023 | What is the effect of intergenerational activities on the wellbeing and mental health of older people?: A systematic review
+  [63] 2023 | Police stops to reduce crime: A systematic review and meta-analysis
+  [54] 2023 | Effectiveness of interventions for improving social inclusion outcomes for people with disabilities in low- and middle-income countries: A systematic review
+  [48] 2023 | Non-familial intergenerational interventions and their impact on social and mental wellbeing of both younger and older people—A mapping review and evidence and gap map
+  [46] 2023 | Communication skills training for improving the communicative abilities of student social workers: A systematic review
+  [44] 2023 | Montessori education's impact on academic and nonacademic outcomes: A systematic review
+  [43] 2024 | Mapping the scientific knowledge and approaches to defining and measuring hate crime, hate speech, and hate incidents: A systematic review
+  [39] 2023 | Involving men and boys in family planning: A systematic review of the effective components and characteristics of complex interventions in low- and middle-income countries
+  [38] 2023 | Effectiveness of nutrition counseling for pregnant women in low- and middle-income countries to improve maternal and infant behavioral, nutritional, and health outcomes: A systematic review
+  [34] 2023 | Child and adolescent mental health and psychosocial support interventions: An evidence and gap map of low- and middle-income countries
+  [33] 2024 | Effects of guaranteed basic income interventions on poverty-related outcomes in high-income countries: A systematic review and meta-analysis
+=== BUS: J Management (0149-2063) total 2023-26: 366
+  [469] 2024 | Signaling Theory: State of the Theory and Its Future
+  [204] 2023 | Human-AI Ensembles: When Can They Work?
+  [143] 2023 | Partnering for Grand Challenges: A Review of Organizational Design Considerations in Public–Private Collaborations
+  [134] 2023 | Time as a Research Lens: A Conceptual Review and Research Agenda
+  [116] 2023 | Stereotypical Perception in Management: A Review and Expansion of Role Congruity Theory
+  [111] 2023 | The Lean Startup as an Actionable Theory of Entrepreneurship
+  [102] 2023 | Autism and Employment: A Review of the “New Frontier” of Diversity Research
+  [97] 2023 | The Construct of Bottom-Line Mentality: Where We’ve Been and Where We’re Going
+  [93] 2023 | The Role of Language in Organizational Sensemaking: An Integrative Theoretical Framework and an Agenda for Future Research
+  [81] 2025 | Bridging Institutional Theory and Social and Environmental Efforts in Management: A Review and Research Agenda
+  [78] 2024 | Organization Design: Current Insights and Future Research Directions
+  [76] 2024 | Discursive Legitimation: An Integrative Theoretical Framework and Agenda for Future Research
+  [75] 2024 | New Horizons for Newcomer Organizational Socialization: A Review, Meta-Analysis, and Future Research Directions
+  [75] 2024 | Using Augmentation-Based AI Tool at Work: A Daily Investigation of Learning-Based Benefit and Challenge
+  [66] 2025 | Green Innovation Implementation: A Systematic Review and Research Directions
+=== BUS: J Applied Psychology (0021-9010) total 2023-26: 346
+  [215] 2023 | No person is an island: Unpacking the work and after-work consequences of interacting with artificial intelligence.
+  [118] 2023 | How well can an AI chatbot infer personality? Examining psychometric properties of machine-inferred personality scores.
+  [84] 2024 | How perceived lack of benevolence harms trust of artificial intelligence management.
+  [57] 2025 | How and for whom using generative AI affects creativity: A field experiment.
+  [53] 2024 | Personality profiles of 263 occupations.
+  [53] 2023 | Integrating organizational climate theory: A domain-independent explanation for climate formation and function.
+  [53] 2023 | The consequences of ethical voice inside the organization: An integrative review.
+  [45] 2023 | When “who I am” is under threat: Measures of threat to identity value, meanings, and enactment.
+  [43] 2023 | Do you see me? An inductive examination of differences between women of color’s experiences of and responses to invisibility at work.
+  [41] 2023 | The role of self-interest in unethical pro-organizational behavior: A nomological network meta-analysis.
+  [40] 2024 | Psychometric properties of automated video interview competency assessments.
+  [40] 2023 | A creativity stereotype perspective on the Bamboo Ceiling: Low perceived creativity explains the underrepresentation of East Asian leaders in the United States.
+  [38] 2024 | Does competitive action intensity influence team performance via leader bottom-line mentality? A social information processing perspective.
+  [38] 2023 | A contemporary look at the relationship between general cognitive ability and job performance.
+  [37] 2024 | Personality and leadership: Meta-analytic review of cross-cultural moderation, behavioral mediation, and honesty-humility.
+=== ENV: Science of the Total Environment (0048-9697) total 2023-26: 20194
+  [1160] 2024 | Greenhouse gases emissions and global climate change: Examining the influence of CO2, CH4, and N2O
+  [640] 2023 | Impacts of climate change on the fate of contaminants through extreme weather events
+  [544] 2024 | Hydrogen energy systems: Technologies, trends, and future prospects
+  [531] 2023 | Unveiling the crucial role of soil microorganisms in carbon cycling: A review
+  [524] 2023 | The potential of biochar as a microbial carrier for agricultural and environmental applications
+  [506] 2023 | Detection and characterization of microplastics in the human testis and semen
+  [467] 2023 | Spatiotemporal variation of soil heavy metals in China: The pollution status and risk assessment
+  [415] 2023 | There's something in the air: A review of sources, prevalence and behaviour of microplastics in the atmosphere
+  [399] 2024 | Pesticides: An alarming detrimental to health and environment
+  [397] 2024 | Municipal solid waste management challenges in developing regions: A comprehensive review and future perspectives for Asia and Africa
+  [384] 2023 | The emerging role of microplastics in systemic toxicity: Involvement of reactive oxygen species (ROS)
+  [383] 2023 | Critical review on emerging health effects associated with the indoor air quality and its sustainable management
+  [355] 2023 | The potential toxicity of microplastics on human health
+  [349] 2023 | The impact of air pollution on respiratory diseases in an era of climate change: A review of the current evidence
+  [342] 2023 | A review of plants strategies to resist biotic and abiotic environmental stressors
+=== SPORT: British J Sports Medicine (0306-3674) total 2023-26: 766
+  [1239] 2023 | Consensus statement on concussion in sport: the 6th International Conference on Concussion in Sport–Amsterdam, October 2022
+  [1049] 2023 | Effectiveness of physical activity interventions for improving depression, anxiety and distress: an overview of systematic reviews
+  [748] 2023 | 2023 International Olympic Committee’s (IOC) consensus statement on Relative Energy Deficiency in Sport (REDs)
+  [450] 2023 | Exercise as medicine for depressive symptoms? A systematic review and meta-analysis with meta-regression
+  [303] 2023 | Aspetar clinical practice guideline on rehabilitation after anterior cruciate ligament reconstruction
+  [286] 2023 | Non-occupational physical activity and risk of cardiovascular disease, cancer and mortality outcomes: a dose–response meta-analysis of large prospective studies
+  [284] 2023 | Exercise training and resting blood pressure: a large-scale pairwise and network meta-analysis of randomised controlled trials
+  [225] 2024 | Cardiorespiratory fitness is a strong and consistent predictor of morbidity and mortality among adults: an overview of meta-analyses representing over 20.9 million observations from 199 unique cohort studies
+  [181] 2023 | Rest and exercise early after sport-related concussion: a systematic review and meta-analysis
+  [179] 2023 | Resistance training prescription for muscle strength and hypertrophy in healthy adults: a systematic review and Bayesian network meta-analysis
+  [176] 2023 | Clinical recovery from concussion–return to school and sport: a systematic review and meta-analysis
+  [162] 2023 | Prevention strategies and modifiable risk factors for sport-related concussions and head impacts: a systematic review and meta-analysis
+  [157] 2025 | Effectiveness of exercise for improving cognition, memory and executive function: a systematic umbrella review and meta-meta-analysis
+  [150] 2023 | The intention-behaviour gap in physical activity: a systematic review and meta-analysis of the action control framework
+  [147] 2023 | European fitness landscape for children and adolescents: updated reference values, fitness maps and country rankings based on nearly 8 million test results from 34 countries gathered by the FitBack network
+

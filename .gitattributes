@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
+
+# Preserve historical research snapshots byte-for-byte, including their EOF.
+docs/reference-data/*.txt -text whitespace=-blank-at-eof,cr-at-eol
