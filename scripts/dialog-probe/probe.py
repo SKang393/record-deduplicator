@@ -23,6 +23,7 @@ import time
 
 UI_SCRIPT = Path(__file__).with_name("ui.applescript")
 PER_CALL_SECONDS = 6
+PANEL_CALL_SECONDS = 12
 STAGE_SECONDS = 20
 DEFAULT_SECONDS = 120
 DIAGNOSTIC_RESERVE_SECONDS = 7
@@ -201,7 +202,8 @@ class Probe:
             fallback_mode = "verified-owned-pid" if self.allow_unavailable_bundle_id else "strict"
             result = self.command(["/usr/bin/osascript", str(UI_SCRIPT), str(self.process.pid),
                                    self.bundle_id, operation, target, extra, self.executable.name,
-                                   fallback_mode], "accessibility.log")
+                                   fallback_mode], "accessibility.log",
+                                  timeout_limit=PANEL_CALL_SECONDS if operation.startswith("panel_") else PER_CALL_SECONDS)
             reply = result.stdout.decode("utf-8", "replace").strip()
             lines = reply.splitlines()
             identity = {"stage": self.stage, "operation": operation,
@@ -233,10 +235,11 @@ class Probe:
             raise Blocked(f"{self.stage}: System Events process name does not match the owned executable")
         raise Blocked(f"{self.stage}: expected window, accessibility control, or native panel unavailable ({last_state})")
 
-    def screenshot(self, name: str) -> None:
+    def screenshot(self, name: str, *, diagnostic: bool = False) -> None:
         path = self.output / f"{name}.png"
         try:
-            result = self.command(["/usr/sbin/screencapture", "-x", str(path)], "screencapture.log", timeout_limit=2)
+            result = self.command(["/usr/sbin/screencapture", "-x", str(path)], "screencapture.log",
+                                  diagnostic=diagnostic, timeout_limit=2)
             valid = result.returncode == 0 and path.is_file() and path.stat().st_size > len(PNG_SIGNATURE) and path.read_bytes()[:8] == PNG_SIGNATURE
         except (Blocked, OSError):
             valid = False
@@ -348,6 +351,7 @@ class Probe:
         self.screenshot("01-app-window")
         self.stage = "open_dialog"
         self.ax("click", "Choose files")
+        self.screenshot("02-after-choose-files")
         self.ax("panel_check", "Open")
         self.screenshot("02-open-panel")
         self.ax("panel_goto", "Open", str(self.fixture), retry=False)
@@ -458,6 +462,7 @@ def main(argv=None) -> int:
         exit_code = 0
     except Blocked as error:
         probe.status.update(status="blocked", stage=probe.stage, reason=str(error))
+        probe.screenshot(f"blocked-{probe.stage}", diagnostic=True)
         probe.diagnostic()
     except (Failed, OSError, ValueError, TypeError) as error:
         probe.status.update(status="failed", stage=probe.stage, reason=str(error))

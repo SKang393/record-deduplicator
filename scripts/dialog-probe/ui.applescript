@@ -35,32 +35,106 @@ on controlNamed(rootElement, wantedRole, wantedName, operation, replacement)
   return "WAIT:not_found"
 end controlNamed
 
+-- Query only controls directly owned by a native panel or one of its first
+-- eight immediate groups. Never walk the parent window's WebView descendants.
+on directPanelControl(rootElement, wantedRole, wantedName, operation, replacement)
+  tell application "System Events"
+    set candidates to {}
+    try
+      if wantedRole is "AXButton" then
+        set candidates to every button of rootElement
+      else if wantedRole is "AXTextField" then
+        set candidates to every text field of rootElement
+      end if
+    end try
+    set checkedCount to 0
+    repeat with candidate in candidates
+      set checkedCount to checkedCount + 1
+      if checkedCount > 40 then exit repeat
+      try
+        set namesFound to {}
+        try
+          set end of namesFound to (name of candidate as text)
+        end try
+        try
+          set end of namesFound to (title of candidate as text)
+        end try
+        try
+          set end of namesFound to (description of candidate as text)
+        end try
+        try
+          set end of namesFound to (value of candidate as text)
+        end try
+        if namesFound contains wantedName then
+          if operation is "press" then
+            if not (enabled of candidate) then return "WAIT:disabled"
+            perform action "AXPress" of candidate
+          else if operation is "replace" then
+            set value of candidate to replacement
+          end if
+          return "OK"
+        end if
+      end try
+    end repeat
+  end tell
+  return "WAIT:not_found"
+end directPanelControl
+
+on shallowPanelControl(rootElement, wantedRole, wantedName, operation, replacement)
+  set resultText to my directPanelControl(rootElement, wantedRole, wantedName, operation, replacement)
+  if resultText is not "WAIT:not_found" then return resultText
+  tell application "System Events"
+    try
+      set groupNumber to 0
+      repeat with groupRef in (every group of rootElement)
+        set groupNumber to groupNumber + 1
+        if groupNumber > 8 then exit repeat
+        set resultText to my directPanelControl(contents of groupRef, wantedRole, wantedName, operation, replacement)
+        if resultText is not "WAIT:not_found" then return resultText
+      end repeat
+    end try
+  end tell
+  return "WAIT:not_found"
+end shallowPanelControl
+
+on tryPanel(theContainer, processRef, panelButton, operation, argumentValue)
+  tell application "System Events"
+    if (my shallowPanelControl(theContainer, "AXButton", panelButton, "check", "")) is "OK" and (my shallowPanelControl(theContainer, "AXButton", "Cancel", "check", "")) is "OK" then
+      if operation is "check" then return "OK:panel"
+      if operation is "press" then return my shallowPanelControl(theContainer, "AXButton", panelButton, "press", "")
+      if operation is "save_name" then return my shallowPanelControl(theContainer, "AXTextField", "deduplicator-project.json", "replace", argumentValue)
+      if operation is "export_name" then return my shallowPanelControl(theContainer, "AXTextField", "deduplicated-records", "replace", argumentValue)
+      if operation is "goto" then
+        set frontmost of processRef to true
+        if not (frontmost of processRef) then return "WAIT:not_frontmost"
+        keystroke "g" using {command down, shift down}
+        delay 0.5
+        if not (frontmost of processRef) then return "WAIT:not_frontmost"
+        keystroke argumentValue
+        key code 36
+        return "OK:goto_sent"
+      end if
+    end if
+  end tell
+  return "WAIT:native_panel"
+end tryPanel
+
 on panelOperation(processRef, panelButton, operation, argumentValue)
   tell application "System Events"
-    repeat with appWindow in (every window of processRef)
-      set containers to {contents of appWindow}
+    set appWindows to every window of processRef
+    -- Sheets are the normal Tauri/rfd parented-panel path. Inspect them first.
+    repeat with appWindow in appWindows
       try
         repeat with appSheet in (every sheet of appWindow)
-          set end of containers to contents of appSheet
+          set panelResult to my tryPanel(contents of appSheet, processRef, panelButton, operation, argumentValue)
+          if panelResult is not "WAIT:native_panel" then return panelResult
         end repeat
       end try
-      repeat with containerRef in containers
-        set theContainer to contents of containerRef
-        if (my controlNamed(theContainer, "AXButton", panelButton, "check", "")) is "OK" and (my controlNamed(theContainer, "AXButton", "Cancel", "check", "")) is "OK" then
-          if operation is "check" then return "OK:panel"
-          if operation is "press" then return my controlNamed(theContainer, "AXButton", panelButton, "press", "")
-          if operation is "save_name" then return my controlNamed(theContainer, "AXTextField", "deduplicator-project.json", "replace", argumentValue)
-          if operation is "export_name" then return my controlNamed(theContainer, "AXTextField", "deduplicated-records", "replace", argumentValue)
-          if operation is "goto" then
-            set frontmost of processRef to true
-            keystroke "g" using {command down, shift down}
-            delay 0.5
-            keystroke argumentValue
-            key code 36
-            return "OK:goto_sent"
-          end if
-        end if
-      end repeat
+    end repeat
+    -- Some AppKit panels may be exposed as app-owned windows instead.
+    repeat with appWindow in appWindows
+      set panelResult to my tryPanel(contents of appWindow, processRef, panelButton, operation, argumentValue)
+      if panelResult is not "WAIT:native_panel" then return panelResult
     end repeat
   end tell
   return "WAIT:native_panel"
@@ -85,7 +159,7 @@ on clipped(valueToClip)
 end clipped
 
 on dumpWindows(processRef)
-  set outputText to "AX diagnostic (maximum two windows and 150 controls per window)" & linefeed
+  set outputText to "AX diagnostic (maximum two windows and eight direct sheets each)" & linefeed
   tell application "System Events"
     set allWindows to every window of processRef
     set outputText to outputText & "window_count=" & (count of allWindows) & linefeed
@@ -94,28 +168,27 @@ on dumpWindows(processRef)
       set windowIndex to windowIndex + 1
       if windowIndex > 2 then exit repeat
       set outputText to outputText & "window=" & windowIndex & linefeed
-      set elementIndex to 0
       try
-        set candidates to entire contents of appWindow
-        repeat with candidate in candidates
-          set elementIndex to elementIndex + 1
-          if elementIndex > 150 then exit repeat
-          set elementRole to "<unavailable>"
-          set elementName to "<unavailable>"
-          set elementDescription to "<unavailable>"
+        set outputText to outputText & "window_name=" & (my clipped(name of appWindow)) & linefeed
+      end try
+      try
+        set sheetsFound to every sheet of appWindow
+        set outputText to outputText & "sheet_count=" & (count of sheetsFound) & linefeed
+        set sheetNumber to 0
+        repeat with sheetRef in sheetsFound
+          set sheetNumber to sheetNumber + 1
+          if sheetNumber > 8 then exit repeat
+          set outputText to outputText & "sheet=" & sheetNumber & linefeed
           try
-            set elementRole to my clipped(role of candidate)
+            set buttonNames to name of every button of sheetRef
+            set outputText to outputText & "direct_buttons=" & (my clipped(buttonNames)) & linefeed
           end try
           try
-            set elementName to my clipped(name of candidate)
+            set outputText to outputText & "direct_groups=" & (count of every group of sheetRef) & linefeed
           end try
-          try
-            set elementDescription to my clipped(description of candidate)
-          end try
-          set outputText to outputText & "role=" & elementRole & " name=" & elementName & " description=" & elementDescription & linefeed
         end repeat
       on error errorMessage
-        set outputText to outputText & "contents unavailable: " & (my clipped(errorMessage)) & linefeed
+        set outputText to outputText & "sheets unavailable: " & (my clipped(errorMessage)) & linefeed
       end try
     end repeat
   end tell
