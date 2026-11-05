@@ -4,15 +4,13 @@ This file tracks the ordered engineering tasks for **`record-deduplicator`**.
 
 ## Execution tracker (revised 2026-11-02)
 
-Current task: **prepare the system for Terra only**. The latest user instruction
-stops live research, export requests and downloads. Existing partial collection
-work is preserved with its limitations. Do not resume old browser queues or
-watchers. The [current handoff](docs/14-terra-handoff.md) is the entry point.
-The user will start development with Terra 6.1 max; B01 is the next coding batch.
-Collection, validation and manuscript writing remain separate future runs.
+This section records the 2026-11-02 foundation and planning snapshot.
+At that point, research, exports and downloads had stopped, partial evidence
+was preserved, and B01 was the next coding batch. Collection, validation and
+manuscript writing require separately authorized runs.
 
-Follow [the full development plan](docs/08-development-plan.md) and
-[Terra 6.1 runbook](docs/09-terra-execution.md). The B-batches are the executable
+Follow [the full development plan](docs/08-development-plan.md).
+The B-batches define the execution
 order; the M0-M9 inventory below remains for coverage. The
 [engine contract](docs/10-engine-contract.md) overrides conflicting older rules.
 

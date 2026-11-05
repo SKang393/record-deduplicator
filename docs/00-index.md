@@ -4,10 +4,8 @@ This `docs/` directory records all domain knowledge, methodological evidence, al
 
 ## Start here for implementation
 
-- [Current preparation-only Terra handoff and next batch](14-terra-handoff.md)
 - [Product positioning and competitor evidence](07-product-positioning.md)
 - [Full development plan and release gates](08-development-plan.md)
-- [GPT-6.1 Terra launch and handoff prompts](09-terra-execution.md)
 - [Engine contract and specification corrections](10-engine-contract.md)
 - [Preparation review and verification evidence](11-preparation-review.md)
 - [Prepared database research and original-export protocol](06-benchmark-search-protocol.md)

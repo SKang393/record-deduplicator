@@ -1,16 +1,16 @@
-# Agent Handoff & Operating Instructions (`record-deduplicator`)
+# Agent Operating Instructions (`record-deduplicator`)
 
 Welcome! This file (`AGENT.md` / `AGENTS.md`) is the primary entry point for any AI coding agent taking over development of **`record-deduplicator`**. Read this document and [`TASKS.md`](TASKS.md) before making changes.
 
 ## Current execution contract (revised 2026-11-02)
 
 - **Preparation only:** the user's latest instruction stops research execution
-  and export acquisition. Finish the Terra setup and handoff. Do not initiate
+  and export acquisition. Follow the selected task scope. Do not initiate
   searches, exports, downloads, mailbox retrieval or file-copy watchers. Preserve
-  existing partial evidence. See [the current handoff](docs/14-terra-handoff.md).
+  existing partial evidence. See [the development tracker](TASKS.md).
 - The repository is a foundation build, not a working deduplicator. Follow the
   bounded batches in [the development plan](docs/08-development-plan.md) and
-  [Terra 6.1 runbook](docs/09-terra-execution.md).
+  [development tracker](TASKS.md).
 - [The engine contract](docs/10-engine-contract.md) supersedes contradictory
   algorithm, validation, performance and reporting claims in the original notes.
 - Start every user response with `Thread: [short title]` and a one-sentence
@@ -51,7 +51,7 @@ Welcome! This file (`AGENT.md` / `AGENTS.md`) is the primary entry point for any
 
 1. **Git & Commit Attribution Policy (`SKang393` ONLY):**
    - All commits and pushes MUST be recorded **exclusively as `SKang393`**.
-   - Keep git identity set to `Sungwoo Kang <200436385+SKang393@users.noreply.github.com>` (GitHub maps this noreply email directly to the `SKang393` account, matching all previous commits).
+   - Keep git identity set to `SKang393 <200436385+SKang393@users.noreply.github.com>` (GitHub maps this noreply email directly to the `SKang393` account, matching all previous commits).
    - **NEVER** add `Co-authored-by:`, `Signed-off-by:` for an AI/bot, or any agent attribution trailers in commit messages or PR descriptions.
 2. **LLM Validation Is External Only (NOT Part of the Program):**
    - The shipped `record-deduplicator` binary and `dedup-core` / `dedup-cli` crates are **100% deterministic, rule-based + fuzzy algorithmic**, and **offline-first**.
@@ -89,7 +89,6 @@ All gathered research, domain schemas, algorithmic specifications, and architect
 | [`docs/04-architecture-and-ui-spec.md`](docs/04-architecture-and-ui-spec.md) | Rust workspace layout, crate responsibilities, CLI JSON contract, Tauri 2 + React minimalist chic UI specification, and macOS readiness checklist. |
 | [`docs/05-validation-and-llm-oracle.md`](docs/05-validation-and-llm-oracle.md) | External `validation/` harness design, Tier 3 LLM Oracle rubric, human dual-labeling + Cohen's kappa protocol, benchmark datasets, and target accuracy metrics. |
 | [`docs/06-benchmark-search-protocol.md`](docs/06-benchmark-search-protocol.md) | Prepared field-specific research, raw-count refinement and original-export audit procedure; execution stopped. |
-| [`docs/14-terra-handoff.md`](docs/14-terra-handoff.md) | Current scope, B01 launch, stopped collection state and future execution gates. |
 | [`docs/reference-data/`](docs/reference-data/) | Raw OpenAlex 2023–2026 top-cited journal outputs and ERIC API yield probe logs collected during planning. |
 
 ---

@@ -1,16 +1,16 @@
 # Full development plan
 
-Owner: SKang393. Revised: 2026-11-02. Execution target: GPT-6.1 Terra, max reasoning.
+Owner: SKang393. Revised: 2026-11-02.
 This is the execution order; [TASKS.md](../TASKS.md) retains the original M0-M9
 task inventory. [Engine contract](10-engine-contract.md) resolves older design
-conflicts. [Terra runbook](09-terra-execution.md) contains launch and handoff prompts.
+conflicts.
 
 ## Starting state and delivery boundaries
 
-Current activity is **Terra setup only**. Collection is stopped at the user's
-direction. The [current handoff](14-terra-handoff.md) supersedes earlier execution
-authority; the [collection protocol](06-benchmark-search-protocol.md) is retained
-for a future user-selected collection run.
+The starting snapshot on 2026-11-02 covered preparation only, with collection
+stopped at the user's direction. The [development tracker](../TASKS.md) records
+later scope decisions. The [collection protocol](06-benchmark-search-protocol.md)
+is retained for separately authorized collection runs.
 The ten core validation fields are medicine, neuroscience, public health,
 psychology, pharmacy/pharmacology, engineering, health science, environmental
 science, education/educational research and computer science. Special education
@@ -37,7 +37,7 @@ checks. Current scaffolding introduces no third-party runtime dependency.
 | Later expansion | B13 | New discipline profiles and search-update workflow. | Measured incremental value without relaxing safety or contaminating held-out evaluation. |
 
 No calendar estimate is asserted before B04 produces an actual vertical slice.
-Use one bounded batch per Terra run, splitting a batch further if it cannot be
+Work in bounded batches, splitting a batch if it cannot be
 implemented and verified together. Do not start all milestones at once.
 The sequential route is B01-B06, B08a, B07, B09-B11, B08b, B12, then B13.
 B08a may start earlier after B04; the split freeze must precede corpus tuning.

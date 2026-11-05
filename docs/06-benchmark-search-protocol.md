@@ -4,7 +4,7 @@ Protocol: RD-COLLECTION-2026-11-02-v2. Status: **execution stopped; preparation 
 The latest user instruction supersedes earlier collection authority: do not run
 searches, request exports, download files or retrieve pending export mail.
 The procedure below is retained for a future user-selected collection run, not
-as an instruction to execute it now. See [the current handoff](14-terra-handoff.md).
+as an instruction to execute it now. See [the development tracker](../TASKS.md).
 
 Earlier on 2026-11-02, the user confirmed the counting basis and date coverage,
 and selected commonly used native databases alongside EBSCOhost.
