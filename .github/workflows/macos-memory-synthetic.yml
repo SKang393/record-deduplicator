@@ -1,0 +1,93 @@
+name: Encrypted Apple Silicon memory-candidate synthetic check
+
+on:
+  push:
+    branches: [SKang393/macos-memory-synthetic-20261105]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    if: github.repository == 'SKang393/record-deduplicator' && github.ref == 'refs/heads/SKang393/macos-memory-synthetic-20261105'
+    runs-on: macos-15
+    timeout-minutes: 45
+    environment: dedup-macos-memory-synthetic-20261105
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.15.0'
+      - name: Authenticate code-only candidate
+        shell: bash
+        env:
+          MACOS_READINESS_KEY: ${{ secrets.MACOS_MEMORY_KEY }}
+        run: |
+          set +x
+          umask 077
+          test "$(uname -m)" = arm64
+          mkdir -p "$RUNNER_TEMP/native-private/evidence"
+          touch "$RUNNER_TEMP/native-private/decrypt.log" "$RUNNER_TEMP/native-private/run.log"
+          node scripts/memory-crypto.cjs decrypt payload/candidate-memory.enc "$RUNNER_TEMP/native-private/candidate.zip" candidate-memory >>"$RUNNER_TEMP/native-private/decrypt.log" 2>&1
+          python3 scripts/memory-extract.py "$RUNNER_TEMP/native-private/candidate.zip" "$RUNNER_TEMP/native-private/source" >>"$RUNNER_TEMP/native-private/decrypt.log" 2>&1
+      - name: Fetch locked build dependencies
+        shell: bash
+        run: |
+          set +x
+          work="$RUNNER_TEMP/native-private"
+          rustup toolchain install 1.99.0-aarch64-apple-darwin --profile minimal
+          rustup target add --toolchain 1.99.0-aarch64-apple-darwin aarch64-apple-darwin
+          rustc +1.99.0-aarch64-apple-darwin -vV > "$work/evidence/rust-toolchain.txt"
+          grep -Fx 'host: aarch64-apple-darwin' "$work/evidence/rust-toolchain.txt"
+          (cd "$work/source" && cargo +1.99.0-aarch64-apple-darwin fetch --locked)
+          (cd "$work/source" && cargo +1.99.0-aarch64-apple-darwin fetch --manifest-path app/src-tauri/Cargo.toml --locked)
+          (cd "$work/source/app" && npm ci --ignore-scripts)
+      - name: Prepare isolated synthetic host
+        shell: bash
+        run: bash scripts/native-followup-prepare.sh >>"$RUNNER_TEMP/native-private/run.log" 2>&1
+      - name: Test and build the memory-candidate arm64 app offline
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: sandbox-exec -f "$RUNNER_TEMP/native-private/offline.sb" bash scripts/memory-test.sh >>"$RUNNER_TEMP/native-private/run.log" 2>&1
+      - name: Check native import, export, and recovery
+        id: native
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: bash scripts/memory-ui.sh >>"$RUNNER_TEMP/native-private/run.log" 2>&1
+      - name: Report check outcome
+        if: always()
+        shell: bash
+        env:
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          NATIVE_OUTCOME: ${{ steps.native.outcome }}
+        run: |
+          if [ "$BUILD_OUTCOME" != success ] || [ "$NATIVE_OUTCOME" != success ]; then
+            echo '::error::Build or native synthetic workflow did not pass.'
+            exit 1
+          fi
+      - name: Encrypt evidence
+        if: always()
+        shell: bash
+        env:
+          MACOS_READINESS_KEY: ${{ secrets.MACOS_MEMORY_KEY }}
+        run: |
+          set +x
+          p="$RUNNER_TEMP/native-private"
+          if [ ! -d "$p/evidence" ]; then
+            echo '::warning::No evidence directory is available.'
+            exit 0
+          fi
+          tar -czf "$p/evidence.tar.gz" -C "$p" decrypt.log run.log evidence
+          node scripts/memory-crypto.cjs encrypt "$p/evidence.tar.gz" "$p/evidence-memory.enc" evidence-memory
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: encrypted-macos-memory-synthetic-evidence
+          path: ${{ runner.temp }}/native-private/evidence-memory.enc
+          if-no-files-found: ignore
+          retention-days: 1
