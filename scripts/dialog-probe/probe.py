@@ -191,20 +191,38 @@ class Probe:
 
     def ax(self, operation: str, target: str = "", extra: str = "", *, retry: bool = True) -> None:
         stage_deadline = min(self.deadline - DIAGNOSTIC_RESERVE_SECONDS, time.monotonic() + STAGE_SECONDS)
+        last_state = "app_process"
         while time.monotonic() < stage_deadline:
             if self.process.poll() is not None:
                 raise Failed(f"{self.stage}: app exited unexpectedly")
+            self.check_launched_pid(self.executable)
             result = self.command(["/usr/bin/osascript", str(UI_SCRIPT), str(self.process.pid),
                                    self.bundle_id, operation, target, extra], "accessibility.log")
             reply = result.stdout.decode("utf-8", "replace").strip()
+            lines = reply.splitlines()
+            identity = {"stage": self.stage, "operation": operation,
+                        "state": lines[0] if lines else "no_identity_response"}
+            for line in lines[1:]:
+                key, separator, value = line.partition("=")
+                if separator and key in {"requested_pid", "observed_pid", "observed_name", "observed_bundle"}:
+                    identity[key] = value[:160]
+            with (self.output / "system-events-identity.jsonl").open("a", encoding="utf-8") as log:
+                log.write(json.dumps(identity, ensure_ascii=True) + "\n")
+            self.status["checks"]["system_events_identity"] = identity
             if result.returncode != 0:
                 raise Blocked(f"{self.stage}: System Events, accessibility, or automation unavailable")
             if reply.startswith("OK"):
                 return
+            if lines and lines[0].startswith("WAIT:"):
+                last_state = lines[0][5:]
             if not reply.startswith("WAIT:") or not retry:
-                raise Blocked(f"{self.stage}: accessibility action not confirmed")
+                raise Blocked(f"{self.stage}: System Events identity or control unavailable ({last_state})")
             time.sleep(min(0.5, self.remaining()))
-        raise Blocked(f"{self.stage}: expected window, accessibility control, or native panel unavailable")
+        if last_state == "bundle_unavailable":
+            raise Blocked(f"{self.stage}: System Events bundle identifier remained unavailable")
+        if last_state == "bundle_mismatch":
+            raise Blocked(f"{self.stage}: System Events reported a persistent bundle identifier mismatch")
+        raise Blocked(f"{self.stage}: expected window, accessibility control, or native panel unavailable ({last_state})")
 
     def screenshot(self, name: str) -> None:
         path = self.output / f"{name}.png"
@@ -248,13 +266,14 @@ class Probe:
             if pidpath(self.process.pid, buffer, len(buffer)) > 0:
                 try:
                     if Path(os.fsdecode(buffer.value)).resolve(strict=True) == expected:
-                        ps = self.command(["/bin/ps", "-p", str(self.process.pid), "-o", "pid=", "-o", "comm="],
-                                          "process-identity.log")
-                        fields = ps.stdout.decode("utf-8", "replace").strip().split(maxsplit=1)
-                        if ps.returncode != 0 or len(fields) != 2 or fields[0] != str(self.process.pid):
-                            raise Blocked("ps did not confirm the owned app PID")
+                        if not self.status["checks"].get("ps_identity_recorded"):
+                            ps = self.command(["/bin/ps", "-p", str(self.process.pid), "-o", "pid=", "-o", "comm="],
+                                              "process-identity.log")
+                            fields = ps.stdout.decode("utf-8", "replace").strip().split(maxsplit=1)
+                            if ps.returncode != 0 or len(fields) != 2 or fields[0] != str(self.process.pid):
+                                raise Blocked("ps did not confirm the owned app PID")
+                            self.status["checks"]["ps_identity_recorded"] = True
                         self.status["checks"]["owned_pid_executable_matches"] = True
-                        self.status["checks"]["ps_identity_recorded"] = True
                         return
                 except OSError:
                     pass
@@ -280,6 +299,7 @@ class Probe:
             executable = self.app / "Contents" / "MacOS" / executable_name
             if not executable.is_file():
                 raise ValueError("app executable is missing")
+            self.executable = executable.resolve(strict=True)
             source_bytes = self.fixture.read_bytes()
             if not source_bytes or len(source_bytes) > 1024 * 1024:
                 raise ValueError("synthetic fixture must be nonempty and at most 1 MiB")

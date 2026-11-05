@@ -69,8 +69,16 @@ end panelOperation
 on clipped(valueToClip)
   try
     set resultText to valueToClip as text
-    if (length of resultText) > 160 then return (text 1 thru 160 of resultText) & "..."
-    return resultText
+    set safeText to ""
+    repeat with oneCharacter in characters of resultText
+      if oneCharacter is linefeed or oneCharacter is return or oneCharacter is tab then
+        set safeText to safeText & " "
+      else
+        set safeText to safeText & oneCharacter
+      end if
+      if (length of safeText) >= 160 then exit repeat
+    end repeat
+    return safeText
   on error
     return "<unavailable>"
   end try
@@ -123,13 +131,31 @@ on run argv
   set extra to item 5 of argv
   tell application "System Events"
     set matchingProcesses to every application process whose unix id is wantedPid
-    if (count of matchingProcesses) is not 1 then return "WAIT:app_process"
+    if (count of matchingProcesses) is not 1 then return "WAIT:app_process" & linefeed & "requested_pid=" & wantedPid & linefeed & "observed_pid=<unavailable>" & linefeed & "observed_name=<unavailable>" & linefeed & "observed_bundle=<unavailable>"
     set processRef to item 1 of matchingProcesses
-    if (bundle identifier of processRef as text) is not wantedBundle then error "app PID bundle identifier mismatch"
-    if operation is "dump" then return my dumpWindows(processRef)
+    set observedPid to -1
+    set observedName to "<unavailable>"
+    set observedBundle to "<unavailable>"
+    try
+      set observedPid to (unix id of processRef) as integer
+    end try
+    try
+      set observedName to my clipped(name of processRef)
+    end try
+    try
+      set bundleValue to bundle identifier of processRef
+      if bundleValue is not missing value then set observedBundle to my clipped(bundleValue)
+    end try
+    set identityInfo to linefeed & "requested_pid=" & wantedPid & linefeed & "observed_pid=" & observedPid & linefeed & "observed_name=" & observedName & linefeed & "observed_bundle=" & observedBundle
+    if observedPid is not wantedPid then return "WAIT:app_process" & identityInfo
+    if observedBundle is "" or observedBundle is "<unavailable>" or observedBundle is "missing value" then return "WAIT:bundle_unavailable" & identityInfo
+    considering case
+      if observedBundle is not wantedBundle then return "WAIT:bundle_mismatch" & identityInfo
+    end considering
+    if operation is "dump" then return (my dumpWindows(processRef)) & identityInfo
     set frontmost of processRef to true
-    if (count of windows of processRef) is 0 then return "WAIT:app_window"
-    if operation is "window" then return "OK:window"
+    if (count of windows of processRef) is 0 then return "WAIT:app_window" & identityInfo
+    if operation is "window" then return "OK:window" & identityInfo
     if operation is "click" or operation is "text" then
       repeat with appWindow in (every window of processRef)
         if operation is "click" then
@@ -137,15 +163,15 @@ on run argv
         else
           set matchResult to my controlNamed(contents of appWindow, "AXStaticText", target, "check", "")
         end if
-        if matchResult is "OK" then return "OK:control"
+        if matchResult is "OK" then return "OK:control" & identityInfo
       end repeat
-      return "WAIT:control"
+      return "WAIT:control" & identityInfo
     end if
-    if operation is "panel_check" then return my panelOperation(processRef, target, "check", "")
-    if operation is "panel_goto" then return my panelOperation(processRef, target, "goto", extra)
-    if operation is "panel_press" then return my panelOperation(processRef, target, "press", "")
-    if operation is "panel_save_name" then return my panelOperation(processRef, target, "save_name", extra)
-    if operation is "panel_export_name" then return my panelOperation(processRef, target, "export_name", extra)
+    if operation is "panel_check" then return (my panelOperation(processRef, target, "check", "")) & identityInfo
+    if operation is "panel_goto" then return (my panelOperation(processRef, target, "goto", extra)) & identityInfo
+    if operation is "panel_press" then return (my panelOperation(processRef, target, "press", "")) & identityInfo
+    if operation is "panel_save_name" then return (my panelOperation(processRef, target, "save_name", extra)) & identityInfo
+    if operation is "panel_export_name" then return (my panelOperation(processRef, target, "export_name", extra)) & identityInfo
   end tell
   error "unsupported probe operation"
 end run
