@@ -220,6 +220,40 @@ def inspect_recovery(root: Path, home: Path, pid: int, source_bytes: bytes, base
         raise Failed(f"recovery pre-termination verification failed: {error}") from error
 
 
+def copy_recovery_evidence(session: Path, home: Path, output: Path, evidence: dict) -> dict:
+    """Copy only already-verified recovery bytes, without replacing any evidence."""
+    names = {"source-0.bytes": "source_sha256", "base.project.json": "base_sha256",
+             "journal.jsonl": "journal_sha256", "commits.jsonl": "commits_sha256"}
+    try:
+        home = home.resolve(strict=True)
+        if session.is_symlink() or not session.is_dir() or not session.resolve(strict=True).is_relative_to(home):
+            raise ValueError("recovery session is outside the isolated HOME")
+        destination = output / "recovery-prekill-files"
+        destination.mkdir(mode=0o700, exist_ok=False)
+        for name, hash_key in names.items():
+            source = session / name
+            if source.is_symlink() or not source.is_file() or not source.resolve(strict=True).is_relative_to(home):
+                raise ValueError(f"recovery file is unavailable or outside isolated HOME: {name}")
+            data = source.read_bytes()
+            if sha256(data) != evidence[hash_key]:
+                raise ValueError(f"recovery file changed after verification: {name}")
+            with (destination / name).open("xb") as copy:
+                copy.write(data)
+                copy.flush()
+                os.fsync(copy.fileno())
+        for name, hash_key in names.items():
+            source = session / name
+            copied = destination / name
+            if (source.is_symlink() or copied.is_symlink() or
+                    not source.resolve(strict=True).is_relative_to(home) or
+                    sha256(source.read_bytes()) != evidence[hash_key] or
+                    sha256(copied.read_bytes()) != evidence[hash_key]):
+                raise ValueError(f"recovery source or copy changed during evidence capture: {name}")
+        return {"directory": destination.name, "verified_files": len(names)}
+    except (OSError, KeyError, TypeError, ValueError) as error:
+        raise Failed(f"recovery evidence capture failed: {error}") from error
+
+
 def verify_recovered_project(path: Path, baseline_path: Path, source_bytes: bytes, event: dict) -> dict:
     """Confirm native save after restoration contains the exact committed event and source."""
     try:
@@ -521,7 +555,10 @@ class Probe:
         self.stage = "verify_recovery_before_kill"
         session_id, review_event, recovery_evidence = inspect_recovery(
             self.recovery_root, self.isolated_home, self.process.pid, source_bytes, project_path)
-        (self.output / "recovery-before-kill.json").write_text(json.dumps(recovery_evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        self.status["checks"]["recovery_file_copies"] = copy_recovery_evidence(
+            self.recovery_root / session_id, self.isolated_home, self.output, recovery_evidence)
+        with (self.output / "recovery-before-kill.json").open("x", encoding="utf-8") as stream:
+            stream.write(json.dumps(recovery_evidence, indent=2, sort_keys=True) + "\n")
         self.status["checks"]["recovery_before_kill"] = {"session_id": session_id, "inside_isolated_home": True,
                                                           "review_event_sha256": review_event["event_sha256"]}
         if self.sandbox_profile.read_bytes() != profile_bytes or Path(os.environ["HOME"]).resolve(strict=True) != self.isolated_home:
