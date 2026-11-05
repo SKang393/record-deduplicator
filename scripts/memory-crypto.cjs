@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const crypto = require('node:crypto');
 const [mode, input, output, purpose] = process.argv.slice(2);
 const magic = Buffer.from('RDMAC001');
-const sourceSha = 'a88fa82e1a7d7720ea7949cf4c072574c810d4c8452cb59885970641a4d825f1';
+const sourceSha = '358b40179d41f83f896550050afcd511aa0034942ee7bdf2a8f19f092584fd81';
 try {
   if (!['encrypt', 'decrypt'].includes(mode) || !input || !output || !['candidate-memory', 'evidence-memory'].includes(purpose)) throw Error('arguments');
   const encoded = process.env.MACOS_READINESS_KEY || '';
