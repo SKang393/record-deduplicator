@@ -1,4 +1,4 @@
-name: Encrypted macOS candidate check
+name: Encrypted macOS native diagnostics
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
   candidate:
     if: github.repository == 'SKang393/record-deduplicator' && github.ref == 'refs/heads/SKang393/macos-readiness-20261104-1041e15a'
     runs-on: macos-15
-    timeout-minutes: 150
+    timeout-minutes: 25
     environment: dedup-macos-20261104-1041e15a
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -20,45 +20,72 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24.15.0'
-      - name: Decrypt and authenticate the candidate
+      - name: Decrypt and authenticate the original DMG and receipt tests
         shell: bash
         env:
           MACOS_READINESS_KEY: ${{ secrets.MACOS_READINESS_KEY }}
         run: |
           set +x
           umask 077
-          mkdir -p "$RUNNER_TEMP/dedup-private/evidence"
-          touch "$RUNNER_TEMP/dedup-private/decrypt.log" "$RUNNER_TEMP/dedup-private/run.log"
-          if ! node scripts/crypto.cjs decrypt payload/candidate.enc "$RUNNER_TEMP/dedup-private/source.zip" source >>"$RUNNER_TEMP/dedup-private/decrypt.log" 2>&1; then
-            echo '::error::Candidate authentication failed. See encrypted evidence.'
+          mkdir -p "$RUNNER_TEMP/native-private/evidence"
+          touch "$RUNNER_TEMP/native-private/decrypt.log" "$RUNNER_TEMP/native-private/run.log"
+          if ! node scripts/native-followup-crypto.cjs decrypt payload/original-review.dmg.enc "$RUNNER_TEMP/native-private/original.dmg" dmg >>"$RUNNER_TEMP/native-private/decrypt.log" 2>&1; then
+            echo '::error::Original DMG authentication failed.'
             exit 1
           fi
-          if ! node scripts/crypto.cjs decrypt payload/overlay.enc "$RUNNER_TEMP/dedup-private/overlay.zip" overlay >>"$RUNNER_TEMP/dedup-private/decrypt.log" 2>&1; then
-            echo '::error::Test overlay authentication failed. See encrypted evidence.'
+          if ! node scripts/native-followup-crypto.cjs decrypt payload/receipts.enc "$RUNNER_TEMP/native-private/receipts.zip" receipts >>"$RUNNER_TEMP/native-private/decrypt.log" 2>&1; then
+            echo '::error::Synthetic receipt-test authentication failed.'
             exit 1
           fi
-          if ! node scripts/crypto.cjs decrypt payload/validation.enc "$RUNNER_TEMP/dedup-private/validation.zip" validation >>"$RUNNER_TEMP/dedup-private/decrypt.log" 2>&1; then
-            echo '::error::Synthetic evaluator overlay authentication failed. See encrypted evidence.'
-            exit 1
-          fi
-          if ! node scripts/crypto.cjs decrypt payload/receipts.enc "$RUNNER_TEMP/dedup-private/receipts.zip" receipts >>"$RUNNER_TEMP/dedup-private/decrypt.log" 2>&1; then
-            echo '::error::Synthetic receipt-test overlay authentication failed. See encrypted evidence.'
-            exit 1
-          fi
-      - name: Fetch locked dependencies without lifecycle scripts
+      - name: Prepare network sandbox and compare automation controls
         shell: bash
         run: |
           set +x
-          if ! bash scripts/prefetch.sh >>"$RUNNER_TEMP/dedup-private/run.log" 2>&1; then
-            echo '::error::Dependency preparation failed. See encrypted evidence.'
+          if ! bash scripts/native-followup-prepare.sh >>"$RUNNER_TEMP/native-private/run.log" 2>&1; then
+            echo '::error::Network sandbox preparation failed.'
             exit 1
           fi
-      - name: Run offline macOS checks and probe native launch
+      - name: Run final synthetic receipt tests offline
+        id: receipts
+        continue-on-error: true
         shell: bash
         run: |
           set +x
-          if ! sandbox-exec -f "$RUNNER_TEMP/dedup-private/offline.sb" bash scripts/test-macos.sh >>"$RUNNER_TEMP/dedup-private/run.log" 2>&1; then
-            echo '::error::macOS checks failed. See encrypted evidence.'
+          if ! sandbox-exec -f "$RUNNER_TEMP/native-private/offline.sb" bash scripts/native-followup-receipts.sh >>"$RUNNER_TEMP/native-private/run.log" 2>&1; then
+            echo '::error::Synthetic receipt tests failed.'
+            exit 1
+          fi
+      - name: Inspect the original DMG and create a checked corrected image
+        id: layout
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +x
+          if ! bash scripts/native-followup-layout.sh >>"$RUNNER_TEMP/native-private/run.log" 2>&1; then
+            echo '::error::DMG layout inspection or correction failed.'
+            exit 1
+          fi
+      - name: Probe synthetic native dialogs with only the app sandboxed
+        id: native
+        if: steps.layout.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +x
+          if ! bash scripts/native-followup-ui.sh >>"$RUNNER_TEMP/native-private/run.log" 2>&1; then
+            echo '::error::Native dialog probe did not pass.'
+            exit 1
+          fi
+      - name: Report the combined check outcome
+        if: always()
+        shell: bash
+        env:
+          RECEIPT_OUTCOME: ${{ steps.receipts.outcome }}
+          LAYOUT_OUTCOME: ${{ steps.layout.outcome }}
+          NATIVE_OUTCOME: ${{ steps.native.outcome }}
+        run: |
+          if [ "$RECEIPT_OUTCOME" != success ] || [ "$LAYOUT_OUTCOME" != success ] || [ "$NATIVE_OUTCOME" != success ]; then
+            echo '::error::At least one check failed, was blocked, or was skipped.'
             exit 1
           fi
       - name: Encrypt evidence
@@ -68,8 +95,8 @@ jobs:
           MACOS_READINESS_KEY: ${{ secrets.MACOS_READINESS_KEY }}
         run: |
           set +x
-          p="$RUNNER_TEMP/dedup-private"
-          if [ ! -d "$p" ] || [ ! -f scripts/crypto.cjs ]; then
+          p="$RUNNER_TEMP/native-private"
+          if [ ! -d "$p" ] || [ ! -f scripts/native-followup-crypto.cjs ]; then
             echo '::warning::No evidence directory is available.'
             exit 0
           fi
@@ -77,14 +104,14 @@ jobs:
             echo '::error::Evidence archive creation failed.'
             exit 1
           fi
-          if ! node scripts/crypto.cjs encrypt "$p/evidence.tar.gz" "$p/evidence.enc" evidence >/dev/null 2>&1; then
+          if ! node scripts/native-followup-crypto.cjs encrypt "$p/evidence.tar.gz" "$p/evidence.enc" evidence >/dev/null 2>&1; then
             echo '::error::Evidence encryption failed.'
             exit 1
           fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
-          name: encrypted-macos-evidence
-          path: ${{ runner.temp }}/dedup-private/evidence.enc
+          name: encrypted-macos-native-followup-evidence
+          path: ${{ runner.temp }}/native-private/evidence.enc
           if-no-files-found: ignore
           retention-days: 1

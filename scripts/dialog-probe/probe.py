@@ -10,11 +10,13 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 import csv
+import ctypes
 import hashlib
 import json
 import os
 from pathlib import Path
 import plistlib
+import re
 import subprocess
 import sys
 import time
@@ -157,10 +159,11 @@ def verify_export(directory: Path, source_bytes: bytes, saved_project: Path) -> 
 
 
 class Probe:
-    def __init__(self, app: Path, fixture: Path, output: Path, seconds: int):
+    def __init__(self, app: Path, fixture: Path, output: Path, sandbox_profile: Path, seconds: int):
         self.app = app.resolve(strict=True)
         self.fixture = fixture.resolve(strict=True)
         self.output = output.resolve()
+        self.sandbox_profile = sandbox_profile.resolve(strict=True)
         self.deadline = time.monotonic() + seconds
         self.process = None
         self.app_log = None
@@ -227,6 +230,37 @@ class Probe:
             if not path.exists():
                 path.write_text("AX diagnostic unavailable or timed out.\n", encoding="utf-8")
 
+    def check_launched_pid(self, executable: Path) -> None:
+        """Require sandbox-exec to become the expected app at the owned PID."""
+        try:
+            libproc = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+            pidpath = libproc.proc_pidpath
+            pidpath.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32]
+            pidpath.restype = ctypes.c_int
+        except (OSError, AttributeError) as error:
+            raise Blocked("cannot inspect the launched process executable") from error
+        expected = executable.resolve(strict=True)
+        stage_deadline = min(self.deadline - DIAGNOSTIC_RESERVE_SECONDS, time.monotonic() + STAGE_SECONDS)
+        while time.monotonic() < stage_deadline:
+            if self.process.poll() is not None:
+                raise Failed("sandboxed app exited before its executable could be verified")
+            buffer = ctypes.create_string_buffer(4096)
+            if pidpath(self.process.pid, buffer, len(buffer)) > 0:
+                try:
+                    if Path(os.fsdecode(buffer.value)).resolve(strict=True) == expected:
+                        ps = self.command(["/bin/ps", "-p", str(self.process.pid), "-o", "pid=", "-o", "comm="],
+                                          "process-identity.log")
+                        fields = ps.stdout.decode("utf-8", "replace").strip().split(maxsplit=1)
+                        if ps.returncode != 0 or len(fields) != 2 or fields[0] != str(self.process.pid):
+                            raise Blocked("ps did not confirm the owned app PID")
+                        self.status["checks"]["owned_pid_executable_matches"] = True
+                        self.status["checks"]["ps_identity_recorded"] = True
+                        return
+                except OSError:
+                    pass
+            time.sleep(min(0.2, self.remaining()))
+        raise Blocked("sandbox-exec PID did not become the expected app executable")
+
     def run(self) -> None:
         if sys.platform != "darwin":
             raise Blocked("requires a macOS GUI session")
@@ -249,18 +283,26 @@ class Probe:
             source_bytes = self.fixture.read_bytes()
             if not source_bytes or len(source_bytes) > 1024 * 1024:
                 raise ValueError("synthetic fixture must be nonempty and at most 1 MiB")
+            profile_bytes = self.sandbox_profile.read_bytes()
+            if not re.search(rb"^\s*\(deny network\*\)\s*$", profile_bytes, re.MULTILINE):
+                raise ValueError("sandbox profile lacks the expected deny-network rule")
         except (OSError, KeyError, TypeError, ValueError, plistlib.InvalidFileException) as error:
             raise Failed(f"invalid app bundle or fixture: {error}") from error
         self.status["inputs"] = {"bundle_id": self.bundle_id, "executable_sha256": sha256(executable.read_bytes()),
-                                 "fixture_sha256": sha256(source_bytes)}
+                                 "fixture_sha256": sha256(source_bytes), "sandbox_profile_sha256": sha256(profile_bytes)}
         self.stage = "launch"
         self.app_log = (self.output / "app.log").open("wb")
         try:
-            self.process = subprocess.Popen([str(executable)], stdout=self.app_log, stderr=subprocess.STDOUT,
+            self.process = subprocess.Popen(["/usr/bin/sandbox-exec", "-f", str(self.sandbox_profile), str(executable)],
+                                            stdout=self.app_log, stderr=subprocess.STDOUT,
                                             stdin=subprocess.DEVNULL, start_new_session=True)
         except OSError as error:
             raise Blocked(f"cannot launch bundled app: {type(error).__name__}") from error
         self.status["app_pid"] = self.process.pid
+        if self.sandbox_profile.read_bytes() != profile_bytes:
+            raise Failed("sandbox profile changed during app launch")
+        self.stage = "sandboxed_app_pid"
+        self.check_launched_pid(executable)
         self.stage = "window"
         self.ax("window")
         self.screenshot("01-app-window")
@@ -333,6 +375,14 @@ class Probe:
                 pass
         if self.app_log is not None:
             self.app_log.close()
+        if "inputs" in self.status:
+            try:
+                final_hash = sha256(self.sandbox_profile.read_bytes())
+                self.status["inputs"]["sandbox_profile_sha256_after"] = final_hash
+                if final_hash != self.status["inputs"]["sandbox_profile_sha256"]:
+                    self.status.update(status="failed", stage="sandbox_profile", reason="sandbox profile changed during probe")
+            except OSError:
+                self.status.update(status="failed", stage="sandbox_profile", reason="sandbox profile unavailable after probe")
         (self.output / "status.json").write_text(json.dumps(self.status, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
@@ -341,6 +391,8 @@ def main(argv=None) -> int:
     parser.add_argument("--app", required=True, type=Path)
     parser.add_argument("--fixture", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--sandbox-profile", required=True, type=Path,
+                        help="externally verified deny-network sandbox profile for the app")
     parser.add_argument("--timeout-seconds", type=int, default=DEFAULT_SECONDS)
     args = parser.parse_args(argv)
     if not 15 <= args.timeout_seconds <= 180:
@@ -352,7 +404,7 @@ def main(argv=None) -> int:
         print("native-ui: cannot create a new evidence directory", file=sys.stderr)
         return 3
     try:
-        probe = Probe(args.app, args.fixture, args.output, args.timeout_seconds)
+        probe = Probe(args.app, args.fixture, args.output, args.sandbox_profile, args.timeout_seconds)
     except OSError:
         (args.output / "status.json").write_text('{"schema_version":1,"status":"failed","stage":"preflight","reason":"input path unavailable"}\n', encoding="utf-8")
         print("native-ui: failed")
@@ -373,7 +425,7 @@ def main(argv=None) -> int:
     finally:
         probe.finish()
     print(f"native-ui: {probe.status['status']}")
-    return exit_code
+    return 3 if probe.status["status"] == "failed" else exit_code
 
 
 if __name__ == "__main__":
