@@ -7,7 +7,7 @@ const [mode, input, output, purpose] = process.argv.slice(2);
 const magic = Buffer.from('RDMAC001');
 const expectedSourceSha256 = '24314ac69f11a8766727649f0878735eb21cc408af5dbcf975373d246fa71a16';
 try {
-  if (!['encrypt', 'decrypt'].includes(mode) || !input || !output || !['source', 'overlay', 'evidence'].includes(purpose)) throw Error('arguments');
+  if (!['encrypt', 'decrypt'].includes(mode) || !input || !output || !['source', 'overlay', 'validation', 'receipts', 'evidence'].includes(purpose)) throw Error('arguments');
   const encodedKey = process.env.MACOS_READINESS_KEY || '';
   const key = Buffer.from(encodedKey, 'base64');
   if (key.length !== 32 || key.toString('base64') !== encodedKey) throw Error('key');
@@ -30,6 +30,14 @@ try {
     if (purpose === 'overlay') {
       const expected = fs.readFileSync(path.join(__dirname, '../payload/overlay.sha256'), 'ascii').trim();
       if (!/^[0-9a-f]{64}$/.test(expected) || crypto.createHash('sha256').update(result).digest('hex') !== expected) throw Error('overlay hash');
+    }
+    if (purpose === 'validation') {
+      const expected = fs.readFileSync(path.join(__dirname, '../payload/validation.sha256'), 'ascii').trim();
+      if (!/^[0-9a-f]{64}$/.test(expected) || crypto.createHash('sha256').update(result).digest('hex') !== expected) throw Error('validation hash');
+    }
+    if (purpose === 'receipts') {
+      const expected = fs.readFileSync(path.join(__dirname, '../payload/receipts.sha256'), 'ascii').trim();
+      if (!/^[0-9a-f]{64}$/.test(expected) || crypto.createHash('sha256').update(result).digest('hex') !== expected) throw Error('receipts hash');
     }
   }
   fs.writeFileSync(output, result, { flag: 'wx', mode: 0o600 });

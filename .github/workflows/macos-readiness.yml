@@ -37,6 +37,14 @@ jobs:
             echo '::error::Test overlay authentication failed. See encrypted evidence.'
             exit 1
           fi
+          if ! node scripts/crypto.cjs decrypt payload/validation.enc "$RUNNER_TEMP/dedup-private/validation.zip" validation >>"$RUNNER_TEMP/dedup-private/decrypt.log" 2>&1; then
+            echo '::error::Synthetic evaluator overlay authentication failed. See encrypted evidence.'
+            exit 1
+          fi
+          if ! node scripts/crypto.cjs decrypt payload/receipts.enc "$RUNNER_TEMP/dedup-private/receipts.zip" receipts >>"$RUNNER_TEMP/dedup-private/decrypt.log" 2>&1; then
+            echo '::error::Synthetic receipt-test overlay authentication failed. See encrypted evidence.'
+            exit 1
+          fi
       - name: Fetch locked dependencies without lifecycle scripts
         shell: bash
         run: |

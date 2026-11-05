@@ -6,8 +6,13 @@ source_dir="$work/source"
 mkdir -p "$source_dir" "$work/evidence"
 python3 scripts/safe-extract.py "$work/source.zip" "$source_dir" source
 python3 scripts/safe-extract.py "$work/overlay.zip" "$source_dir" overlay
+python3 scripts/safe-extract.py "$work/validation.zip" "$source_dir" validation
+python3 scripts/safe-extract.py "$work/receipts.zip" "$source_dir" receipts
 rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
 rustup target add --toolchain 1.99.0 aarch64-apple-darwin x86_64-apple-darwin
+rustup target list --toolchain 1.99.0 --installed > "$work/evidence/rust-targets-prefetch.txt"
+grep -Fx aarch64-apple-darwin "$work/evidence/rust-targets-prefetch.txt"
+grep -Fx x86_64-apple-darwin "$work/evidence/rust-targets-prefetch.txt"
 (cd "$source_dir" && cargo +1.99.0 fetch --locked)
 (cd "$source_dir" && cargo +1.99.0 fetch --manifest-path app/src-tauri/Cargo.toml --locked)
 (cd "$source_dir/app" && npm ci --ignore-scripts)
