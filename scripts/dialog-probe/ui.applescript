@@ -102,7 +102,14 @@ on tryPanel(theContainer, processRef, panelButton, operation, argumentValue)
     if (my shallowPanelControl(theContainer, "AXButton", panelButton, "check", "")) is "OK" and (my shallowPanelControl(theContainer, "AXButton", "Cancel", "check", "")) is "OK" then
       if operation is "check" then return "OK:panel"
       if operation is "press" then return my shallowPanelControl(theContainer, "AXButton", panelButton, "press", "")
-      if operation is "save_name" then return my shallowPanelControl(theContainer, "AXTextField", "deduplicator-project.json", "replace", argumentValue)
+      if operation is "save_name" then
+        if argumentValue is not "native-ui-project.json" then return "WAIT:invalid_save_name"
+        set saveNameResult to my shallowPanelControl(theContainer, "AXTextField", "deduplicator-project.json", "replace", argumentValue)
+        if saveNameResult is not "WAIT:not_found" then return saveNameResult
+        -- AppKit may hide the .json extension in the actual Save As field.
+        -- Enter the requested stem and let the native JSON filter add it.
+        return my shallowPanelControl(theContainer, "AXTextField", "deduplicator-project", "replace", "native-ui-project")
+      end if
       if operation is "export_name" then return my shallowPanelControl(theContainer, "AXTextField", "deduplicated-records", "replace", argumentValue)
       if operation is "goto" then
         set frontmost of processRef to true
