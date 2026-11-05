@@ -62,7 +62,7 @@ app="${apps[0]}"
 exe_name=$(/usr/libexec/PlistBuddy -c 'Print CFBundleExecutable' "$app/Contents/Info.plist")
 exe="$app/Contents/MacOS/$exe_name"
 lipo -archs "$exe" > "$evidence/architectures.txt"
-lipo -verify_arch arm64 x86_64 "$exe"
+lipo "$exe" -verify_arch arm64 x86_64
 codesign -dv --verbose=2 "$app" > "$evidence/signature.txt" 2>&1 || true
 find "$app" -type f -print > "$evidence/app-files.txt"
 dmg_status=0
