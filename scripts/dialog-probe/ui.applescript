@@ -123,12 +123,14 @@ on dumpWindows(processRef)
 end dumpWindows
 
 on run argv
-  if (count of argv) is not 5 then error "invalid probe arguments"
+  if (count of argv) is not 7 then error "invalid probe arguments"
   set wantedPid to (item 1 of argv) as integer
   set wantedBundle to item 2 of argv
   set operation to item 3 of argv
   set target to item 4 of argv
   set extra to item 5 of argv
+  set wantedName to item 6 of argv
+  set fallbackMode to item 7 of argv
   tell application "System Events"
     set matchingProcesses to every application process whose unix id is wantedPid
     if (count of matchingProcesses) is not 1 then return "WAIT:app_process" & linefeed & "requested_pid=" & wantedPid & linefeed & "observed_pid=<unavailable>" & linefeed & "observed_name=<unavailable>" & linefeed & "observed_bundle=<unavailable>"
@@ -136,6 +138,8 @@ on run argv
     set observedPid to -1
     set observedName to "<unavailable>"
     set observedBundle to "<unavailable>"
+    set bundleState to "read_error"
+    set bundleErrorCode to "<none>"
     try
       set observedPid to (unix id of processRef) as integer
     end try
@@ -144,14 +148,37 @@ on run argv
     end try
     try
       set bundleValue to bundle identifier of processRef
-      if bundleValue is not missing value then set observedBundle to my clipped(bundleValue)
+      if bundleValue is missing value then
+        set bundleState to "missing"
+        set observedBundle to "<missing>"
+      else
+        set observedBundle to my clipped(bundleValue)
+        if observedBundle is "" then
+          set bundleState to "missing"
+          set observedBundle to "<missing>"
+        else
+          set bundleState to "present"
+        end if
+      end if
+    on error errorMessage number errorNumber
+      set bundleState to "read_error"
+      set bundleErrorCode to errorNumber as text
     end try
-    set identityInfo to linefeed & "requested_pid=" & wantedPid & linefeed & "observed_pid=" & observedPid & linefeed & "observed_name=" & observedName & linefeed & "observed_bundle=" & observedBundle
+    set identityInfo to linefeed & "requested_pid=" & wantedPid & linefeed & "observed_pid=" & observedPid & linefeed & "observed_name=" & observedName & linefeed & "observed_bundle=" & observedBundle & linefeed & "bundle_state=" & bundleState & linefeed & "bundle_error_code=" & bundleErrorCode
     if observedPid is not wantedPid then return "WAIT:app_process" & identityInfo
-    if observedBundle is "" or observedBundle is "<unavailable>" or observedBundle is "missing value" then return "WAIT:bundle_unavailable" & identityInfo
-    considering case
-      if observedBundle is not wantedBundle then return "WAIT:bundle_mismatch" & identityInfo
-    end considering
+    set identityMode to "bundle_match"
+    if bundleState is "present" then
+      considering case
+        if observedBundle is not wantedBundle then return "WAIT:bundle_mismatch" & identityInfo & linefeed & "identity_mode=blocked"
+      end considering
+    else
+      if fallbackMode is not "verified-owned-pid" then return "WAIT:bundle_unavailable" & identityInfo & linefeed & "identity_mode=blocked"
+      considering case
+        if observedName is not wantedName then return "WAIT:process_name_mismatch" & identityInfo & linefeed & "identity_mode=blocked"
+      end considering
+      set identityMode to "owned_pid_unavailable_bundle"
+    end if
+    set identityInfo to identityInfo & linefeed & "identity_mode=" & identityMode
     if operation is "dump" then return (my dumpWindows(processRef)) & identityInfo
     set frontmost of processRef to true
     if (count of windows of processRef) is 0 then return "WAIT:app_window" & identityInfo

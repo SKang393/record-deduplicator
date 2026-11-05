@@ -159,11 +159,13 @@ def verify_export(directory: Path, source_bytes: bytes, saved_project: Path) -> 
 
 
 class Probe:
-    def __init__(self, app: Path, fixture: Path, output: Path, sandbox_profile: Path, seconds: int):
+    def __init__(self, app: Path, fixture: Path, output: Path, sandbox_profile: Path, seconds: int,
+                 allow_unavailable_bundle_id: bool = False):
         self.app = app.resolve(strict=True)
         self.fixture = fixture.resolve(strict=True)
         self.output = output.resolve()
         self.sandbox_profile = sandbox_profile.resolve(strict=True)
+        self.allow_unavailable_bundle_id = allow_unavailable_bundle_id
         self.deadline = time.monotonic() + seconds
         self.process = None
         self.app_log = None
@@ -196,19 +198,24 @@ class Probe:
             if self.process.poll() is not None:
                 raise Failed(f"{self.stage}: app exited unexpectedly")
             self.check_launched_pid(self.executable)
+            fallback_mode = "verified-owned-pid" if self.allow_unavailable_bundle_id else "strict"
             result = self.command(["/usr/bin/osascript", str(UI_SCRIPT), str(self.process.pid),
-                                   self.bundle_id, operation, target, extra], "accessibility.log")
+                                   self.bundle_id, operation, target, extra, self.executable.name,
+                                   fallback_mode], "accessibility.log")
             reply = result.stdout.decode("utf-8", "replace").strip()
             lines = reply.splitlines()
             identity = {"stage": self.stage, "operation": operation,
                         "state": lines[0] if lines else "no_identity_response"}
             for line in lines[1:]:
                 key, separator, value = line.partition("=")
-                if separator and key in {"requested_pid", "observed_pid", "observed_name", "observed_bundle"}:
+                if separator and key in {"requested_pid", "observed_pid", "observed_name", "observed_bundle",
+                                         "bundle_state", "bundle_error_code", "identity_mode"}:
                     identity[key] = value[:160]
             with (self.output / "system-events-identity.jsonl").open("a", encoding="utf-8") as log:
                 log.write(json.dumps(identity, ensure_ascii=True) + "\n")
             self.status["checks"]["system_events_identity"] = identity
+            if identity.get("identity_mode") == "owned_pid_unavailable_bundle":
+                self.status["checks"]["unavailable_bundle_fallback_used"] = True
             if result.returncode != 0:
                 raise Blocked(f"{self.stage}: System Events, accessibility, or automation unavailable")
             if reply.startswith("OK"):
@@ -222,6 +229,8 @@ class Probe:
             raise Blocked(f"{self.stage}: System Events bundle identifier remained unavailable")
         if last_state == "bundle_mismatch":
             raise Blocked(f"{self.stage}: System Events reported a persistent bundle identifier mismatch")
+        if last_state == "process_name_mismatch":
+            raise Blocked(f"{self.stage}: System Events process name does not match the owned executable")
         raise Blocked(f"{self.stage}: expected window, accessibility control, or native panel unavailable ({last_state})")
 
     def screenshot(self, name: str) -> None:
@@ -242,13 +251,20 @@ class Probe:
             path.write_text("AX diagnostic unavailable: the launched app is not running.\n", encoding="utf-8")
             return
         try:
+            self.check_launched_pid(self.executable, diagnostic=True)
+            fallback_mode = "verified-owned-pid" if self.allow_unavailable_bundle_id else "strict"
             self.command(["/usr/bin/osascript", str(UI_SCRIPT), str(self.process.pid),
-                          self.bundle_id, "dump", "", ""], path.name, diagnostic=True)
+                          self.bundle_id, "dump", "", "", self.executable.name, fallback_mode],
+                         path.name, diagnostic=True)
+        except Failed as error:
+            self.status.update(status="failed", stage="identity", reason=str(error))
+            if not path.exists():
+                path.write_text("AX diagnostic unavailable: owned process identity changed.\n", encoding="utf-8")
         except (Blocked, OSError):
             if not path.exists():
                 path.write_text("AX diagnostic unavailable or timed out.\n", encoding="utf-8")
 
-    def check_launched_pid(self, executable: Path) -> None:
+    def check_launched_pid(self, executable: Path, *, diagnostic: bool = False) -> None:
         """Require sandbox-exec to become the expected app at the owned PID."""
         try:
             libproc = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
@@ -258,7 +274,8 @@ class Probe:
         except (OSError, AttributeError) as error:
             raise Blocked("cannot inspect the launched process executable") from error
         expected = executable.resolve(strict=True)
-        stage_deadline = min(self.deadline - DIAGNOSTIC_RESERVE_SECONDS, time.monotonic() + STAGE_SECONDS)
+        reserve = 0 if diagnostic else DIAGNOSTIC_RESERVE_SECONDS
+        stage_deadline = min(self.deadline - reserve, time.monotonic() + STAGE_SECONDS)
         while time.monotonic() < stage_deadline:
             if self.process.poll() is not None:
                 raise Failed("sandboxed app exited before its executable could be verified")
@@ -266,9 +283,11 @@ class Probe:
             if pidpath(self.process.pid, buffer, len(buffer)) > 0:
                 try:
                     if Path(os.fsdecode(buffer.value)).resolve(strict=True) == expected:
+                        if sha256(expected.read_bytes()) != self.status["inputs"]["executable_sha256"]:
+                            raise Failed("owned app executable bytes changed")
                         if not self.status["checks"].get("ps_identity_recorded"):
                             ps = self.command(["/bin/ps", "-p", str(self.process.pid), "-o", "pid=", "-o", "comm="],
-                                              "process-identity.log")
+                                              "process-identity.log", diagnostic=diagnostic)
                             fields = ps.stdout.decode("utf-8", "replace").strip().split(maxsplit=1)
                             if ps.returncode != 0 or len(fields) != 2 or fields[0] != str(self.process.pid):
                                 raise Blocked("ps did not confirm the owned app PID")
@@ -277,7 +296,7 @@ class Probe:
                         return
                 except OSError:
                     pass
-            time.sleep(min(0.2, self.remaining()))
+            time.sleep(min(0.2, self.remaining(diagnostic=diagnostic)))
         raise Blocked("sandbox-exec PID did not become the expected app executable")
 
     def run(self) -> None:
@@ -309,7 +328,8 @@ class Probe:
         except (OSError, KeyError, TypeError, ValueError, plistlib.InvalidFileException) as error:
             raise Failed(f"invalid app bundle or fixture: {error}") from error
         self.status["inputs"] = {"bundle_id": self.bundle_id, "executable_sha256": sha256(executable.read_bytes()),
-                                 "fixture_sha256": sha256(source_bytes), "sandbox_profile_sha256": sha256(profile_bytes)}
+                                 "fixture_sha256": sha256(source_bytes), "sandbox_profile_sha256": sha256(profile_bytes),
+                                 "allow_unavailable_bundle_id": self.allow_unavailable_bundle_id}
         self.stage = "launch"
         self.app_log = (self.output / "app.log").open("wb")
         try:
@@ -413,6 +433,8 @@ def main(argv=None) -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--sandbox-profile", required=True, type=Path,
                         help="externally verified deny-network sandbox profile for the app")
+    parser.add_argument("--allow-unavailable-bundle-id", action="store_true",
+                        help="synthetic hosted probe only: permit unavailable bundle ID with verified owned PID/executable/name")
     parser.add_argument("--timeout-seconds", type=int, default=DEFAULT_SECONDS)
     args = parser.parse_args(argv)
     if not 15 <= args.timeout_seconds <= 180:
@@ -424,7 +446,8 @@ def main(argv=None) -> int:
         print("native-ui: cannot create a new evidence directory", file=sys.stderr)
         return 3
     try:
-        probe = Probe(args.app, args.fixture, args.output, args.sandbox_profile, args.timeout_seconds)
+        probe = Probe(args.app, args.fixture, args.output, args.sandbox_profile, args.timeout_seconds,
+                      allow_unavailable_bundle_id=args.allow_unavailable_bundle_id)
     except OSError:
         (args.output / "status.json").write_text('{"schema_version":1,"status":"failed","stage":"preflight","reason":"input path unavailable"}\n', encoding="utf-8")
         print("native-ui: failed")
