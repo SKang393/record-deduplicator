@@ -35,6 +35,39 @@ on controlNamed(rootElement, wantedRole, wantedName, operation, replacement)
   return "WAIT:not_found"
 end controlNamed
 
+-- Never act on an ambiguous review/recovery button, even across app windows.
+on uniqueButton(processRef, wantedName, alternateName)
+  tell application "System Events"
+    set matchingButtons to {}
+    repeat with appWindow in (every window of processRef)
+      set candidates to entire contents of appWindow
+      repeat with candidate in candidates
+        try
+          if (role of candidate as text) is "AXButton" then
+            set namesFound to {}
+            try
+              set end of namesFound to (name of candidate as text)
+            end try
+            try
+              set end of namesFound to (title of candidate as text)
+            end try
+            try
+              set end of namesFound to (description of candidate as text)
+            end try
+            if namesFound contains wantedName or (alternateName is not "" and namesFound contains alternateName) then set end of matchingButtons to candidate
+          end if
+        end try
+      end repeat
+    end repeat
+    if (count of matchingButtons) is 0 then return "WAIT:not_found"
+    if (count of matchingButtons) is not 1 then return "WAIT:ambiguous"
+    set matchedButton to item 1 of matchingButtons
+    if not (enabled of matchedButton) then return "WAIT:disabled"
+    perform action "AXPress" of matchedButton
+    return "OK:unique_button"
+  end tell
+end uniqueButton
+
 -- Query only controls directly owned by a native panel or one of its first
 -- eight immediate groups. Never walk the parent window's WebView descendants.
 on directPanelControl(rootElement, wantedRole, wantedName, operation, replacement)
@@ -103,12 +136,18 @@ on tryPanel(theContainer, processRef, panelButton, operation, argumentValue)
       if operation is "check" then return "OK:panel"
       if operation is "press" then return my shallowPanelControl(theContainer, "AXButton", panelButton, "press", "")
       if operation is "save_name" then
-        if argumentValue is not "native-ui-project.json" then return "WAIT:invalid_save_name"
+        if argumentValue is "native-ui-project.json" then
+          set requestedStem to "native-ui-project"
+        else if argumentValue is "recovered-ui-project.json" then
+          set requestedStem to "recovered-ui-project"
+        else
+          return "WAIT:invalid_save_name"
+        end if
         set saveNameResult to my shallowPanelControl(theContainer, "AXTextField", "deduplicator-project.json", "replace", argumentValue)
         if saveNameResult is not "WAIT:not_found" then return saveNameResult
         -- AppKit may hide the .json extension in the actual Save As field.
         -- Enter the requested stem and let the native JSON filter add it.
-        return my shallowPanelControl(theContainer, "AXTextField", "deduplicator-project", "replace", "native-ui-project")
+        return my shallowPanelControl(theContainer, "AXTextField", "deduplicator-project", "replace", requestedStem)
       end if
       if operation is "export_name" then return my shallowPanelControl(theContainer, "AXTextField", "deduplicated-records", "replace", argumentValue)
       if operation is "goto" then
@@ -263,6 +302,7 @@ on run argv
     set frontmost of processRef to true
     if (count of windows of processRef) is 0 then return "WAIT:app_window" & identityInfo
     if operation is "window" then return "OK:window" & identityInfo
+    if operation is "click_unique" then return (my uniqueButton(processRef, target, extra)) & identityInfo
     if operation is "click" or operation is "text" then
       repeat with appWindow in (every window of processRef)
         if operation is "click" then

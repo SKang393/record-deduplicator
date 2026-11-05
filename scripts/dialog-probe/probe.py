@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 import plistlib
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -157,6 +158,86 @@ def verify_export(directory: Path, source_bytes: bytes, saved_project: Path) -> 
     return {"fixture_records": expected, "csv_records": len(rows), "ris_records": len(exported_ris),
             "manifest_sha256": sha256((directory / "manifest.json").read_bytes()),
             "manifest_entries_verified": len(entries)}
+
+
+def inspect_recovery(root: Path, home: Path, pid: int, source_bytes: bytes, baseline_path: Path) -> tuple[str, dict, dict]:
+    """Identify the only session created by this PID and its committed review event."""
+    try:
+        home = home.resolve(strict=True)
+        if root.is_symlink() or not root.is_dir() or not root.resolve(strict=True).is_relative_to(home):
+            raise ValueError("recovery root is outside the isolated HOME")
+        sessions = list(root.iterdir())
+        if len(sessions) != 1 or sessions[0].is_symlink() or not sessions[0].is_dir():
+            raise ValueError("expected exactly one non-symlink recovery session")
+        session = sessions[0]
+        if not re.fullmatch(rf"session-\d+-{pid}-\d+", session.name):
+            raise ValueError("recovery session ID does not identify the owned app PID")
+        if not session.resolve(strict=True).is_relative_to(home):
+            raise ValueError("recovery session is outside the isolated HOME")
+        files = [session / n for n in ("source-0.bytes", "base.project.json", "journal.jsonl", "commits.jsonl")]
+        if any(p.is_symlink() or not p.is_file() or not p.resolve(strict=True).is_relative_to(home) for p in files):
+            raise ValueError("recovery files are unavailable or outside isolated HOME")
+        source, base, journal, commits = (p.read_bytes() for p in files)
+        if source != source_bytes or len(journal) > 1024 * 1024 or len(commits) > 1024 * 1024:
+            raise ValueError("recovery source differs or journal exceeds the synthetic bound")
+        if not journal.endswith(b"\n") or not commits.endswith(b"\n"):
+            raise ValueError("recovery journal has an unfinished entry")
+        entries = [json.loads(line) for line in journal.splitlines()]
+        receipts = [json.loads(line) for line in commits.splitlines()]
+        if not entries or len(entries) != len(receipts):
+            raise ValueError("recovery entries and durable receipts differ")
+        offset = 0
+        previous = "record-deduplicator/desktop-recovery/v1"
+        for number, (line, entry, receipt) in enumerate(zip(journal.splitlines(keepends=True), entries, receipts), 1):
+            offset += len(line)
+            digest_input = {key: entry[key] for key in ("schema_version", "sequence", "previous_sha256", "action")}
+            digest = sha256(json.dumps(digest_input, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+            if (entry["schema_version"] != 1 or receipt["schema_version"] != 1 or
+                    entry["sequence"] != number or receipt["sequence"] != number or
+                    entry["previous_sha256"] != previous or entry["sha256"] != digest or
+                    receipt["journal_bytes"] != offset or receipt["entry_sha256"] != entry["sha256"]):
+                raise ValueError("recovery journal and durable receipt do not agree")
+            previous = entry["sha256"]
+        reviews = [entry["action"]["event"] for entry in entries if entry["action"]["kind"] == "review"]
+        if len(reviews) != 1 or entries[-1]["action"]["kind"] != "review":
+            raise ValueError("expected one committed review action")
+        event = reviews[0]
+        baseline = json.loads(baseline_path.read_bytes())
+        base_project = json.loads(base)
+        ids = [record["raw"]["record_id"] for record in baseline["records"]]
+        pair = event["action"]["pair"]
+        if (len(ids) != 2 or len(set(ids)) != 2 or event["action"]["kind"] != "keep_both" or
+                {pair["left_record_id"], pair["right_record_id"]} != set(ids) or
+                event["input_fingerprint"] != baseline["input_fingerprint"] or
+                event["policy_sha256"] != baseline["policy_sha256"] or
+                len(base_project["sources"]) != 1 or bytes(base_project["sources"][0]["bytes"]) != source_bytes):
+            raise ValueError("committed review does not match both imported records")
+        evidence = {"session_id": session.name, "source_sha256": sha256(source),
+                    "base_sha256": sha256(base), "journal_sha256": sha256(journal),
+                    "commits_sha256": sha256(commits), "entries": len(entries), "review_event": event}
+        return session.name, event, evidence
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+        raise Failed(f"recovery pre-termination verification failed: {error}") from error
+
+
+def verify_recovered_project(path: Path, baseline_path: Path, source_bytes: bytes, event: dict) -> dict:
+    """Confirm native save after restoration contains the exact committed event and source."""
+    try:
+        recovered = json.loads(path.read_bytes())
+        baseline = json.loads(baseline_path.read_bytes())
+        if recovered["events"] != [event]:
+            raise ValueError("restored project does not contain exactly the committed review event")
+        for key in ("sources", "records", "summaries", "policy", "policy_sha256", "input_fingerprint"):
+            if recovered[key] != baseline[key]:
+                raise ValueError(f"restored project changed {key}")
+        if len(recovered["sources"]) != 1 or bytes(recovered["sources"][0]["bytes"]) != source_bytes:
+            raise ValueError("restored project source bytes differ from the fixture")
+        if recovered.get("matching_pending", False) is not False:
+            raise ValueError("restored matching remains pending")
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+        raise Failed(f"recovered native save verification failed: {error}") from error
+    return {"source_sha256": sha256(source_bytes), "project_sha256": sha256(path.read_bytes()),
+            "review_event_sha256": event["event_sha256"], "review_kind": event["action"]["kind"]}
 
 
 class Probe:
@@ -302,6 +383,22 @@ class Probe:
             time.sleep(min(0.2, self.remaining(diagnostic=diagnostic)))
         raise Blocked("sandbox-exec PID did not become the expected app executable")
 
+    def kill_owned_child(self) -> int:
+        """Force-stop only the live Popen child after a fresh executable check."""
+        if self.process is None or self.process.poll() is not None:
+            raise Failed("owned child is no longer running before forced termination")
+        self.check_launched_pid(self.executable)
+        pid = self.process.pid
+        self.process.kill()
+        try:
+            result = self.process.wait(timeout=min(5, self.remaining()))
+        except subprocess.TimeoutExpired as error:
+            raise Blocked("owned child did not exit after forced termination") from error
+        if result != -signal.SIGKILL:
+            raise Failed("owned child did not exit from the requested SIGKILL")
+        self.status["checks"]["forced_termination"] = {"pid": pid, "signal": "SIGKILL", "returncode": result}
+        return pid
+
     def run(self) -> None:
         if sys.platform != "darwin":
             raise Blocked("requires a macOS GUI session")
@@ -322,6 +419,17 @@ class Probe:
             if not executable.is_file():
                 raise ValueError("app executable is missing")
             self.executable = executable.resolve(strict=True)
+            home_value = os.environ.get("HOME", "")
+            if not home_value or not Path(home_value).is_absolute():
+                raise ValueError("a fresh absolute HOME is required")
+            self.isolated_home = Path(home_value).resolve(strict=True)
+            if not self.isolated_home.is_dir():
+                raise ValueError("isolated HOME must be a directory")
+            self.recovery_root = self.isolated_home / "Library" / "Application Support" / self.bundle_id / "recovery"
+            if self.recovery_root.is_symlink() or (self.recovery_root.exists() and any(self.recovery_root.iterdir())):
+                raise ValueError("isolated HOME contains an existing recovery session")
+            if not self.recovery_root.resolve().is_relative_to(self.isolated_home):
+                raise ValueError("recovery root resolves outside isolated HOME")
             source_bytes = self.fixture.read_bytes()
             if not source_bytes or len(source_bytes) > 1024 * 1024:
                 raise ValueError("synthetic fixture must be nonempty and at most 1 MiB")
@@ -404,7 +512,70 @@ class Probe:
         if self.fixture.read_bytes() != source_bytes:
             raise Failed("synthetic input bytes changed during export")
         self.screenshot("07-export-complete")
-        self.status.update(status="passed", stage="complete", reason="synthetic native open, import, save, and export verified")
+        self.stage = "review_decision"
+        self.ax("click", "Review")
+        self.ax("text", "Review possible duplicates")
+        self.ax("click_unique", "Keep both", "Keep both K")
+        self.ax("text", "No pairs need review")
+        self.screenshot("08-review-decision")
+        self.stage = "verify_recovery_before_kill"
+        session_id, review_event, recovery_evidence = inspect_recovery(
+            self.recovery_root, self.isolated_home, self.process.pid, source_bytes, project_path)
+        (self.output / "recovery-before-kill.json").write_text(json.dumps(recovery_evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        self.status["checks"]["recovery_before_kill"] = {"session_id": session_id, "inside_isolated_home": True,
+                                                          "review_event_sha256": review_event["event_sha256"]}
+        if self.sandbox_profile.read_bytes() != profile_bytes or Path(os.environ["HOME"]).resolve(strict=True) != self.isolated_home:
+            raise Failed("sandbox profile or isolated HOME changed before forced termination")
+        self.stage = "forced_termination"
+        old_pid = self.kill_owned_child()
+        self.app_log.close()
+        self.app_log = None
+        self.stage = "restart"
+        if self.sandbox_profile.read_bytes() != profile_bytes or sha256(self.executable.read_bytes()) != self.status["inputs"]["executable_sha256"]:
+            raise Failed("sandbox profile or executable changed before restart")
+        self.app_log = (self.output / "app-restart.log").open("wb")
+        try:
+            self.process = subprocess.Popen(["/usr/bin/sandbox-exec", "-f", str(self.sandbox_profile), str(self.executable)],
+                                            stdout=self.app_log, stderr=subprocess.STDOUT,
+                                            stdin=subprocess.DEVNULL, start_new_session=True,
+                                            env={**os.environ, "HOME": str(self.isolated_home)})
+        except OSError as error:
+            raise Blocked(f"cannot restart bundled app: {type(error).__name__}") from error
+        if self.process.pid == old_pid:
+            raise Blocked("restarted app reused the terminated PID")
+        self.status["restart_pid"] = self.process.pid
+        self.status["checks"].pop("ps_identity_recorded", None)
+        self.check_launched_pid(self.executable)
+        self.ax("window")
+        self.stage = "restore_recovery"
+        self.ax("text", "Ready to recover")
+        self.screenshot("09-recovery-available")
+        self.ax("click_unique", f"Recover {session_id}")
+        self.ax("text", "Recovery copy opened.")
+        self.ax("text", "No pairs need review")
+        self.screenshot("10-recovery-restored")
+        self.stage = "save_restored_project"
+        recovered_path = self.output / "recovered-ui-project.json"
+        if recovered_path.exists() or recovered_path.is_symlink():
+            raise Failed("restored project output already exists")
+        self.ax("click", "Save project")
+        self.ax("panel_check", "Save")
+        self.screenshot("11-restored-save-panel")
+        self.ax("panel_save_name", "Save", "recovered-ui-project.json")
+        self.ax("panel_goto", "Save", str(self.output), retry=False)
+        self.ax("panel_press", "Save")
+        stage_deadline = min(self.deadline - DIAGNOSTIC_RESERVE_SECONDS, time.monotonic() + STAGE_SECONDS)
+        while not recovered_path.is_file() and time.monotonic() < stage_deadline:
+            if self.process.poll() is not None:
+                raise Failed("restarted app exited before saving the restored project")
+            time.sleep(min(0.5, self.remaining()))
+        if recovered_path.is_symlink() or not recovered_path.is_file():
+            raise Blocked("native save did not produce the restored project")
+        self.status["checks"]["recovered_project"] = verify_recovered_project(recovered_path, project_path, source_bytes, review_event)
+        if self.fixture.read_bytes() != source_bytes:
+            raise Failed("synthetic input bytes changed during recovery")
+        self.screenshot("12-recovery-saved")
+        self.status.update(status="passed", stage="complete", reason="synthetic native open, import, save, export, and forced-termination recovery verified")
 
     def finish(self) -> None:
         if self.process is not None and self.process.poll() is None:
@@ -441,7 +612,7 @@ def main(argv=None) -> int:
                         help="synthetic hosted probe only: permit unavailable bundle ID with verified owned PID/executable/name")
     parser.add_argument("--timeout-seconds", type=int, default=DEFAULT_SECONDS)
     args = parser.parse_args(argv)
-    if not 15 <= args.timeout_seconds <= 180:
+    if not 15 <= args.timeout_seconds <= 300:
         print("native-ui: invalid timeout", file=sys.stderr)
         return 3
     try:
