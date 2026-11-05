@@ -21,7 +21,7 @@ with zipfile.ZipFile(archive) as z:
         if name.casefold() in seen or stat.S_ISLNK(entry.external_attr >> 16):
             raise SystemExit('Duplicate or symbolic link in archive')
         seen.add(name.casefold())
-        if kind == 'overlay' and not (name == 'app/src-tauri/tests/permissions.rs' or name.startswith(('crates/dedup-core/tests/', 'crates/dedup-cli/tests/', 'testdata/fixtures/'))):
+        if kind == 'overlay' and not (name in {'app/src-tauri/tests/permissions.rs', 'app/vitest.config.ts'} or name.startswith(('crates/dedup-core/tests/', 'crates/dedup-cli/tests/', 'testdata/fixtures/'))):
             raise SystemExit('Overlay contains a non-allowlisted path')
         dest = target.joinpath(*parts)
         if entry.is_dir() or os.path.lexists(dest):
