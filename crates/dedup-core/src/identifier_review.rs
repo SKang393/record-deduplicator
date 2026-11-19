@@ -36,6 +36,8 @@ pub enum Issue {
     UnsupportedDoi,
     UnsupportedPmid,
     NoIdentifiers,
+    ConflictingDoi,
+    ConflictingPmid,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -51,12 +53,15 @@ pub enum InputError {
     ByteLimit,
     RecordLimit,
     Header,
+    FieldLimit,
 }
 
 #[derive(Default)]
-struct Row {
-    doi: Option<String>,
-    pmid: Option<String>,
+pub(crate) struct Row {
+    pub(crate) doi: Option<String>,
+    pub(crate) pmid: Option<String>,
+    pub(crate) doi_conflict: bool,
+    pub(crate) pmid_conflict: bool,
 }
 
 fn decode_path(raw: &str) -> Option<String> {
@@ -74,7 +79,7 @@ fn decode_path(raw: &str) -> Option<String> {
     String::from_utf8(result).ok()
 }
 
-fn doi_key(raw: &str) -> Option<String> {
+pub(crate) fn doi_key(raw: &str) -> Option<String> {
     if raw.len() > MAX_ID_BYTES {
         return None;
     }
@@ -108,7 +113,7 @@ fn doi_key(raw: &str) -> Option<String> {
     Some(doi)
 }
 
-fn pmid_key(raw: &str) -> Option<String> {
+pub(crate) fn pmid_key(raw: &str) -> Option<String> {
     let digits = raw.trim();
     (!digits.is_empty()
         && digits.len() <= MAX_ID_BYTES
@@ -143,7 +148,12 @@ fn groups_for(
         let mut conflict = false;
         for &ordinal in &ordinals {
             seen[ordinal - 1] = true;
-            match value(&rows[ordinal - 1], other) {
+            let row = &rows[ordinal - 1];
+            conflict |= match other {
+                Identifier::Doi => row.doi_conflict,
+                Identifier::Pmid => row.pmid_conflict,
+            };
+            match value(row, other) {
                 None => missing = true,
                 Some(key) => match first {
                     None => first = Some(key),
@@ -209,18 +219,22 @@ pub fn review_tsv(input: &str) -> Result<Review, InputError> {
         }
         rows.push(row);
     }
+    Ok(review_rows(&rows, issues))
+}
+
+pub(crate) fn review_rows(rows: &[Row], issues: Vec<(usize, Issue)>) -> Review {
     let mut seen = vec![false; rows.len()];
-    let mut groups = groups_for(&rows, Identifier::Doi, Identifier::Pmid, &mut seen);
+    let mut groups = groups_for(rows, Identifier::Doi, Identifier::Pmid, &mut seen);
     groups.extend(groups_for(
-        &rows,
+        rows,
         Identifier::Pmid,
         Identifier::Doi,
         &mut seen,
     ));
-    Ok(Review {
+    Review {
         retained_records: rows.len(),
         candidate_records: seen.into_iter().filter(|&b| b).count(),
         groups,
         issues,
-    })
+    }
 }

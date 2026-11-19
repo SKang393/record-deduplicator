@@ -2,6 +2,7 @@
 
 pub mod identifier_review;
 pub mod normalize;
+pub mod ris;
 
 /// Package version, not an accuracy or format-support claim.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

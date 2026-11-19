@@ -9,9 +9,9 @@ meta-analyses, built around a shared Rust engine. The goal is to identify duplic
 database records while preserving distinct reports, original metadata, and the
 reasoning behind each decision.
 
-**In development:** the CLI can identify rows that share a full DOI or PMID in
-a two-column TSV file. It produces a review report, not a deduplicated export.
-Native database import, automated merging and the desktop application are not
+**In development:** the CLI can review shared full DOIs and PMIDs directly from
+a UTF-8 RIS export or a two-column TSV file. It produces a review report, not
+a deduplicated export. Automated merging and the desktop application are not
 available on this branch. There are no prebuilt release downloads.
 
 ## Features and design
@@ -59,8 +59,36 @@ build.
 
 ## Usage
 
-Use `--help` for syntax or `--version` for the build version. To review repeated
-identifiers from a UTF-8 TSV projection, run:
+Use `--help` for syntax or `--version` for the build version.
+
+### Review an RIS export
+
+```sh
+cargo run --release --locked -p dedup-cli -- review-ids --ris records.ris
+```
+
+This command reads records beginning with `TY  -` and ending with `ER  -`.
+It uses the DOI field (`DO`) and DOI-resolver or PubMed article URLs in `UR`.
+Numeric accession or local record IDs (`AN`, `ID`) are not inferred to be PMIDs.
+A repeated equivalent identifier counts once. Unsupported or contradictory
+values within a record withhold that identifier from matching. A usable ID of
+the other kind can still lead to a review group, but never an automatic merge.
+
+The report gives each record or nonblank stray fragment an occurrence number.
+Each `source` line points to the original bytes: the start is inclusive and
+the end is exclusive. It also reports record status, field count, and the number
+of fields not used for identifier matching. Ordered and repeated fields,
+indented continuations, unrecognized tags, and original line endings remain
+in the source. No record is reserialized. Keep the original export; the report
+is not a backup or persistent project bundle.
+
+A missing end tag, unexpected untagged line, or fragment is reported and kept
+out of matching. The retained count includes those occurrences. Files are read
+without modification and rechecked against the captured bytes before review.
+Use `--ris -` for standard input. Non-UTF-8 input or a limit violation (16 MiB,
+100,000 occurrences, or 250,000 fields) produces no partial report.
+
+### Review a two-column TSV projection
 
 ```sh
 cargo run --release --locked -p dedup-cli -- review-ids records.tsv
