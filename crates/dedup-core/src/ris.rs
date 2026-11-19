@@ -6,7 +6,20 @@ use crate::identifier_review::{
 };
 use std::ops::Range;
 
+mod queue;
+pub use queue::{
+    Disposition, MAX_SOURCES, NamedSource, QueueEntry, QueueError, ReviewQueue, review_sources,
+    valid_source_label,
+};
+
 pub const MAX_FIELDS: usize = 250_000;
+
+#[derive(Default)]
+struct ParseCounts {
+    bytes: usize,
+    records: usize,
+    fields: usize,
+}
 
 #[derive(Debug)]
 pub struct Field<'a> {
@@ -64,18 +77,26 @@ fn tag(line: &str) -> Option<(&str, &str)> {
 /// A nonblank fragment outside TY/ER gets an ordinal instead of disappearing.
 /// A new TY ends an unterminated occurrence; its fields never leak into the next.
 pub fn parse(input: &str) -> Result<Source<'_>, InputError> {
-    if input.len() > MAX_INPUT_BYTES {
+    parse_source(input, &mut ParseCounts::default())
+}
+
+fn parse_source<'a>(input: &'a str, counts: &mut ParseCounts) -> Result<Source<'a>, InputError> {
+    if input.len() > MAX_INPUT_BYTES - counts.bytes {
         return Err(InputError::ByteLimit);
     }
+    counts.bytes += input.len();
     let mut records = Vec::new();
     let mut current: Option<Occurrence<'_>> = None;
-    let mut field_count = 0;
     let mut offset = 0;
     let mut can_continue = false;
-    for raw in input.split_inclusive('\n') {
-        let end = offset + raw.len();
-        let body = raw.strip_suffix('\n').unwrap_or(raw);
-        let body = body.strip_suffix('\r').unwrap_or(body);
+    let mut lines = input.split_inclusive(['\r', '\n']).peekable();
+    while let Some(raw) = lines.next() {
+        let mut end = offset + raw.len();
+        // Count both bytes of a CRLF terminator in this line's source span.
+        if raw.ends_with('\r') && lines.next_if_eq(&"\n").is_some() {
+            end += 1;
+        }
+        let body = raw.trim_end_matches(['\r', '\n']);
         let body = if offset == 0 {
             body.strip_prefix('\u{feff}').unwrap_or(body)
         } else {
@@ -87,9 +108,10 @@ pub fn parse(input: &str) -> Result<Source<'_>, InputError> {
             records.extend(current.take());
         }
         if current.is_none() && (parsed.is_some() || !body.trim_matches([' ', '\t']).is_empty()) {
-            if records.len() >= MAX_RECORDS {
+            if counts.records >= MAX_RECORDS {
                 return Err(InputError::RecordLimit);
             }
+            counts.records += 1;
             current = Some(Occurrence {
                 bytes: offset..end,
                 fields: Vec::new(),
@@ -109,8 +131,8 @@ pub fn parse(input: &str) -> Result<Source<'_>, InputError> {
             }
             match parsed {
                 Some((key, value)) => {
-                    field_count += 1;
-                    if field_count > MAX_FIELDS {
+                    counts.fields += 1;
+                    if counts.fields > MAX_FIELDS {
                         return Err(InputError::FieldLimit);
                     }
                     if (key == "TY" && value.trim().is_empty())
@@ -237,7 +259,12 @@ impl Source<'_> {
     pub fn review(&self) -> Review {
         let mut rows = Vec::with_capacity(self.occurrences.len());
         let mut issues = Vec::new();
-        for (index, rec) in self.occurrences.iter().enumerate() {
+        self.append_rows(&mut rows, &mut issues);
+        review_rows(&rows, issues)
+    }
+
+    fn append_rows(&self, rows: &mut Vec<Row>, issues: &mut Vec<(usize, Issue)>) {
+        for rec in &self.occurrences {
             let mut row = Row::default();
             if rec.usable() {
                 let mut d = Values::default();
@@ -253,7 +280,7 @@ impl Source<'_> {
                         None => {}
                     }
                 }
-                let ordinal = index + 1;
+                let ordinal = rows.len() + 1;
                 if d.unsupported {
                     issues.push((ordinal, Issue::UnsupportedDoi));
                 }
@@ -276,6 +303,5 @@ impl Source<'_> {
             }
             rows.push(row);
         }
-        review_rows(&rows, issues)
     }
 }

@@ -30,6 +30,25 @@ fn all_bytes_and_interleaved_fields_remain_accessible_with_unicode_crlf_and_no_f
 }
 
 #[test]
+fn bare_cr_and_mixed_endings_preserve_record_and_continuation_spans() {
+    let records = [
+        "TY  - JOUR\rTI  - First\rER  -\r",
+        "TY  - BOOK\r\nTI  - Second\r  continued\nER  -\r\n",
+        "TY  - RPRT\rER  -",
+    ];
+    let text = records.concat();
+    let source = parse(&text).unwrap();
+    assert_eq!(source.occurrences.len(), records.len());
+    for (record, expected) in source.occurrences.iter().zip(records) {
+        assert!(record.usable());
+        assert_eq!(&text[record.bytes.clone()], expected);
+    }
+    let field = &source.occurrences[1].fields[1];
+    assert!(field.continued);
+    assert_eq!(&text[field.bytes.clone()], "TI  - Second\r  continued\n");
+}
+
+#[test]
 fn conflicting_repeats_abstain_for_that_namespace_and_mark_other_group() {
     let text = "TY  - JOUR\nDO  - 10.0000/a\nDO  - 10.0000/b\nUR  - https://pubmed.ncbi.nlm.nih.gov/12/\nER  -\nTY  - JOUR\nDO  - 10.0000/a\nUR  - https://pubmed.ncbi.nlm.nih.gov/12\nER  -\nTY  - JOUR\nDO  - doi:10.0000/A\nUR  - https://doi.org/10.0000/a\nER  -\n";
     let report = parse(text).unwrap().review();

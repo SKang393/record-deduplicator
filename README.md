@@ -10,8 +10,8 @@ database records while preserving distinct reports, original metadata, and the
 reasoning behind each decision.
 
 **In development:** the CLI can review shared full DOIs and PMIDs directly from
-a UTF-8 RIS export or a two-column TSV file. It produces a review report, not
-a deduplicated export. Automated merging and the desktop application are not
+one or more UTF-8 RIS exports or a two-column TSV file. The review queue keeps
+every occurrence and leaves the input files intact. Automated merging and the desktop application are not
 available on this branch. There are no prebuilt release downloads.
 
 ## Features and design
@@ -61,13 +61,47 @@ build.
 
 Use `--help` for syntax or `--version` for the build version.
 
-### Review an RIS export
+### Review multiple RIS exports together
+
+Assign a unique label to each export. This command compares two database
+searches and saves the review queue to a new file.
+
+```sh
+dedup review-ids --ris-source catalog catalog.ris --ris-source index index.ris > review.tsv
+```
+
+Choose a new output filename separate from your inputs. Labels may contain 1
+to 64 ASCII letters, digits, dots, hyphens or underscores and must start with
+a letter or digit. They are case-sensitive. Reordering the arguments produces
+the same report. Two separately labeled exports retain their own occurrences,
+even when their filenames or contents are identical.
+
+- Each `input` row records a label, byte length, occurrence count and SHA-256
+  digest. Keep the files with the report. The digest lets you check that you
+  are inspecting the same bytes later.
+- A `candidate` row lists occurrences sharing a full DOI or PMID. For example,
+  `catalog:3,index:3` points to the third occurrence in each file. Groups can
+  overlap and can include several records from one file. The final column
+  reports agreement, conflict or incomplete evidence for the other identifier.
+- Each `source` row gives the original half-open byte range and a disposition.
+  `review_candidate` means inspect its candidate groups and any `issue` rows.
+  `review_input` means inspect a damaged record or identifier issue.
+  `retained` means the occurrence has no flagged issue or shared identifier.
+  All three dispositions keep the record. Reports of the same study that
+  share only a title, accession or study identifier stay separate.
+
+The command accepts up to 128 named files. The combined limits are 16 MiB,
+100,000 occurrences and 250,000 tagged fields. Input errors and exceeded limits
+stop the run before it writes any report rows.
+
+### Review a single RIS export
 
 ```sh
 cargo run --release --locked -p dedup-cli -- review-ids --ris records.ris
 ```
 
 This command reads records beginning with `TY  -` and ending with `ER  -`.
+LF, CRLF, and bare CR line endings may occur within the same file.
 It uses the DOI field (`DO`) and DOI-resolver or PubMed article URLs in `UR`.
 Numeric accession or local record IDs (`AN`, `ID`) are not inferred to be PMIDs.
 A repeated equivalent identifier counts once. Unsupported or contradictory
