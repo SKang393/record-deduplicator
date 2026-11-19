@@ -69,15 +69,15 @@ unwrapping or stripping, including titles consisting only of a marker.
    - Split multi-author strings if concatenated by `;`, ` and `, ` & `, or newlines.
    - Strip inline ORCID URLs, author IDs (e.g., APA `(Author) [ORCID]`), degree suffixes (`MD`, `PhD`), and role tags (`(Ed.)`).
 2. **Name Parsing (`Last, First M.` vs. `First M. Last`):**
-   - If comma-separated (`Kang, Sung-Woo` or `Smith, John A.`): part before first comma (excluding `Jr.`/`III` suffixes) is `family`, part after is `given`.
-   - If no comma (`Sung-Woo Kang` or `Kang SW` in PubMed `AU` format):
-     - Detect PubMed/Medline abbreviated style (`^[A-Z][a-z'\-]+ [A-Z]{1,4}$`, e.g., `Kang SW` -> `family = kang`, `initials = s w`).
+   - If comma-separated (`Example, Da-Rin` or `Smith, John A.`): part before first comma (excluding `Jr.`/`III` suffixes) is `family`, part after is `given`.
+   - If no comma (`Da-Rin Example` or `Example DR` in PubMed `AU` format):
+     - Detect PubMed/Medline abbreviated style (`^[A-Z][a-z'\-]+ [A-Z]{1,4}$`, e.g., `Example DR` -> `family = example`, `initials = d r`).
      - Otherwise treat last token as `family` (accounting for compound surnames/particles like `van der`, `de la`, `von`) and preceding tokens as `given`.
 3. **Reversed Permutation & Hyphenated Given-Name Representation:**
    - For every author, store:
      - **Forward representation:** `(family_norm, given_tokens, initials_full, initial_first)`
-     - **Reversed representation:** `(given_last_token, family_norm, ...)` to catch East Asian and Western indexing swaps (`Sungwoo, Kang` vs `Kang, Sungwoo`).
-     - **Hyphenated / Compound Given-Name Compatibility:** For `Sung-Woo` -> `given_tokens = ["sung", "woo"]`, `given_collapsed = "sungwoo"`, `initials = ["s", "w"]`, `initial_prefix = "s"`. Two authors match on initials if their initial sequences are identical OR one is a strict prefix of the other (`["s"]` is compatible with `["s", "w"]`) and neither has conflicting full given names (e.g., `Sungwoo` vs `Sora` conflicts even though both start with `S`).
+     - **Reversed representation:** `(given_last_token, family_norm, ...)` to catch East Asian and Western indexing swaps (`Darin, Example` vs `Example, Darin`).
+     - **Hyphenated / Compound Given-Name Compatibility:** For `Da-Rin` -> `given_tokens = ["da", "rin"]`, `given_collapsed = "darin"`, `initials = ["d", "r"]`, `initial_prefix = "d"`. Two authors match on initials if their initial sequences are identical OR one is a strict prefix of the other (`["d"]` is compatible with `["d", "r"]`) and neither has conflicting full given names (e.g., `Darin` vs `Dalia` conflicts even though both start with `D`).
 
 ### 1.4 Abstract Normalization & Copyright Trailer Stripping
 1. **Publisher & Database Copyright Trailer Stripping:**
