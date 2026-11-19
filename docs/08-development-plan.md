@@ -1,15 +1,13 @@
 # Full development plan
 
 Owner: SKang393. Revised: 2026-11-02.
-This is the execution order; [TASKS.md](../TASKS.md) retains the original M0-M9
-task inventory. [Engine contract](10-engine-contract.md) resolves older design
+[Engine contract](10-engine-contract.md) resolves older design
 conflicts.
 
 ## Starting state and delivery boundaries
 
 The starting snapshot on 2026-11-02 covered preparation only, with collection
-stopped at the user's direction. The [development tracker](../TASKS.md) records
-later scope decisions. The [collection protocol](06-benchmark-search-protocol.md)
+paused. The [collection protocol](06-benchmark-search-protocol.md)
 is retained for separately authorized collection runs.
 The ten core validation fields are medicine, neuroscience, public health,
 psychology, pharmacy/pharmacology, engineering, health science, environmental

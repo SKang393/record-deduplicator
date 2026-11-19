@@ -5,8 +5,7 @@ fn main() -> ExitCode {
     if args.is_empty() || (args.len() == 1 && (args[0] == "--help" || args[0] == "-h")) {
         println!(
             "record-deduplicator {}\n\nUsage: dedup [--help | --version]\n\n\
-             Foundation build only. Import, matching, review, and export are not implemented.\n\
-             See TASKS.md for the next implementation batch.",
+             Foundation build only. Import, matching, review, and export are not implemented.",
             dedup_core::VERSION
         );
         return ExitCode::SUCCESS;

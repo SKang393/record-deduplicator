@@ -31,8 +31,7 @@ The planned workflow combines:
 - **Local processing:** one Rust engine shared by a CLI and a planned Tauri
   desktop interface, with no upload required for deduplication.
 
-See the [engine contract](docs/10-engine-contract.md) for the technical rules and
-the [development tracker](TASKS.md) for implementation progress.
+See the [engine contract](docs/10-engine-contract.md) for the technical rules.
 
 ## Build from source
 

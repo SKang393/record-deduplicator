@@ -3,7 +3,7 @@
 Collection date: 2026-11-02. Status: **stopped at the user's direction; partial evidence only**.
 This dated report records preparation work. No searches, exports, downloads or mailbox
 retrieval may continue under the earlier instructions. Existing originals and
-logs are preserved. No final field corpus is admitted. See [the development tracker](../TASKS.md).
+logs are preserved. No final field corpus is admitted.
 The [execution-state record](reference-data/collection-2026-11-02/execution-state.json)
 supersedes any historical export-approval labels in the dated tables.
 The [collection protocol](06-benchmark-search-protocol.md) fixes the raw-count

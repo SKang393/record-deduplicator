@@ -31,8 +31,7 @@ have been approved or executed.
 ## Development before evaluation
 
 Follow the bounded implementation batches in the
-[development plan](08-development-plan.md). Record completed checks and
-outstanding gates in the [development tracker](../TASKS.md).
+[development plan](08-development-plan.md).
 
 Complete the production program and its meaningful parser, safety, replay,
 determinism and native workflow checks before asserting measured performance.

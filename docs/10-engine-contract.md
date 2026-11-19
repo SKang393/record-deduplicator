@@ -1,7 +1,6 @@
 # Engine contract and specification corrections
 
-Status: accepted design contract, 2026-11-01. Implementation is tracked in
-[TASKS.md](../TASKS.md). This document resolves conflicts in the earlier research
+Status: accepted design contract, 2026-11-01. This document resolves conflicts in the earlier research
 and design notes. It describes required behavior, not implemented capabilities.
 
 ## 1. What the product identifies

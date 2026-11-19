@@ -1,7 +1,5 @@
 # 01 — Methodology, Nomenclature & Peer-Reviewed Literature
 
-> **Operational Note for Agents:** When verifying full-text claims or accessing manuscripts / university library subscriptions for Milestone M0, **use the `aside` CLI** (see [`AGENT.md`](../AGENT.md)).
-
 > **Evidence status, 2026-11-01:** This is a literature/design register. Specific
 > attributions are provisional unless listed as verified in the
 > [preparation review](11-preparation-review.md). Bramer's field sequence, Jiang's

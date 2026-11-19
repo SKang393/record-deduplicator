@@ -5,9 +5,6 @@
 > benchmark datasets. Use [the engine contract](../10-engine-contract.md) and
 > [development plan](../08-development-plan.md) for validation and data-rights gates.
 
-> **Note for Coding Agents:**
-> This protocol and all supporting journal trend/yield data have **already been gathered**. **Do NOT spend turns re-running keyword investigations or API yield tests by yourself.** When accessing manuscripts or university library subscriptions, **use the `aside` CLI** (see [`AGENT.md`](../../AGENT.md)).
-
 ---
 
 ## 1. Purpose & Design Rules

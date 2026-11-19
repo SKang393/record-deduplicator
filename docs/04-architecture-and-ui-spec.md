@@ -21,8 +21,6 @@
 
 ```text
 record-deduplicator/
-├── AGENT.md / AGENTS.md        # Handoff instructions & mandatory rules for coding agents
-├── TASKS.md                    # Ordered engineering backlog & milestone checklist
 ├── DECISIONS.md                # Architectural and product decision log
 ├── README.md                   # Project overview
 ├── Cargo.toml                  # Rust workspace manifest
