@@ -9,10 +9,10 @@ meta-analyses, built around a shared Rust engine. The goal is to identify duplic
 database records while preserving distinct reports, original metadata, and the
 reasoning behind each decision.
 
-**In development:** the public `main` branch currently builds a CLI foundation
-with help and version commands. End-to-end deduplication and the desktop
-application are not yet published in this branch. There are no prebuilt release
-downloads. CI checks the foundation on Windows and macOS.
+**In development:** the CLI can identify rows that share a full DOI or PMID in
+a two-column TSV file. It produces a review report, not a deduplicated export.
+Native database import, automated merging and the desktop application are not
+available on this branch. There are no prebuilt release downloads.
 
 ## Features and design
 
@@ -59,27 +59,46 @@ build.
 
 ## Usage
 
-The currently published CLI supports these commands from the repository root:
+Use `--help` for syntax or `--version` for the build version. To review repeated
+identifiers from a UTF-8 TSV projection, run:
 
 ```sh
-cargo run --release --locked -p dedup-cli -- --help
-cargo run --release --locked -p dedup-cli -- --version
+cargo run --release --locked -p dedup-cli -- review-ids records.tsv
 ```
 
-You can also run the built executable directly:
+Use a literal tab between the header fields `doi` and `pmid`, in that order.
+Each following line represents one record. Leave an unknown field empty but
+keep its tab. The first data line is row 1. For example, with three rows:
 
-```powershell
-# Windows PowerShell
-.\target\release\dedup.exe --help
+```text
+doi	pmid
+10.0000/example	11
+https://doi.org/10.0000/EXAMPLE	22
+10.0000/other	22
 ```
 
-```sh
-# macOS
-./target/release/dedup --help
-```
+Rows 1 and 2 share a DOI but disagree on PMID. Rows 2 and 3 share a PMID but
+disagree on DOI. The output lists **two separate review groups**, not a cluster
+of three. All three rows are retained; none is suppressed.
 
-These commands inspect the foundation build. Import, matching, review, and export
-commands will be documented when their implementation is published.
+- The command reads a file without changing it, or reads standard input when
+  the filename is `-`. Output goes to standard output. The report references
+  row numbers, not identifier values. Keep the source file to inspect the rows.
+- DOI comparison ignores ASCII case and known resolver prefixes. Resolver paths
+  are percent-decoded once. Literal suffixes, versions and punctuation stay
+  significant. Only supported ASCII DOI forms and positive digit-only PMIDs
+  without leading zeros are indexed. No registry lookup is performed.
+- Empty, malformed or unsupported data rows are counted and diagnosed if they
+  have no usable identifier or contain a formatting error. A valid identifier
+  can still contribute evidence when the other field is unsupported. There is
+  no title matching and no inference about records without a shared key.
+- Each group indicates whether the other identifier agrees for every member,
+  conflicts, or is incomplete. Groups may overlap. The summary counts each
+  candidate record once. Even full agreement never automatically merges rows.
+- The TSV is an unquoted two-column projection, not a general spreadsheet or
+  bibliographic file importer. LF and CRLF and an optional UTF-8 BOM are accepted.
+  A wrong header, non-UTF-8 input, more than 100,000 rows, or more than 16 MiB
+  of input stops the run with an error and no report.
 
 ## Development
 
@@ -116,8 +135,6 @@ not deduplication accuracy.
 - [Methodology and literature](docs/01-methodology-and-literature.md)
 - [Matching rules and pipeline](docs/02-deduplication-rules-and-pipeline.md)
 - [Database schemas and formats](docs/03-database-schemas-and-formats.md)
-- [Development plan](docs/08-development-plan.md)
-- [Architecture decisions](DECISIONS.md)
 
 ## Contributing
 
