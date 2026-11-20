@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Run the four documented first-review blocks using the extracted executable.
+# Exercise the documented walkthrough and guided setup using the extracted executable.
 set -euo pipefail
 work=$(mktemp -d)
 trap 'cd / && rm -rf "$work"' EXIT
-tar -xzf "$1" -C "$work"
-cd "$work"/recorddedu-*
+mkdir "$work/Extracted package"
+tar -xzf "$1" -C "$work/Extracted package"
+cd "$work/Extracted package"/recorddedu-*
+package_dir=$PWD
 if command -v sha256sum >/dev/null; then
     sha256sum -c SHA256SUMS
 else
@@ -37,39 +39,80 @@ grep -Fxq 'TI  - Marsh transects after spring flooding: seasonal observations' r
 cat catalog.ris index.ris | cmp - restored/reviewed.ris
 echo "PASS: packaged CLI verified one copy, retained the subtitled record and restored all three occurrences."
 
-# Use the same three synthetic occurrences through the prompt-driven entry.
-mkdir 'Search exports'
-cp catalog.ris 'Search exports/Catalog export.ris'
-cp index.ris 'Search exports/Index export.ris'
-guided_inputs() {
-    printf '%s\n' '"Review choices.tsv"' cat '"Search exports/Catalog export.ris"' \
-        idx 'Search exports/Index export.ris' '' "$1"
+# Mimic pasted file paths in the packaged guide, including Windows drive letters.
+project='Search exports'
+sheet="$project/Review choices.tsv"
+mkdir "$project"
+cp catalog.ris "$project/Catalog export.ris"
+cp index.ris "$project/Index export.ris"
+start_shell=direct
+case "${RUNNER_OS:-$(uname -s)}" in
+    Windows|MINGW*|MSYS*) start_shell=pwsh ;;
+    macOS|Darwin) start_shell=zsh ;;
+esac
+
+guide_path() {
+    case "$start_shell" in
+        pwsh) cygpath -aw "$1" ;;
+        zsh) printf '%s/%s\n' "$PWD" "$1" ;;
+        *) printf '%s\n' "$1" ;;
+    esac
 }
-guided_inputs :cancel | dedup start > cancelled.tsv 2> prompts.txt
-test ! -e 'Review choices.tsv'
+sheet_path=$(guide_path "$sheet")
+catalog_path=$(guide_path "$project/Catalog export.ris")
+index_path=$(guide_path "$project/Index export.ris")
+
+guided_start() (
+    printf '%s\n' "\"$sheet_path\"" cat "\"$catalog_path\"" idx "$index_path" '' "$1" > "$work/answers.txt"
+    case "$start_shell" in
+        pwsh)
+            export REVIEW_ANSWERS
+            REVIEW_ANSWERS=$(cygpath -aw "$work/answers.txt")
+            cd "$package_dir"
+            pwsh -NoProfile -NonInteractive -Command '
+                $ErrorActionPreference = "Stop"
+                Get-Content -LiteralPath $env:REVIEW_ANSWERS -Encoding utf8 | .\dedup.exe start
+                exit $LASTEXITCODE
+            ' | sed $'s/\r$//'  # Compare displayed rows across shell line endings.
+            ;;
+        zsh)
+            cd "$package_dir"
+            /bin/zsh -fc './dedup start' < "$work/answers.txt"
+            ;;
+        *) dedup start < "$work/answers.txt" ;;
+    esac
+)
+
+find "$project" -print | LC_ALL=C sort > "$work/before.txt"
+guided_start :cancel > cancelled.tsv 2> prompts.txt
+find "$project" -print | LC_ALL=C sort | cmp - "$work/before.txt"
+cmp catalog.ris "$project/Catalog export.ris"
+cmp index.ris "$project/Index export.ris"
 test ! -s cancelled.tsv
 grep -Fq 'Review setup cancelled.' prompts.txt
 
-guided_inputs yes | dedup start > guided.tsv 2> prompts.txt
+guided_start yes > guided.tsv 2> prompts.txt
 review --init-metadata-decisions reference.tsv > reference-queue.tsv
-cmp reference.tsv 'Review choices.tsv'
+cmp reference.tsv "$sheet"
 cmp reference-queue.tsv guided.tsv
-grep -Fxq $'cat:1\tpending' 'Review choices.tsv'
-grep -Fxq $'idx:1\tpending' 'Review choices.tsv'
+grep -Fxq $'cat:1\tpending' "$sheet"
+grep -Fxq $'idx:1\tpending' "$sheet"
 
-# Reopen the partially reviewed sheet left by the walkthrough.
-cp choices.tsv 'Review choices.tsv'
-guided_inputs yes | dedup start > guided-pending.tsv 2> prompts.txt
+# Record one explicit keep on the new sheet. Leave the other row pending.
+sed $'s/^cat:1\tpending$/cat:1\tkeep/' "$sheet" > edit.tmp
+cat edit.tmp > "$sheet"
+cmp choices.tsv "$sheet"
+guided_start yes > guided-pending.tsv 2> prompts.txt
 review --pending-decisions choices.tsv > reference-pending.tsv
 cmp reference-pending.tsv guided-pending.tsv
-cmp choices.tsv 'Review choices.tsv'
-cmp catalog.ris 'Search exports/Catalog export.ris'
-cmp index.ris 'Search exports/Index export.ris'
+cmp choices.tsv "$sheet"
+cmp catalog.ris "$project/Catalog export.ris"
+cmp index.ris "$project/Index export.ris"
 
 # A changed source must be diagnosed before emitting any saved decisions.
-printf '\n' >> 'Search exports/Index export.ris'
-if guided_inputs yes | dedup start > rejected.tsv 2> prompts.txt; then exit 1; fi
+printf '\n' >> "$project/Index export.ris"
+if guided_start yes > rejected.tsv 2> prompts.txt; then exit 1; fi
 test ! -s rejected.tsv
 grep -Fq 'Decision sheet inputs differ.' prompts.txt
-cmp choices.tsv 'Review choices.tsv'
-echo "PASS: guided cancel, create, reopen and changed-source refusal with spaced paths."
+cmp choices.tsv "$sheet"
+echo "PASS: $start_shell guided start with spaced paths; cancellation preserved project bytes and entries; created 2 pending; reopened 1 keep and 1 pending; changed source refused."
