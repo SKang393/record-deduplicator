@@ -2,15 +2,18 @@
 //! UTF-8 input, including its original line endings. No field is reserialized.
 
 use crate::identifier_review::{
-    InputError, Issue, MAX_INPUT_BYTES, MAX_RECORDS, Review, Row, doi_key, pmid_key, review_rows,
+    Identifier, InputError, Issue, MAX_INPUT_BYTES, MAX_RECORDS, Review, Row, doi_key, pmid_key,
+    review_rows,
 };
 use std::ops::Range;
 
 mod queue;
+mod triage;
 pub use queue::{
     Disposition, MAX_SOURCES, NamedSource, QueueEntry, QueueError, ReviewQueue, review_sources,
     valid_source_label,
 };
+pub use triage::{MAX_HINT_MEMBERS, MetadataHint};
 
 pub const MAX_FIELDS: usize = 250_000;
 
@@ -253,6 +256,45 @@ impl Values {
     }
 }
 
+/// Full identifier evidence across occurrences proposed to represent a single report.
+/// Missing or unsupported fields cannot erase a disagreement between supported values.
+#[derive(Default)]
+pub struct ReportIdentifiers {
+    doi: Values,
+    pmid: Values,
+}
+
+impl ReportIdentifiers {
+    pub fn observe(&mut self, rec: &Occurrence<'_>) {
+        if !rec.usable() {
+            return;
+        }
+        for field in &rec.fields {
+            match projected(field) {
+                Some(Projected::Doi(raw)) => {
+                    self.doi
+                        .add(if field.continued { None } else { doi_key(raw) });
+                }
+                Some(Projected::Pmid(raw)) => {
+                    self.pmid
+                        .add(if field.continued { None } else { pmid_key(raw) });
+                }
+                None => {}
+            }
+        }
+    }
+
+    pub fn conflict(&self) -> Option<Identifier> {
+        if self.doi.conflict {
+            Some(Identifier::Doi)
+        } else if self.pmid.conflict {
+            Some(Identifier::Pmid)
+        } else {
+            None
+        }
+    }
+}
+
 impl Source<'_> {
     /// Skip ambiguous namespaces and withhold all evidence from structurally
     /// damaged occurrences. Every occurrence still enters reconciliation.
@@ -267,19 +309,12 @@ impl Source<'_> {
         for rec in &self.occurrences {
             let mut row = Row::default();
             if rec.usable() {
-                let mut d = Values::default();
-                let mut p = Values::default();
-                for field in &rec.fields {
-                    match projected(field) {
-                        Some(Projected::Doi(raw)) => {
-                            d.add(if field.continued { None } else { doi_key(raw) })
-                        }
-                        Some(Projected::Pmid(raw)) => {
-                            p.add(if field.continued { None } else { pmid_key(raw) })
-                        }
-                        None => {}
-                    }
-                }
+                let mut identifiers = ReportIdentifiers::default();
+                identifiers.observe(rec);
+                let ReportIdentifiers {
+                    doi: mut d,
+                    pmid: mut p,
+                } = identifiers;
                 let ordinal = rows.len() + 1;
                 if d.unsupported {
                     issues.push((ordinal, Issue::UnsupportedDoi));

@@ -123,3 +123,49 @@ fn limits_apply_to_the_entire_queue_including_later_sources() {
         assert_eq!(review_sources(&over).unwrap_err(), QueueError::Input(error));
     }
 }
+
+#[test]
+fn metadata_hints_report_large_blocks_without_expanding_pairs() {
+    use dedup_core::ris::{MAX_HINT_MEMBERS, MetadataHint};
+    let rec = "TY  - JOUR\nTI  - Reading the tides\nAU  - Rowan, A.\nPY  - 2020\nER  -\n";
+    let input = rec.repeat(MAX_HINT_MEMBERS);
+    let queue = review_sources(&[("a", &input)]).unwrap();
+    assert_eq!(
+        queue.metadata_hints(),
+        [MetadataHint::Inspect((1..=MAX_HINT_MEMBERS).collect())]
+    );
+    let queue = review_sources(&[("b", rec), ("a", &input)]).unwrap();
+    assert_eq!(
+        queue.metadata_hints(),
+        [MetadataHint::Overflow {
+            first: 1,
+            count: MAX_HINT_MEMBERS + 1
+        }]
+    );
+    assert!(queue.review.groups.is_empty());
+}
+
+#[test]
+fn incomplete_or_contradictory_metadata_does_not_supply_a_key() {
+    use dedup_core::ris::MetadataHint;
+    let base = "TY  - JOUR\nTI  - Reading the tides\nAU  - Rowan, A.\nPY  - 2020\nER  -\n";
+    let mut input = base.to_owned();
+    for replacement in [
+        base.replace("ER  -", "T1  - Reading the tides: protocol\nER  -"),
+        base.replace("ER  -", "A1  - Rowan, B.\nER  -"),
+        base.replace("ER  -", "Y1  - 2021\nER  -"),
+        base.replace("Reading the tides", "Reading the tides\n      in winter"),
+        base.replace("PY  - 2020", "PY  - 2020/2021"),
+        base.replace("PY  - 2020", "PY  - 2020/13/01"),
+        base.replace("AU  - Rowan, A.", "AU  - unknown"),
+        base.replace("ER  -\n", ""),
+    ] {
+        input.push_str(&replacement);
+    }
+    input.push_str(&base.replace(
+        "ER  -",
+        "T1  - READING THE TIDES\nA1  - rowan, a.\nY1  - 2020/03/04/\nER  -",
+    ));
+    let queue = review_sources(&[("test", &input)]).unwrap();
+    assert_eq!(queue.metadata_hints(), [MetadataHint::Inspect(vec![1, 10])]);
+}

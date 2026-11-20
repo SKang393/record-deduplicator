@@ -1,0 +1,141 @@
+//! Inspection-only bibliographic leads for occurrences without a usable identifier.
+use std::collections::BTreeMap;
+
+use super::{Field, Occurrence, ReviewQueue};
+
+pub const MAX_HINT_MEMBERS: usize = 16;
+
+/// Members and the overflow reference are one-based rows in the named review queue.
+#[derive(Debug, PartialEq, Eq)]
+pub enum MetadataHint {
+    Inspect(Vec<usize>),
+    Overflow { first: usize, count: usize },
+}
+
+#[derive(Default)]
+struct Block {
+    members: Vec<usize>,
+    count: usize,
+    includes_unidentified: bool,
+}
+
+// Repeated representations of a scalar (e.g. TI/T1 or PY/Y1) must agree.
+fn agreed<T: PartialEq>(mut values: impl Iterator<Item = Option<T>>) -> Option<T> {
+    let first = values.next()??;
+    values
+        .all(|value| value.as_ref() == Some(&first))
+        .then_some(first)
+}
+
+fn text(field: &Field<'_>) -> Option<String> {
+    if field.continued {
+        return None;
+    }
+    let mut words = field.first_line_value.split_whitespace();
+    let mut value = words.next()?.to_owned();
+    for word in words {
+        value.push(' ');
+        value.push_str(word);
+    }
+    let value = value.to_lowercase();
+    (value.chars().any(char::is_alphabetic)
+        && !matches!(
+            value.as_str(),
+            "unknown" | "anonymous" | "n/a" | "not available"
+        ))
+    .then_some(value)
+}
+
+fn year(field: &Field<'_>) -> Option<u16> {
+    if field.continued {
+        return None;
+    }
+    let mut parts = field
+        .first_line_value
+        .trim()
+        .trim_end_matches('/')
+        .split('/');
+    let year = parts.next()?;
+    if year.len() != 4 || !year.bytes().all(|ch| ch.is_ascii_digit()) {
+        return None;
+    }
+    for max in [12, 31] {
+        if let Some(part) = parts.next() {
+            if part.len() > 2
+                || !part.bytes().all(|ch| ch.is_ascii_digit())
+                || !(1..=max).contains(&part.parse::<u8>().ok()?)
+            {
+                return None;
+            }
+        }
+    }
+    let year = year.parse().ok()?;
+    (parts.next().is_none() && year != 0).then_some(year)
+}
+
+fn key(rec: &Occurrence<'_>) -> Option<(String, String, u16, String)> {
+    if !rec.usable() {
+        return None;
+    }
+    let title = agreed(
+        rec.fields
+            .iter()
+            .filter(|f| matches!(f.tag, "TI" | "T1"))
+            .map(text),
+    )?;
+    let author = agreed(
+        ["AU", "A1"]
+            .into_iter()
+            .filter_map(|tag| rec.fields.iter().find(|f| f.tag == tag))
+            .map(text),
+    )?;
+    let year = agreed(
+        rec.fields
+            .iter()
+            .filter(|f| matches!(f.tag, "PY" | "Y1"))
+            .map(year),
+    )?;
+    Some((title, author, year, text(rec.fields.first()?)?))
+}
+
+impl ReviewQueue<'_> {
+    /// Exact metadata blocks do not become ID groups or authorize decisions.
+    /// Each occurrence contributes at most one membership. No pairs are expanded.
+    pub fn metadata_hints(&self) -> Vec<MetadataHint> {
+        if self.entries.iter().all(|entry| entry.has_usable_identifier) {
+            return Vec::new();
+        }
+        let records = self
+            .sources
+            .iter()
+            .flat_map(|named| &named.source.occurrences);
+        let mut blocks = BTreeMap::new();
+        for (index, (rec, entry)) in records.zip(&self.entries).enumerate() {
+            let Some(key) = key(rec) else { continue };
+            let block: &mut Block = blocks.entry(key).or_default();
+            block.count += 1;
+            block.includes_unidentified |= !entry.has_usable_identifier;
+            if block.count <= MAX_HINT_MEMBERS {
+                block.members.push(index + 1);
+            }
+        }
+        let mut blocks: Vec<_> = blocks
+            .into_values()
+            .filter(|block| block.includes_unidentified && block.count > 1)
+            .collect();
+        blocks.sort_unstable_by_key(|block| block.members[0]);
+        blocks
+            .into_iter()
+            .map(|block| {
+                if block.count > MAX_HINT_MEMBERS {
+                    MetadataHint::Overflow {
+                        first: block.members[0],
+                        count: block.count,
+                    }
+                } else {
+                    MetadataHint::Inspect(block.members)
+                }
+            })
+            .collect()
+    }
+}

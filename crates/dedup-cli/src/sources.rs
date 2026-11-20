@@ -4,6 +4,7 @@ use std::{
     io::{self, Write},
 };
 
+use super::decisions::Decision;
 use dedup_core::{
     identifier_review as ids,
     ris::{self, Disposition, QueueError, ReviewQueue},
@@ -50,7 +51,22 @@ fn named_paths(args: &[OsString]) -> Result<BTreeMap<&str, &OsStr>, &'static str
     Ok(paths)
 }
 
+enum Action<'a> {
+    Review,
+    Init(&'a OsStr),
+    Resume(&'a OsStr),
+    Export(&'a OsStr, &'a OsStr),
+}
+
 pub(super) fn run(args: &[OsString]) -> Result<(), String> {
+    let (action, args) = match args {
+        [flag, path, rest @ ..] if flag == "--init-decisions" => (Action::Init(path), rest),
+        [flag, path, rest @ ..] if flag == "--resume-decisions" => (Action::Resume(path), rest),
+        [flag, path, dir, rest @ ..] if flag == "--export-reviewed" => {
+            (Action::Export(path, dir), rest)
+        }
+        _ => (Action::Review, args),
+    };
     let paths = named_paths(args)?;
     let mut remaining = ids::MAX_INPUT_BYTES;
     let mut snapshots = Vec::with_capacity(paths.len());
@@ -69,28 +85,75 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
     for (label, path, text) in &snapshots {
         super::recheck(path, text.as_bytes()).map_err(|error| format!("{label}: {error}"))?;
     }
+    let manifest: Vec<_> = queue
+        .sources
+        .iter()
+        .map(|named| {
+            let original = named.source.original.as_bytes();
+            let hash = Sha256::digest(original);
+            format!(
+                "input\tris\t{}\tbytes={};occurrences={};sha256={hash:x}",
+                named.label,
+                original.len(),
+                named.source.occurrences.len()
+            )
+        })
+        .collect();
+    let decisions = match action {
+        Action::Review => None,
+        Action::Init(path) => {
+            super::decisions::create(path, &queue, &manifest)?;
+            None
+        }
+        Action::Resume(path) => Some(super::decisions::resume(path, &queue, &manifest)?),
+        Action::Export(path, dir) => {
+            let decisions = super::decisions::resume(path, &queue, &manifest)?;
+            return super::reviewed::export(dir.as_ref(), &queue, &manifest, &decisions);
+        }
+    };
     let mut out = io::BufWriter::new(io::stdout().lock());
-    render_queue(&queue, &mut out)
+    render_queue(&queue, &manifest, decisions.as_deref(), &mut out)
         .and_then(|()| out.flush())
         .map_err(|_| String::from("Cannot write report."))
 }
 
-fn render_queue(queue: &ReviewQueue<'_>, out: &mut impl Write) -> io::Result<()> {
-    super::render(&queue.review, out, |global| {
+fn render_queue(
+    queue: &ReviewQueue<'_>,
+    manifest: &[String],
+    decisions: Option<&[Decision]>,
+    out: &mut impl Write,
+) -> io::Result<()> {
+    let reference = |global: usize| {
         let entry = &queue.entries[global - 1];
         format!("{}:{}", entry.label, entry.ordinal)
-    })?;
+    };
+    super::render(&queue.review, out, reference)?;
+    for hint in queue.metadata_hints() {
+        match hint {
+            ris::MetadataHint::Inspect(rows) => {
+                let refs = rows
+                    .into_iter()
+                    .map(reference)
+                    .collect::<Vec<_>>()
+                    .join(",");
+                writeln!(
+                    out,
+                    "triage\ttitle_author_year_type\t{refs}\tinspect_metadata_only"
+                )?;
+            }
+            ris::MetadataHint::Overflow { first, count } => {
+                writeln!(
+                    out,
+                    "triage_overflow\ttitle_author_year_type\t{}\tmembers={count};limit={}",
+                    reference(first),
+                    ris::MAX_HINT_MEMBERS
+                )?;
+            }
+        }
+    }
     let mut entries = queue.entries.iter();
-    for named in &queue.sources {
-        let original = named.source.original.as_bytes();
-        let hash = Sha256::digest(original);
-        writeln!(
-            out,
-            "input\tris\t{}\tbytes={};occurrences={};sha256={hash:x}",
-            named.label,
-            original.len(),
-            named.source.occurrences.len()
-        )?;
+    for (named, identity) in queue.sources.iter().zip(manifest) {
+        writeln!(out, "{identity}")?;
         for rec in &named.source.occurrences {
             let entry = entries.next().expect("one queue entry per occurrence");
             let disposition = match entry.disposition {
@@ -104,6 +167,19 @@ fn render_queue(queue: &ReviewQueue<'_>, out: &mut impl Write) -> io::Result<()>
                 rec,
                 Some(disposition),
             )?;
+        }
+    }
+    if let Some(decisions) = decisions {
+        for (entry, &decision) in queue.entries.iter().zip(decisions) {
+            if decision != Decision::NotCandidate {
+                writeln!(
+                    out,
+                    "decision\thuman\t{}:{}\t{}",
+                    entry.label,
+                    entry.ordinal,
+                    decision.label(queue)
+                )?;
+            }
         }
     }
     Ok(())
