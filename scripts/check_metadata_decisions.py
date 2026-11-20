@@ -1,5 +1,6 @@
 """Follow six generated RIS occurrences through queue, sheet and reviewed export."""
 import argparse
+import hashlib
 import subprocess
 import tempfile
 from pathlib import Path
@@ -141,9 +142,14 @@ def exercise(directory, binary, baseline):
     assert output("undo", "reviewed.ris") == output("pending", "reviewed.ris")
     assert output("undo", "reconciliation.tsv").splitlines()[-1] == b"total\t\t6\t0\t0\t6\t1\t1\t3\t1\t0"
     # Calc exports four columns on every row, even the header and end marker.
-    padded = b"\xef\xbb\xbf" + b"".join(
-        row + b"\t" * (3 - row.count(b"\t")) + b"\r\n" for row in approved.splitlines()
+    padded_lf = b"\xef\xbb\xbf" + b"".join(
+        row + b"\t" * (3 - row.count(b"\t")) + b"\n" for row in approved.splitlines()
     )
+    sheet.write_bytes(padded_lf)
+    assert run("--resume-decisions", sheet).stdout.splitlines() == preview
+    padded = padded_lf.replace(b"\n", b"\r\n")
+    fingerprint = hashlib.sha256(original[0]).hexdigest().encode("ascii")
+    rejected(padded.replace(fingerprint, b"0" * 64, 1), b"inputs differ")
     rejected(padded.replace(b"cat:1\tkeep\t\t", b"cat:1\tkeep\tstray\t"), b"Unknown decision")
     rejected(padded.replace(b"idx:1\tverified-", b"idx:01\tverified-"), b"expected row")
     rejected(padded.replace(reason, b""), b"rationale")
@@ -154,6 +160,7 @@ def exercise(directory, binary, baseline):
     for name in ["reviewed.ris", "mapping.tsv", "reconciliation.tsv"]:
         assert output("replay", name) == output("reviewed", name)
     assert (catalog.read_bytes(), index.read_bytes()) == original
+    print("Padded UTF-8 BOM sheets reopened with LF and CRLF. Changed fingerprint, occurrence key and extra data rejected before output.")
     print("Inspected the copied DOI and the verified pair. All 3 pending occurrences survived; 5 complete RIS records reopened.")
     print("Verified sheet: 5 editable, 6 mapped, 1 verified copy, all 5 distinct reports retained.")
     print("Invalid edits/input changes rejected before output. Undo restored all 6; padded TSV replay matched all export files.")
