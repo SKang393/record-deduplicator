@@ -9,10 +9,11 @@ meta-analyses, built around a shared Rust engine. The goal is to identify duplic
 database records while preserving distinct reports, original metadata, and the
 reasoning behind each decision.
 
-**In development:** the CLI can review shared full DOIs and PMIDs directly from
-one or more UTF-8 RIS exports or a two-column TSV file. The review queue keeps
-every occurrence and leaves the input files intact. Automated merging and the desktop application are not
-available on this branch. There are no prebuilt release downloads.
+**In development.** The CLI accepts named UTF-8 RIS files for a saved
+decision sheet and a reviewed RIS export. A standalone two-column DOI/PMID
+TSV produces an identifier report. Both workflows leave the inputs intact.
+Removing a copy from the export requires a human decision. Build the CLI
+from source on this branch. The desktop application is planned.
 
 ## Features and design
 
@@ -108,6 +109,41 @@ even when their filenames or contents are identical.
 The command accepts up to 128 named files. The combined limits are 16 MiB,
 100,000 occurrences and 250,000 tagged fields. Input errors and exceeded limits
 stop the run before it writes any report rows.
+
+### Bring a BibTeX export into a named RIS review
+
+Suppose one database supplied `catalog.ris` and another supplied a UTF-8
+`index.bib`. Keep both originals. With [bibutils](https://sourceforge.net/p/bibutils/home/Bibutils/)
+installed, these Bash commands convert the BibTeX to a separate RIS file
+and show the queue. Use a new conversion directory for each export.
+
+```sh
+mkdir converted && (
+  set -o pipefail
+  bib2xml -i utf8 index.bib | xml2ris -o utf8 > converted/index.ris
+) && dedup review-ids --ris-source catalog catalog.ris --ris-source index converted/index.ris
+```
+
+Compare the index `input` occurrence count with the original BibTeX entry
+count. Check the citation keys, titles and identifiers against the converted
+RIS. In the tested bibutils 7.2 example, citation keys became RIS `ID`
+values, a quoted comma survived in the title and a wrapped abstract became
+one line. Passing raw BibTeX to `--ris-source` can yield a `source` row
+marked `fragment`. A single retained fragment can cover several BibTeX entries.
+
+Once the counts and fields reconcile, create the sheet with
+`--init-decisions choices.tsv` before the same two `--ris-source` arguments.
+Inspect candidate pairs, mark a keeper and enter `duplicate-of=<keeper key>`
+only for a confirmed copy. Leave unresolved rows pending. Use
+`--export-reviewed choices.tsv reviewed` with the same named RIS files.
+Save the original BibTeX, its SHA-256, the converter version and the exact
+converted RIS alongside the sheet. For `index`, the saved fingerprint and
+the byte ranges in `mapping.tsv` refer to `converted/index.ris`. The RIS
+`ID` links a converted record back to its BibTeX citation key in this example.
+
+To reproduce the six-occurrence synthetic check with bibutils on your path,
+run `python scripts/check_mixed_export.py target/release/dedup` (use
+`dedup.exe` on Windows).
 
 ### Verify a copy found through metadata
 
