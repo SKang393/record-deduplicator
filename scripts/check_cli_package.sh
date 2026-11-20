@@ -105,6 +105,14 @@ guided_start() (
 )
 
 find "$project" "$handoff" -print | LC_ALL=C sort > "$work/before.txt"
+if [[ $start_shell == pwsh ]]; then
+    # Two quoted file paths pasted into one source prompt must not select either file.
+    index_answer="\"$catalog_path\" \"$index_path\"" guided_start yes :cancel > cancelled.tsv 2> prompts.txt
+    grep -Fq 'Cannot locate a regular file there.' prompts.txt
+    test ! -s cancelled.tsv
+    find "$project" "$handoff" -print | LC_ALL=C sort | cmp - "$work/before.txt"
+    echo "PASS: PowerShell guide requested one source path and created no decision sheet."
+fi
 guided_start :cancel > cancelled.tsv 2> prompts.txt
 find "$project" "$handoff" -print | LC_ALL=C sort | cmp - "$work/before.txt"
 cmp catalog.ris "$catalog"
@@ -136,11 +144,8 @@ cmp reference-pending.tsv guided-pending.tsv
 dest="$handoff/À transmettre"
 dest_path=$(guide_path "$dest")
 dest_answer=$dest_path
-cancel_paths=("$dest_path")
 if [[ $start_shell == zsh ]]; then
     dest_answer=$(/bin/zsh -fc 'print -r -- ${(q)1}' -- "$dest_path")
-    # Escaping just the new basename could also name a literal backslash.
-    cancel_paths=("${dest_path%/*}/À\ transmettre" "$dest_path")
 fi
 mkdir "$handoff/Dossier occupé"
 printf '%s\n' 'Previous output' > "$handoff/Dossier occupé/reviewed.ris"
@@ -152,8 +157,15 @@ check_untouched() {
     cmp catalog.ris "$catalog"
     cmp guide-index.ris "$index"
 }
-guided_start yes "${cancel_paths[@]}" '' > guided-pending.tsv 2> prompts.txt
-if [[ $start_shell == zsh ]]; then grep -Fq 'Paste the full path with spaces as written.' prompts.txt; fi
+if [[ $start_shell == zsh ]]; then
+    # Escaping just the new basename could also name a literal backslash.
+    guided_start yes "${dest_path%/*}/À\ transmettre" :cancel > guided-pending.tsv 2> prompts.txt
+    grep -Fq 'Paste the full path with spaces as written.' prompts.txt
+    if grep -Fq 'Type write to create' prompts.txt; then exit 1; fi
+    check_untouched
+    echo "PASS: ambiguous zsh destination prompted for a path and wrote no files."
+fi
+guided_start yes "$dest_path" '' > guided-pending.tsv 2> prompts.txt
 cmp reference-pending.tsv guided-pending.tsv
 grep -Fq "Decision sheet: $sheet_path" prompts.txt
 grep -Fq "New export folder: $dest_path" prompts.txt
@@ -183,7 +195,7 @@ done
 cmp saved.tsv "$sheet"
 cmp catalog.ris "$catalog"
 cmp guide-index.ris "$index"
-echo "PASS: guided export reconciled 3 inputs, removed 1 verified copy and kept the pending distinct report. Cancellation and an existing destination preserved the project."
+echo "PASS: $start_shell guided export outside the project matched all three reference files, removed one verified copy and kept two records including one pending."
 
 # A changed source must be diagnosed before emitting any saved decisions.
 if [[ $start_shell == zsh ]]; then
@@ -198,5 +210,9 @@ fi
 if guided_start yes > rejected.tsv 2> prompts.txt; then exit 1; fi
 test ! -s rejected.tsv
 grep -Fq 'Decision sheet inputs differ.' prompts.txt
+if [[ $start_shell == zsh ]]; then
+    grep -Fq "idx = $index_answer" prompts.txt
+    echo "PASS: literal backslash filename selected while both spellings existed."
+fi
 cmp saved.tsv "$sheet"
 echo "PASS: $start_shell guided start with spaced Unicode paths; cancellation preserved project bytes and entries; created 3 pending; reopened the partially reviewed sheet; changed source refused."
