@@ -12,8 +12,8 @@ reasoning behind each decision.
 **In development.** The CLI accepts named UTF-8 RIS files for a saved
 decision sheet and a reviewed RIS export. A standalone two-column DOI/PMID
 TSV produces an identifier report. Both workflows leave the inputs intact.
-Removing a copy from the export requires a human decision. Build the CLI
-from source on this branch. The desktop application is planned.
+Removing a copy from the export requires a human decision. Use a review
+build or compile the CLI from source. The desktop application is planned.
 
 ## Features and design
 
@@ -34,6 +34,27 @@ The planned workflow combines:
 
 See the [engine contract](docs/10-engine-contract.md) for the technical rules.
 
+## Try the CLI without Rust
+
+For a review-branch run that includes the CLI packaging step, sign in to
+GitHub, open the successful run for your chosen commit, and select its
+`recorddedu-…tar.gz` under **Artifacts**. Choose `x86_64-pc-windows-…`
+for 64-bit Intel/AMD Windows or `aarch64-apple-darwin` for Apple silicon.
+The filename includes the commit prefix. The packaging step prints the
+archive's SHA-256 digest. Review artifacts expire after seven
+days. [Review branch runs](https://github.com/SKang393/record-deduplicator/actions/workflows/ci.yml?query=branch%3Areview%2Fnative-ris-audits)
+
+Extract the archive (for example, `tar -xzf <downloaded-filename>`) and open
+a terminal in the extracted `recorddedu-…` directory. In PowerShell, run
+`.\dedup.exe --version`. In macOS Terminal, run `./dedup --version`.
+`BUILD.txt` identifies the commit and compiler, and `SHA256SUMS` gives the
+executable digest. These are development builds without publisher signing
+or macOS notarization.
+
+To run the [first review](#verify-a-copy-found-through-metadata), open Bash
+(Git Bash on Windows) in the extracted directory and run
+`export PATH="$PWD:$PATH"`. The walkthrough also ships in this README.
+
 ## Build from source
 
 ### Prerequisites
@@ -52,6 +73,7 @@ Build the CLI from the review branch.
 git clone --branch review/native-ris-audits https://github.com/SKang393/record-deduplicator.git
 cd record-deduplicator
 cargo build --release --locked -p dedup-cli
+export PATH="$PWD/target/release:$PATH"
 ```
 
 The executable is `target/release/dedup.exe` on Windows and
@@ -61,8 +83,8 @@ build.
 ## Usage
 
 For a first run, follow the [two-export walkthrough](#verify-a-copy-found-through-metadata).
-It creates its own inputs, adds the built executable to your Bash path, and
-shows how to verify a copy, reopen pending decisions and reconcile the export.
+It creates its own inputs and shows how to verify a copy, reopen pending
+decisions and reconcile the export.
 Other examples assume `dedup` is on your path. Use `--help` for syntax or
 `--version` for the build version.
 
@@ -153,11 +175,10 @@ run `python scripts/check_mixed_export.py target/release/dedup` (use
 
 This example creates a catalog article, an index copy missing its DOI, and
 an index record with an extra subtitle at the same journal location. After
-building the review branch above, start at the repository root and run the
-blocks in the same Bash session (Git Bash on Windows).
+adding the extracted or source-built CLI to your path as shown above, run
+the blocks in the same Bash session (Git Bash on Windows).
 
 ```sh
-export PATH="$PWD/target/release:$PATH"
 cd "$(mktemp -d)"
 cat > catalog.ris <<'RIS'
 TY  - JOUR

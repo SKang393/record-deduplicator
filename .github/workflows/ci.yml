@@ -57,6 +57,22 @@ jobs:
         run: python scripts/check_metadata_decisions.py "${{ env.DEDUP_CLI }}"
       - name: Check inspection-only title variants
         run: python scripts/check_title_variants.py "${{ env.DEDUP_CLI }}"
+      - name: Package the CLI and run its first-review walkthrough
+        if: github.event_name == 'push' && github.ref == 'refs/heads/review/native-ris-audits'
+        shell: bash
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: |
+          python scripts/package_review_cli.py
+          bash scripts/check_cli_package.sh target/review-package/*.tar.gz
+      - name: Attach tested CLI to the review run
+        if: github.event_name == 'push' && github.ref == 'refs/heads/review/native-ris-audits'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: target/review-package/*.tar.gz
+          archive: false
+          if-no-files-found: error
+          retention-days: 7
   docs:
     runs-on: ubuntu-latest
     steps:
