@@ -74,6 +74,8 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    A key such as `catalog:2` means the second RIS record in the export labeled `catalog`.
    To reopen, run the guide again with the same labels and original files.
    It checks their fingerprints and shows pending decisions and keeper context.
+   Optional comparisons appear in the full queue. To see them again, use
+   `--resume-decisions` with the saved sheet and the same named sources.
 5. After reviewing the pending rows, press Enter to finish, or enter a new
    folder path to preview an export. Choose a folder name inside an existing
    directory, which can be outside the project. Check the sheet path,
@@ -190,8 +192,10 @@ even when their filenames or contents are identical.
   of at least five words, the same listed authors in order, year, RIS type,
   journal, volume and final page range or article number. Issue and work type
   must agree as well. Use `--inspect-pair` to read each original. A protocol
-  and follow-up abstract can share a heading and printed pages. Both stay in
-  the export, and the lead adds no editable decision.
+  and follow-up abstract can share a heading and printed pages. Read the
+  original notes (`N1`) and abstracts (`AB`) for differences in what each
+  report describes. The lead adds no editable decision, and both records
+  are retained by default.
 - Each `source` row gives the original half-open byte range and a disposition.
   `review_candidate` means inspect its candidate groups and any `issue` rows.
   `review_input` means inspect the record's identifier issues.

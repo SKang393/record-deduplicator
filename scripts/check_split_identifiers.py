@@ -96,45 +96,74 @@ def compare(label, flags, truth, before, after):
     return positives, old_pairs, new_pairs
 
 
-def check_export(root, flags, originals, before, after, collision):
-    def review(binary, *args, check=True):
-        return subprocess.run([binary, "review-ids", *args, *flags], capture_output=True, check=check)
-
+def check_undecided(root, flags, before, after):
+    root.mkdir()
     sheet = root / "decisions.tsv"
-    review(before, "--init-metadata-decisions", sheet)
+    answers = [str(sheet)]
+    for label, path in zip(flags[1::3], flags[2::3]):
+        answers.extend((label, str(path)))
+    guided = subprocess.run([after, "start"], input="\n".join([*answers, "", "yes", ""]).encode(),
+                            capture_output=True, check=True)
+    groups = [line for line in guided.stdout.decode().splitlines() if line.startswith(("candidate\t", "triage\t"))]
+    added = [line for line in groups if line.startswith(SIGNAL)]
+    assert added and groups[-len(added):] == added
+    assert all(line.endswith("\tinspect_only") for line in added)
+    assert f"optional comparisons ({len(added)} total)" in guided.stderr.decode()
+    pending = subprocess.check_output([after, "review-ids", "--pending-decisions", sheet, *flags])
+    subprocess.run([after, "review-ids", "--export-reviewed", sheet, root / "new", *flags], check=True)
+    if before:
+        old_sheet = root / "baseline.tsv"
+        initial = subprocess.check_output([before, "review-ids", "--init-metadata-decisions", old_sheet, *flags])
+        assert [r for r in guided.stdout.decode().splitlines() if not r.startswith(SIGNAL)] == initial.decode().splitlines()
+        assert old_sheet.read_bytes() == sheet.read_bytes()
+        assert subprocess.check_output([before, "review-ids", "--pending-decisions", old_sheet, *flags]) == pending
+        subprocess.run([before, "review-ids", "--export-reviewed", old_sheet, root / "old", *flags], check=True)
+        for name in ("reviewed.ris", "mapping.tsv", "reconciliation.tsv"):
+            assert (root / "old" / name).read_bytes() == (root / "new" / name).read_bytes()
+    summary, = [line for line in pending.decode().splitlines() if line.startswith("summary\tpending\t")]
+    print(f"Full queue: {len(groups) - len(added)} prior groups followed by {len(added)} optional pairs. {summary}")
+    return sheet, added
+
+
+def check_contrast(root, before, after):
+    flags, truth, originals = contrast(root)
+    job = root / "contrast-review"
+    sheet, added = check_undecided(job, flags, before, after)
     template = sheet.read_bytes()
-    review(after, "--init-metadata-decisions", root / "new.tsv")
-    assert (root / "new.tsv").read_bytes() == template
-    # Inspect the actual colliding proceedings abstracts, including the distinguishing notes.
-    comparison = review(after, "--inspect-pair", sheet, *collision).stdout.decode()
+    pairs = direct_pairs(added)
+    assert len(added) == len(pairs) == 6
+    assert {truth[a] for a, b in pairs if truth[a] == truth[b]} == {
+        "pages", "article", "split-pages", "case-spacing", "reversed-ids"}
+    collision, = [(a, b) for a, b in pairs if truth[a] != truth[b]]
+    assert {truth[k] for k in collision} == {"shared-heading", "shared-heading-other"}
+    if before:
+        compare("fresh contrast", flags, truth, before, after)
+    assert queue(after, flags) == queue(after, flags[3:] + flags[:3])
+    comparison = subprocess.check_output([after, "review-ids", "--inspect-pair", sheet, *collision, *flags]).decode()
     for key in collision:
         assert f"[{key}] outside-decision-sheet (bytes " in comparison
     assert "course protocol" in comparison and "follow-up observations" in comparison
-    for version, binary in [("old", before), ("new", after)]:
-        review(binary, "--export-reviewed", sheet, root / version)
-    for name in ("reviewed.ris", "mapping.tsv", "reconciliation.tsv"):
-        assert (root / "old" / name).read_bytes() == (root / "new" / name).read_bytes()
-    assert (root / "new/reviewed.ris").read_bytes() == b"".join(originals.values())
-    assert sheet.read_bytes() == template and all(path.read_bytes() == data for path, data in originals.items())
-    # An inspect-only pair cannot be promoted by adding a well-formed removal to the sheet.
-    bad = root / "invalid.tsv"
-    bad.write_bytes(template.removesuffix(b"end\n") + b"catalog:1\tkeep\n"
-                    b"index:1\tverified-duplicate-of=catalog:1\tRead both records.\nend\n")
-    destination = root / "invalid-export"
-    result = review(after, "--export-reviewed", bad, destination, check=False)
+    assert (job / "new/reviewed.ris").read_bytes() == b"".join(originals.values())
+    mapped = [line.split("\t") for line in (job / "new/mapping.tsv").read_text(encoding="utf-8").splitlines()]
+    outputs = {detail.split(";output=")[1] for kind, status, key, detail in mapped
+               if kind == "map" and status == "not-candidate" and key in collision}
+    assert len(outputs) == 2
+    left, right = collision
+    extra = f"{left}\tkeep\n{right}\tverified-duplicate-of={left}\tCompared reports.\nend\n"
+    bad = job / "invalid.tsv"
+    bad.write_bytes(template.removesuffix(b"end\n") + extra.encode())
+    destination = job / "invalid-export"
+    result = subprocess.run([after, "review-ids", "--export-reviewed", bad, destination, *flags], capture_output=True)
     assert result.returncode and not result.stdout and not destination.exists()
     assert b"unexpected rows" in result.stderr
+    assert sheet.read_bytes() == template and all(path.read_bytes() == data for path, data in originals.items())
+    print(f"Inspected {left} and {right}: protocol and follow-up retained separately; attempted removal rejected.")
 
 
 def exercise(root, before, after):
-    flags, truth, originals = contrast(root)
-    positives, old, new = compare("fresh contrast", flags, truth, before, after)
-    assert {truth[a] for a, _ in (new - old) & positives} == {
-        "pages", "article", "split-pages", "case-spacing", "reversed-ids"}
-    collision, = (new - old) - positives
-    assert {truth[k] for k in collision} == {"shared-heading", "shared-heading-other"}
-    assert queue(after, flags) == queue(after, flags[3:] + flags[:3])
-    check_export(root, flags, originals, before, after, collision)
+    check_contrast(root, before, after)
+    if before is None:
+        return
 
     flags, truth, _ = challenge(root)
     positives, old, new = compare("frozen title ledger", flags, truth, before, after)
@@ -166,13 +195,14 @@ def exercise(root, before, after):
         else:
             assert all(a not in endpoints and b not in endpoints for a, b in missed)
             assert len(new - old) == 490 and new - old <= missed
+            check_undecided(root / "slice-review", flags, before, after)
             assert all(copies[a].study % 4 == 1 for a, _ in positives - new)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("before", type=Path)
+    parser.add_argument("before", type=Path, nargs="?", help="Baseline CLI for frozen-corpus and export comparison")
     parser.add_argument("after", type=Path)
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="complementary-ids-") as temp:
-        exercise(Path(temp), args.before.resolve(), args.after.resolve())
+        exercise(Path(temp), args.before.resolve() if args.before else None, args.after.resolve())

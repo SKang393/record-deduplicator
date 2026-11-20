@@ -54,7 +54,11 @@ fn named_paths(args: &[OsString]) -> Result<BTreeMap<&str, &OsStr>, &'static str
 
 pub(super) enum Action<'a> {
     Review,
-    Init { path: &'a OsStr, metadata: bool },
+    Init {
+        path: &'a OsStr,
+        metadata: bool,
+        guided: bool,
+    },
     Resume(&'a OsStr),
     Pending(&'a OsStr, Option<&'a mut dyn BufRead>),
     InspectPair(&'a OsStr, &'a OsStr, &'a OsStr),
@@ -70,6 +74,7 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
                 Action::Init {
                     path,
                     metadata: flag == "--init-metadata-decisions",
+                    guided: false,
                 },
                 rest,
             )
@@ -135,9 +140,10 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
             records.len()
         ));
     }
+    let guided = matches!(action, Action::Init { guided: true, .. });
     let sheet = match action {
         Action::Review => None,
-        Action::Init { path, metadata } => {
+        Action::Init { path, metadata, .. } => {
             super::decisions::create(path, &queue, &manifest, metadata)?;
             None
         }
@@ -183,7 +189,7 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
         }
     };
     let mut out = io::BufWriter::new(io::stdout().lock());
-    render_queue(&queue, &manifest, sheet, &mut out)
+    render_queue(&queue, &manifest, sheet, guided, &mut out)
         .and_then(|()| out.flush())
         .map_err(|_| String::from("Cannot write report."))
 }
@@ -192,6 +198,7 @@ fn render_queue(
     queue: &ReviewQueue<'_>,
     manifest: &[String],
     sheet: Option<ResumedSheet>,
+    guided: bool,
     out: &mut impl Write,
 ) -> io::Result<()> {
     let reference = |global: usize| {
@@ -227,6 +234,12 @@ fn render_queue(
         }
     }
     let pairs = queue.locator_pairs();
+    if guided && !pairs.complementary_ids.is_empty() {
+        eprintln!(
+            "Look for complementary_id_locator to see optional comparisons ({} total). The citation details match, with a DOI in one source and a PMID in the other. Use --inspect-pair with the two keys. These leads add no removal decisions.",
+            pairs.complementary_ids.len()
+        );
+    }
     for (signal, leads) in [
         ("title_variant_locator", pairs.title_variants),
         ("complementary_id_locator", pairs.complementary_ids),

@@ -166,6 +166,7 @@ pub(super) fn run() -> Result<(), String> {
         Action::Init {
             path: sheet.as_ref(),
             metadata: true,
+            guided: true,
         },
         &args,
     )?;
