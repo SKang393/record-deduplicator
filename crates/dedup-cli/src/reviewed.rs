@@ -9,7 +9,7 @@ use std::{
 
 use dedup_core::{
     identifier_review::Identifier,
-    ris::{ReportIdentifiers, ReviewQueue},
+    ris::{Disposition, ReportIdentifiers, ReviewQueue},
 };
 use sha2::{Digest, Sha256};
 
@@ -125,10 +125,85 @@ pub(super) fn export(
         Sha256::digest(ris.as_bytes())
     )
     .unwrap();
-    publish(directory, &ris, &mapping).map_err(|e| format!("Cannot create reviewed export: {e}"))
+    let summary = reconciliation(queue, decisions);
+    publish(directory, &ris, &mapping, &summary)
+        .map_err(|e| format!("Cannot create reviewed export: {e}"))
 }
 
-fn publish(directory: &Path, ris: &str, mapping: &str) -> io::Result<()> {
+#[derive(Default)]
+struct Counts {
+    removed_id: usize,
+    removed_metadata: usize,
+    keep: usize,
+    pending_id: usize,
+    pending_metadata: usize,
+    outside_flagged: usize,
+    outside_unflagged: usize,
+}
+
+impl Counts {
+    fn record(&mut self, decision: &Decision, disposition: Disposition) {
+        let count = match decision {
+            Decision::DuplicateOf(_) => &mut self.removed_id,
+            Decision::VerifiedMetadata { .. } => &mut self.removed_metadata,
+            Decision::Keep => &mut self.keep,
+            Decision::Pending if disposition == Disposition::ReviewCandidate => {
+                &mut self.pending_id
+            }
+            Decision::Pending => &mut self.pending_metadata,
+            Decision::NotCandidate if disposition == Disposition::ReviewInput => {
+                &mut self.outside_flagged
+            }
+            Decision::NotCandidate => &mut self.outside_unflagged,
+        };
+        *count += 1;
+    }
+
+    fn write_row(&self, table: &mut String, scope: &str, source: &str, input: usize) {
+        let retained = self.keep
+            + self.pending_id
+            + self.pending_metadata
+            + self.outside_flagged
+            + self.outside_unflagged;
+        writeln!(
+            table,
+            "{scope}\t{source}\t{input}\t{}\t{}\t{retained}\t{}\t{}\t{}\t{}\t{}",
+            self.removed_id,
+            self.removed_metadata,
+            self.keep,
+            self.pending_id,
+            self.pending_metadata,
+            self.outside_flagged,
+            self.outside_unflagged
+        )
+        .unwrap();
+    }
+}
+
+fn reconciliation(queue: &ReviewQueue<'_>, decisions: &[Decision]) -> String {
+    let mut table = String::from(
+        "scope\tsource\tinput\tremoved_id\tremoved_metadata\tretained\tkeep\tpending_id\tpending_metadata\toutside_sheet_flagged\toutside_sheet_unflagged\n",
+    );
+    let mut total = Counts::default();
+    let mut entries = queue.entries.iter().zip(decisions);
+    for named in &queue.sources {
+        let mut source = Counts::default();
+        for (entry, decision) in entries.by_ref().take(named.source.occurrences.len()) {
+            source.record(decision, entry.disposition);
+            total.record(decision, entry.disposition);
+        }
+        source.write_row(
+            &mut table,
+            "source",
+            named.label,
+            named.source.occurrences.len(),
+        );
+    }
+    total.write_row(&mut table, "total", "", queue.entries.len());
+    table
+}
+
+fn publish(directory: &Path, ris: &str, mapping: &str, summary: &str) -> io::Result<()> {
     let parent = directory
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
@@ -136,12 +211,16 @@ fn publish(directory: &Path, ris: &str, mapping: &str) -> io::Result<()> {
     let staging = tempfile::Builder::new()
         .prefix(".dedup-export-")
         .tempdir_in(parent)?;
-    for (name, contents) in [("reviewed.ris", ris), ("mapping.tsv", mapping)] {
+    for (name, contents) in [
+        ("reviewed.ris", ris),
+        ("mapping.tsv", mapping),
+        ("reconciliation.tsv", summary),
+    ] {
         let mut file = File::create_new(staging.path().join(name))?;
         file.write_all(contents.as_bytes())?;
         file.sync_all()?;
     }
-    // Publish both files together. An existing or concurrently created destination wins.
+    // Publish all files together. An existing or concurrently created destination wins.
     renamore::rename_exclusive(staging.path(), directory)?;
     let _ = staging.keep();
     Ok(())

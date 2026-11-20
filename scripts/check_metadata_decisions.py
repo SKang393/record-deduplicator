@@ -92,6 +92,12 @@ def exercise(directory, binary, baseline):
     assert b"decision\thuman\tidx:1\tverified-duplicate-of=cat:1" in preview and rationale in preview
     run("--export-reviewed", sheet, "reviewed")
     assert output("reviewed", "reviewed.ris") == a + b + e + c + d
+    tally = output("reviewed", "reconciliation.tsv").splitlines()
+    assert tally[1:] == [
+        b"source\tcat\t3\t0\t0\t3\t1\t1\t1\t0\t0",
+        b"source\tidx\t3\t0\t1\t2\t0\t0\t1\t1\t0",
+        b"total\t\t6\t0\t1\t5\t1\t1\t2\t1\t0",
+    ]
     mapping = output("reviewed", "mapping.tsv").splitlines()
     assert b"schema\texport\t2\treviewed-ris" in mapping and mapping.count(rationale) == 1
     assert b"summary\tall\t6\tretained=5;suppressed=1" in mapping
@@ -106,13 +112,14 @@ def exercise(directory, binary, baseline):
     sheet.write_bytes(kept)
     run("--export-reviewed", sheet, "undo")
     assert output("undo", "reviewed.ris") == output("pending", "reviewed.ris")
+    assert output("undo", "reconciliation.tsv").splitlines()[-1] == b"total\t\t6\t0\t0\t6\t1\t1\t3\t1\t0"
     sheet.write_bytes(approved)
     run("--export-reviewed", sheet, "replay")
-    for name in ["reviewed.ris", "mapping.tsv"]:
+    for name in ["reviewed.ris", "mapping.tsv", "reconciliation.tsv"]:
         assert output("replay", name) == output("reviewed", name)
     assert (catalog.read_bytes(), index.read_bytes()) == original
     print("Verified sheet: 5 editable, 6 mapped, 1 verified copy, all 5 distinct reports retained.")
-    print("Nine invalid edits/input changes rejected before output. Undo restored all 6; replay matched both files.")
+    print("Nine invalid edits/input changes rejected before output. Undo restored all 6; replay matched all export files.")
 
     # Change one corroborating field at a time. These variants still have the
     # original title/first author/year/type hint and fresh source fingerprints.

@@ -223,9 +223,11 @@ fn reviewed_export_reconciles_every_occurrence_and_replays_byte_for_byte() {
     let beta = format!("{kept}{other}");
     inputs.write("a.ris", alpha.as_bytes());
     inputs.write("b.ris", beta.as_bytes());
+    inputs.write("empty.ris", b"");
     let a = ["--ris-source", "a", "a.ris"];
     let b = ["--ris-source", "b", "b.ris"];
-    let sources = [a, b].concat();
+    let empty = ["--ris-source", "total", "empty.ris"];
+    let sources = [a, b, empty].concat();
     let init = inputs.run(&[&["--init-decisions", "choices.tsv"][..], &sources].concat());
     assert!(init.status.success(), "{:?}", init.stderr);
     let choices = fs::read_to_string(inputs.0.join("choices.tsv"))
@@ -236,7 +238,7 @@ fn reviewed_export_reconciles_every_occurrence_and_replays_byte_for_byte() {
     inputs.write("choices.tsv", choices.as_bytes());
     for (dir, args) in [
         ("first run", sources.clone()),
-        ("second run", [b, a].concat()),
+        ("second run", [empty, b, a].concat()),
     ] {
         let run = inputs.export(dir, &args);
         assert!(run.status.success(), "{:?}", run.stderr);
@@ -247,6 +249,17 @@ fn reviewed_export_reconciles_every_occurrence_and_replays_byte_for_byte() {
     let map = read("first run", "mapping.tsv");
     assert_eq!(ris, read("second run", "reviewed.ris"));
     assert_eq!(map, read("second run", "mapping.tsv"));
+    let tally = read("first run", "reconciliation.tsv");
+    assert_eq!(tally, read("second run", "reconciliation.tsv"));
+    assert_eq!(
+        tally.lines().skip(1).collect::<Vec<_>>(),
+        [
+            "source\ta\t3\t1\t0\t2\t1\t1\t0\t0\t0",
+            "source\tb\t2\t0\t0\t2\t1\t0\t0\t1\t0",
+            "source\ttotal\t0\t0\t0\t0\t0\t0\t0\t0\t0",
+            "total\t\t5\t1\t0\t4\t2\t1\t0\t1\t0",
+        ]
+    );
     let expected_ris = format!(
         "{}{pending}\n{}{other}\n",
         protocol.replace('\r', "\n"),

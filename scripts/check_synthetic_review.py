@@ -21,7 +21,7 @@ class Copy:
         return self.study, self.kind
 
 
-def corpus():
+def corpus(studies=1000):
     sources = {label: [] for label in ("central", "index", "regional", "update")}
 
     def add(label, study, kind):
@@ -37,7 +37,7 @@ def corpus():
             pmid = ""
         sources[label].append(Copy(study, kind, doi, pmid))
 
-    for study in range(1, 1001):
+    for study in range(1, studies + 1):
         add("central", study, "results")
         if study % 3:
             add("index", study, "results")
@@ -70,8 +70,8 @@ def serialize(copy, label, ordinal):
     return ("\n".join(lines) + "\n").encode()
 
 
-def write_corpus(directory):
-    sources = corpus()
+def write_corpus(directory, *, studies=1000, render=serialize):
+    sources = corpus(studies)
     copies, canonical, original, spans = {}, {}, {}, {}
     source_args = []
     for label, records in sources.items():
@@ -80,7 +80,7 @@ def write_corpus(directory):
         for i, rec in enumerate(records, 1):
             key = f"{label}:{i}"
             copies[key] = rec
-            canonical[key] = serialize(rec, label, i)
+            canonical[key] = render(rec, label, i)
             eol = {"central": b"\r\n", "index": b"\n", "regional": b"\r",
                    "update": (b"\r\n", b"\n", b"\r")[i % 3]}[label]
             raw = canonical[key].replace(b"\n", eol)

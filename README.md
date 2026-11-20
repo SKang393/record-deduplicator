@@ -165,6 +165,29 @@ agree when supplied. Conflicting supported DOIs or PMIDs block the set.
 Leave unresolved copies and distinct reports pending or mark them keep.
 Existing identifier-only sheets still open with `--resume-decisions`.
 
+### Reconcile a reviewed export before screening
+
+Open `reconciliation.tsv` in the export directory. It has one row per named
+source and one total row. Every count represents input occurrences. Each
+removed copy counts against the source it came from, including when another
+source supplied the kept record. Use `mapping.tsv` for individual decisions,
+source byte spans and output ordinals.
+
+- `input = removed_id + removed_metadata + retained`. The removal columns
+  count explicit duplicate decisions applied before literature screening.
+- `retained = keep + pending_id + pending_metadata + outside_sheet_flagged + outside_sheet_unflagged`.
+  Start with a source's pending columns to see where decisions remain open.
+  A pending row with an identifier candidate counts under `pending_id` even
+  if it also has a metadata hint. `pending_metadata` counts metadata-only
+  rows in the opt-in sheet.
+- The outside-sheet columns count exported occurrences with no decision row
+  in the selected sheet. For `outside_sheet_flagged`, inspect the queue's
+  `review_input` records and their input issues.
+
+The total `retained` count is the number of records in `reviewed.ris` going
+forward to screening. Title/abstract exclusions, full-text exclusions and
+study inclusion decisions belong to later screening stages.
+
 ### Review a single RIS export
 
 ```sh
@@ -247,6 +270,11 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --locked
 ```
+
+To measure a 15,210-occurrence synthetic search, build the release CLI and
+run `python scripts/check_large_review.py target/release/dedup` (use
+`dedup.exe` on Windows). It checks the export against generated report
+identities and prints candidate load, unresolved categories and CLI timings.
 
 Documentation contributors can check local Markdown links with Python 3.10 or
 newer:
