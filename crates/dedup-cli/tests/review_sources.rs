@@ -167,6 +167,57 @@ fn damaged_named_sources_fail_before_queue_or_sheet() {
 }
 
 #[test]
+fn interrupted_field_joined_to_a_bom_export_fails_before_sheet_or_export() {
+    let inputs = Inputs::new("interrupted-join");
+    let good =
+        "\u{feff}TY  - JOUR\r\nTI  - Literal TY  - JOUR\r\nN1  - Pre\u{feff}face\r\nER  -\r\n";
+    inputs.write("catalog.ris", good.as_bytes());
+    inputs.write("index.ris", good.as_bytes());
+    let sources = [
+        "--ris-source",
+        "catalog",
+        "catalog.ris",
+        "--ris-source",
+        "index",
+        "index.ris",
+    ];
+    let init = |sheet| inputs.run(&[&["--init-decisions", sheet][..], &sources].concat());
+    assert!(init("choices.tsv").status.success());
+    let sheet = fs::read(inputs.0.join("choices.tsv")).unwrap();
+
+    let cut = "TY  - JOUR\nTI  - Enquêt";
+    let joined = format!("{good}{cut}\u{feff}TY  - JOUR\nTI  - Follow-up\nER  -\n");
+    inputs.write("index.ris", joined.as_bytes());
+    for failed in [init("new.tsv"), inputs.export("out", &sources)] {
+        let error = String::from_utf8_lossy(&failed.stderr);
+        assert!(
+            error.contains(&format!(
+                "index:2 (bytes {}..{}, malformed)",
+                good.len(),
+                joined.len()
+            )),
+            "{error}"
+        );
+        assert!(error.contains(&format!(
+            "TY header inside the file at byte {}",
+            good.len() + cut.len()
+        )));
+        assert!(!error.contains("Enquêt") && !error.contains("Follow-up"));
+        assert_failed_before_report(failed);
+    }
+    assert!(!inputs.0.join("new.tsv").exists() && !inputs.0.join("out").exists());
+    assert_eq!(fs::read(inputs.0.join("choices.tsv")).unwrap(), sheet);
+    assert_eq!(
+        fs::read(inputs.0.join("index.ris")).unwrap(),
+        joined.as_bytes()
+    );
+    assert_eq!(
+        fs::read(inputs.0.join("catalog.ris")).unwrap(),
+        good.as_bytes()
+    );
+}
+
+#[test]
 fn converted_ris_and_blank_sources_can_be_reviewed_together() {
     let inputs = Inputs::new("converted");
     // A synthetic bibutils 7.2 conversion, with the file BOM and mixed line endings.

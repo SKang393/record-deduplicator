@@ -209,6 +209,11 @@ stop the run before it writes any report rows. An empty source counts as zero
 occurrences. If a named source contains a fragment, an unclosed record, or a
 malformed line, the command stops before creating a decision sheet. The error
 identifies the first damaged occurrence by label, ordinal and byte range.
+If an interrupted field runs into the next export's UTF-8 BOM and `TY`
+header, the error also gives the byte offset of that BOM. Retrieve the
+complete batch and supply each original export under its own label. With
+no BOM or line break at the join, a `TY` header can read as field text and
+two records can map to one occurrence.
 Run `dedup review-ids --ris <file>` for a read-only diagnostic report.
 
 ### Bring a BibTeX export into a named RIS review
@@ -381,6 +386,11 @@ source and one total row. Every count represents input occurrences. Each
 removed copy counts against the source it came from, including when another
 source supplied the kept record. Use `mapping.tsv` for individual decisions,
 source byte spans and output ordinals.
+
+Compare each source's `input` count with the count recorded when you exported
+that batch. A download that stops after a complete `ER` record can still be
+valid RIS. A repeated page can also offset a missing page in the total. Keep
+the original batch boundaries and check their ranges against the search log.
 
 - `input = removed_id + removed_metadata + retained`. The removal columns
   count explicit duplicate decisions applied before literature screening.

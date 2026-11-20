@@ -120,15 +120,23 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
     for named in &queue.sources {
         let records = &named.source.occurrences;
         if let Some((index, rec)) = records.iter().enumerate().find(|(_, rec)| !rec.usable()) {
-            return Err(format!(
-                "Invalid RIS at {}:{} (bytes {}..{}, {}). Expected complete TY/ER records. \
-                 Inspect with `dedup review-ids --ris <file>`. For BibTeX, see the README section \
-                 \"Bring a BibTeX export into a named RIS review\".",
+            let location = format!(
+                "Invalid RIS at {}:{} (bytes {}..{}, {}).",
                 named.label,
                 index + 1,
                 rec.bytes.start,
                 rec.bytes.end,
                 super::occurrence_status(rec)
+            );
+            if let Some(byte) = rec.embedded_header_byte {
+                return Err(format!(
+                    "{location} A UTF-8 BOM precedes a TY header inside the file at byte {byte}. \
+                     Check for an interrupted batch and supply each complete export as a separately named source."
+                ));
+            }
+            return Err(format!(
+                "{location} Expected complete TY/ER records. Inspect with `dedup review-ids --ris <file>`. \
+                 For BibTeX, see the README section \"Bring a BibTeX export into a named RIS review\"."
             ));
         }
         let original = named.source.original.as_bytes();

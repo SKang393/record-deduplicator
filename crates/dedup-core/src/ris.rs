@@ -39,6 +39,8 @@ pub struct Occurrence<'a> {
     pub has_type: bool,
     pub has_end: bool,
     pub malformed_lines: usize,
+    /// First BOM-prefixed TY header found inside the file, in original bytes.
+    pub embedded_header_byte: Option<usize>,
 }
 
 impl Occurrence<'_> {
@@ -77,6 +79,13 @@ fn tag(line: &str) -> Option<(&str, &str)> {
     Some((&line[..2], tail.trim_start_matches([' ', '\t'])))
 }
 
+fn embedded_header_byte(line: &str, start: usize) -> Option<usize> {
+    line.match_indices('\u{feff}').find_map(|(index, bom)| {
+        let byte = start + index;
+        (byte != 0 && matches!(tag(&line[index + bom.len()..]), Some(("TY", _)))).then_some(byte)
+    })
+}
+
 /// A nonblank fragment outside TY/ER gets an ordinal instead of disappearing.
 /// A new TY ends an unterminated occurrence; its fields never leak into the next.
 pub fn parse(input: &str) -> Result<Source<'_>, InputError> {
@@ -99,11 +108,11 @@ fn parse_source<'a>(input: &'a str, counts: &mut ParseCounts) -> Result<Source<'
         if raw.ends_with('\r') && lines.next_if_eq(&"\n").is_some() {
             end += 1;
         }
-        let body = raw.trim_end_matches(['\r', '\n']);
+        let line = raw.trim_end_matches(['\r', '\n']);
         let body = if offset == 0 {
-            body.strip_prefix('\u{feff}').unwrap_or(body)
+            line.strip_prefix('\u{feff}').unwrap_or(line)
         } else {
-            body
+            line
         };
         let parsed = tag(body);
         let starts = matches!(parsed, Some(("TY", _)));
@@ -121,12 +130,15 @@ fn parse_source<'a>(input: &'a str, counts: &mut ParseCounts) -> Result<Source<'
                 has_type: starts,
                 has_end: false,
                 malformed_lines: 0,
+                embedded_header_byte: None,
             });
             can_continue = false;
         }
         if let Some(rec) = current.as_mut() {
             rec.bytes.end = end;
-            if body.bytes().any(|b| b.is_ascii_control() && b != b'\t') {
+            let header = embedded_header_byte(line, offset);
+            rec.embedded_header_byte = rec.embedded_header_byte.or(header);
+            if header.is_some() || body.bytes().any(|b| b.is_ascii_control() && b != b'\t') {
                 rec.malformed_lines += 1;
                 can_continue = false;
                 offset = end;
