@@ -19,10 +19,22 @@ def package(target, extra_notices):
     if target is None:
         target = next(line.removeprefix("host: ") for line in compiler if line.startswith("host: "))
     revision = output("git", "rev-parse", "HEAD")
-    metadata = json.loads(output("cargo", "metadata", "--locked", "--format-version", "1", "--filter-platform", target))
-    subprocess.run(["cargo", "build", "--release", "--locked", "-p", "dedup-cli", "--target", target],
-                   env=dict(os.environ, CARGO_PROFILE_RELEASE_STRIP="symbols"), check=True)
+    metadata = json.loads(output("cargo", "metadata", "--quiet", "--locked", "--format-version", "1", "--filter-platform", target))
     target_dir = Path(metadata["target_directory"])
+    cargo_home = Path(os.environ.get("CARGO_HOME", Path.home() / ".cargo")).resolve()
+    roots = [(Path.home(), "home"), (Path.cwd(), "source"), (cargo_home, "cargo"), (target_dir, "build")]
+    encoded = os.environ.get("CARGO_ENCODED_RUSTFLAGS")
+    flags = encoded.split("\x1f") if encoded else os.environ.get("RUSTFLAGS", "").split()
+    markers = set()
+    for root, label in roots:
+        if root == root.parent:
+            continue
+        for prefix in sorted({str(root), root.as_posix()}):
+            flags.append(f"--remap-path-prefix={prefix}={label}")
+            markers.update(prefix.encode(encoding).lower() for encoding in ("utf-8", "utf-16-le"))
+    subprocess.run(["cargo", "build", "--quiet", "--release", "--locked", "-p", "dedup-cli", "--target", target],
+                   env=dict(os.environ, CARGO_PROFILE_RELEASE_STRIP="symbols",
+                            CARGO_ENCODED_RUSTFLAGS="\x1f".join(flags)), check=True)
     exe = "dedup.exe" if "-windows-" in target else "dedup"
     name = f"recorddedu-{target}-{revision[:12]}"
     destination = target_dir / "review-package" / (name + ".tar.gz")
@@ -56,6 +68,12 @@ def package(target, extra_notices):
         shutil.copyfile(rust_docs / "COPYRIGHT-library.html", notices / "rust/COPYRIGHT-library.html")
         for path in extra_notices:
             shutil.copyfile(path, notices / path.name)
+
+        for path in folder.rglob("*"):
+            if path.is_file():
+                contents = path.read_bytes().lower()
+                if any(marker in contents for marker in markers):
+                    raise ValueError("Package contains an absolute builder path")
 
         def archive_entry(entry):
             entry.uid = entry.gid = 0
