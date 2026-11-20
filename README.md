@@ -64,8 +64,9 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
 3. Press Enter at the next label prompt. Check the sheet, labels and paths
    shown, then type `yes`. Type `:cancel` at any prompt to stop.
 4. For a new sheet, the terminal shows the candidate queue and every editable
-   row starts pending. Open the sheet in a plain-text editor. A key such as
-   `catalog:2` means the second RIS record in the export labeled `catalog`.
+   row starts pending. Open the sheet in a plain-text editor or
+   [edit it in LibreOffice Calc](#edit-the-decision-sheet-in-libreoffice-calc).
+   A key such as `catalog:2` means the second RIS record in the export labeled `catalog`.
    To reopen, run the guide again with the same labels and original files.
    It checks their fingerprints and shows pending decisions and keeper context.
 
@@ -74,6 +75,34 @@ pending. For a worked example of pair inspection, an explicit decision and
 export, follow the [two-export walkthrough](#verify-a-copy-found-through-metadata).
 To run that example, open Bash (Git Bash on Windows) in the extracted
 directory and run `export PATH="$PWD:$PATH"`.
+
+### Edit the decision sheet in LibreOffice Calc
+
+1. Keep a backup of the last sheet that reopened successfully. Open the working
+   `.tsv` as **Text CSV** in Calc. Select **Unicode (UTF-8)** and **Tab** as
+   the only separator. Clear the string delimiter and turn off **Evaluate
+   formulas**. Select all four preview columns (A through D) and set their
+   column type to **Text**. Check that labels such as `0007` retain every zero.
+2. Edit only the decision cells on occurrence rows. For a verified copy in
+   a metadata-enabled sheet, enter `keep` in column B on the keeper's row.
+   On the copy's row, enter, for example, `verified-duplicate-of=0007:1`
+   in B and a single line explaining the evidence in C. Leave uncertain
+   cases pending. Preserve the row order, occurrence keys, input rows and
+   final `end` row.
+3. Save back to the same `.tsv` using **Text CSV** with **Edit filter
+   settings**. Select **Unicode (UTF-8)**, the **Tab** field delimiter and
+   an empty text delimiter. Leave **Quote all text cells** off and keep the
+   `.tsv` filename. Close Calc and reopen the sheet with `dedup start` and
+   the original named sources to see pending decisions. Check the saved
+   rationale in the reviewed export's `mapping.tsv` or with the
+   [walkthrough's `--resume-decisions` command](#verify-a-copy-found-through-metadata).
+
+In a synthetic trial with Calc 25.2.3.2 on Linux, Standard import converted
+the source label `0007` to `7`. If the inputs or occurrence keys differ on reopen, restore
+the backup and reapply the verified edits by key using Text columns. The
+reader accepts trailing empty cells, LF or CRLF, and an optional UTF-8 BOM.
+It checks the source fingerprints and keys. The reviewer checks the wording
+of the rationale. [LibreOffice text import and export settings](https://help.libreoffice.org/latest/en-US/text/shared/guide/csv_params.html)
 
 ## Build from source
 

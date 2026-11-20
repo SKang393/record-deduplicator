@@ -140,14 +140,23 @@ def exercise(directory, binary, baseline):
     run("--export-reviewed", sheet, "undo")
     assert output("undo", "reviewed.ris") == output("pending", "reviewed.ris")
     assert output("undo", "reconciliation.tsv").splitlines()[-1] == b"total\t\t6\t0\t0\t6\t1\t1\t3\t1\t0"
-    sheet.write_bytes(approved)
+    # Calc exports four columns on every row, even the header and end marker.
+    padded = b"\xef\xbb\xbf" + b"".join(
+        row + b"\t" * (3 - row.count(b"\t")) + b"\r\n" for row in approved.splitlines()
+    )
+    rejected(padded.replace(b"cat:1\tkeep\t\t", b"cat:1\tkeep\tstray\t"), b"Unknown decision")
+    rejected(padded.replace(b"idx:1\tverified-", b"idx:01\tverified-"), b"expected row")
+    rejected(padded.replace(reason, b""), b"rationale")
+    sheet.write_bytes(padded)
+    assert run("--resume-decisions", sheet).stdout.splitlines() == preview
     run("--export-reviewed", sheet, "replay")
+    assert sheet.read_bytes() == padded
     for name in ["reviewed.ris", "mapping.tsv", "reconciliation.tsv"]:
         assert output("replay", name) == output("reviewed", name)
     assert (catalog.read_bytes(), index.read_bytes()) == original
     print("Inspected the copied DOI and the verified pair. All 3 pending occurrences survived; 5 complete RIS records reopened.")
     print("Verified sheet: 5 editable, 6 mapped, 1 verified copy, all 5 distinct reports retained.")
-    print("Nine invalid edits/input changes rejected before output. Undo restored all 6; replay matched all export files.")
+    print("Invalid edits/input changes rejected before output. Undo restored all 6; padded TSV replay matched all export files.")
 
     # Change one corroborating field at a time. These variants still have the
     # original title/first author/year/type hint and fresh source fingerprints.

@@ -127,7 +127,12 @@ pub(super) fn resume(
     if text.len() > MAX_INPUT_BYTES {
         return Err("Decision sheet exceeds 16 MiB.".into());
     }
-    let mut lines = text.strip_prefix('\u{feff}').unwrap_or(&text).lines();
+    // Calc writes short rows out to the width of the sheet with empty cells.
+    let mut lines = text
+        .strip_prefix('\u{feff}')
+        .unwrap_or(&text)
+        .lines()
+        .map(|line| line.trim_end_matches('\t'));
     let metadata = match lines.next() {
         Some(VERSION) => false,
         Some(METADATA_VERSION) => true,

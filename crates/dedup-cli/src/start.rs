@@ -119,7 +119,7 @@ pub(super) fn run() -> Result<(), String> {
 
     super::sources::run(&args)?;
     eprintln!(
-        "Open {sheet} in a plain-text editor to review decisions. Each label:number refers to a numbered record in that export. Leave uncertain decisions pending."
+        "Open {sheet} in a plain-text editor or follow the LibreOffice Calc steps in the README. Each label:number refers to a numbered record in that export. Leave uncertain decisions pending."
     );
     Ok(())
 }
