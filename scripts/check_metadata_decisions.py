@@ -90,6 +90,11 @@ def exercise(directory, binary, baseline):
     preview = run("--resume-decisions", sheet).stdout.splitlines()
     rationale = b"rationale\tmetadata\tidx:1\t" + reason
     assert b"decision\thuman\tidx:1\tverified-duplicate-of=cat:1" in preview and rationale in preview
+    pending = run("--pending-decisions", sheet).stdout.splitlines()
+    assert b"summary\tpending\t3\tgroups=2;flagged_groups=1" in pending
+    groups = [line.split(b"\t") for line in pending if line.startswith(b"pending\t")]
+    assert groups[0][3] == b"inspect_metadata_only;keep=cat:1;assigned=idx:1;conflicting_ids_in=idx:3"
+    pending_keys = {key for group in groups for key in group[2].split(b",")}
     run("--export-reviewed", sheet, "reviewed")
     assert output("reviewed", "reviewed.ris") == a + b + e + c + d
     tally = output("reviewed", "reconciliation.tsv").splitlines()
@@ -106,10 +111,12 @@ def exercise(directory, binary, baseline):
                 (b"idx:3", b"pending", 5)]
     rows = [line.split(b"\t") for line in mapping if line.startswith(b"map\t")]
     assert [(key, action, int(detail.split(b";output=")[1])) for _, action, key, detail in rows] == expected
+    assert pending_keys == {key for _, action, key, _ in rows if action == b"pending"}
     copy_bytes = len(copy.replace(b"\n", b"\r\n"))
     assert rows[3][3] == f"bytes=0..{copy_bytes};output=1".encode()
     assert sheet.read_bytes() == approved
     sheet.write_bytes(kept)
+    assert b"summary\tpending\t4\tgroups=2;flagged_groups=1" in run("--pending-decisions", sheet).stdout.splitlines()
     run("--export-reviewed", sheet, "undo")
     assert output("undo", "reviewed.ris") == output("pending", "reviewed.ris")
     assert output("undo", "reconciliation.tsv").splitlines()[-1] == b"total\t\t6\t0\t0\t6\t1\t1\t3\t1\t0"

@@ -45,10 +45,10 @@ See the [engine contract](docs/10-engine-contract.md) for the technical rules.
   [Rust installation guide](https://doc.rust-lang.org/book/ch01-01-installation.html)
   for platform setup.
 
-Clone the repository and build the current CLI:
+Build the CLI from the review branch.
 
 ```sh
-git clone https://github.com/SKang393/record-deduplicator.git
+git clone --branch review/native-ris-audits https://github.com/SKang393/record-deduplicator.git
 cd record-deduplicator
 cargo build --release --locked -p dedup-cli
 ```
@@ -59,7 +59,11 @@ build.
 
 ## Usage
 
-Use `--help` for syntax or `--version` for the build version.
+For a first run, follow the [two-export walkthrough](#verify-a-copy-found-through-metadata).
+It creates its own inputs, adds the built executable to your Bash path, and
+shows how to verify a copy, reopen pending decisions and reconcile the export.
+Other examples assume `dedup` is on your path. Use `--help` for syntax or
+`--version` for the build version.
 
 ### Review multiple RIS exports together
 
@@ -97,12 +101,11 @@ stop the run before it writes any report rows.
 ### Verify a copy found through metadata
 
 This example creates two synthetic RIS exports of one journal article. The
-catalog has a DOI and the index copy lacks one. From the repository root on
-`review/native-ris-audits`, run the blocks in the same Bash session (Git
-Bash on Windows).
+catalog has a DOI and the index copy lacks one. After building the review
+branch above, start at the repository root and run the blocks in the same
+Bash session (Git Bash on Windows).
 
 ```sh
-cargo build --release --locked -p dedup-cli
 export PATH="$PWD/target/release:$PATH"
 cd "$(mktemp -d)"
 cat > catalog.ris <<'RIS'
@@ -135,11 +138,15 @@ awk -F '\t' '
   {print}
 ' pending.tsv > choices.tsv
 review --resume-decisions choices.tsv
+review --pending-decisions choices.tsv
 review --export-reviewed choices.tsv reviewed
 cat reviewed/mapping.tsv
+cat reviewed/reconciliation.tsv
 ```
 
-The summary reads `retained=1;suppressed=1`. Both `map` rows point to
+The pending view shows zero open decisions. The reconciliation total shows
+two inputs, one copy removed by the verified metadata decision and one record
+retained for screening. Both `map` rows point to
 `output=1` in `reviewed/reviewed.ris`, each with its own source byte span.
 The schema 2 `rationale` row carries the reviewer's explanation for `idx:1`.
 
@@ -150,10 +157,12 @@ rationale column. Export to a fresh directory and inspect the new mapping.
 awk -F '\t' '$1 == "idx:1" {print "idx:1\tpending"; next} {print}' choices.tsv > undo.tsv
 review --export-reviewed undo.tsv restored
 cat restored/mapping.tsv
+cat restored/reconciliation.tsv
 ```
 
-The second summary reads `retained=2;suppressed=0`. The kept catalog entry
-maps to `output=1` and the pending index entry maps to `output=2`.
+The restored total shows two retained, one under `keep` and one under
+`pending_metadata`. The kept catalog entry maps to `output=1` and the pending
+index entry maps to `output=2`.
 
 Every editable row starts pending. Reopening or exporting checks the original
 source fingerprints. A verified copy needs an explicit keep target and a

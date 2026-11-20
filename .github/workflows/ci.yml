@@ -53,7 +53,7 @@ jobs:
           assert fs.lower() == expected, f"Expected {expected} temp volume, found {fs}"
           for audit in ["check_review_triage.py", "check_synthetic_review.py"]:
               subprocess.run([sys.executable, Path("scripts") / audit, os.environ["DEDUP_CLI"]], check=True)
-      - name: Audit verified metadata decisions
+      - name: Check pending metadata decisions against the reviewed export
         run: python scripts/check_metadata_decisions.py "${{ env.DEDUP_CLI }}"
   docs:
     runs-on: ubuntu-latest
