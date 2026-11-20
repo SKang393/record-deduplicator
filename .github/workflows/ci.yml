@@ -15,6 +15,8 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      DEDUP_CLI: target/debug/dedup${{ matrix.os == 'windows-latest' && '.exe' || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install stable Rust with format and lint tools
@@ -38,21 +40,21 @@ jobs:
 
           temp = Path(tempfile.gettempdir())
           if os.name == "nt":
-              binary = "target/debug/dedup.exe"
               volume = "[IO.DriveInfo]::new($env:AUDIT_DRIVE).DriveFormat"
               fs = subprocess.check_output(["pwsh", "-NoProfile", "-Command", volume],
                                            env=dict(os.environ, AUDIT_DRIVE=temp.anchor), text=True).strip()
               expected = "ntfs"
           else:
-              binary = "target/debug/dedup"
               device = subprocess.check_output(["df", "-P", temp], text=True).splitlines()[-1].split()[0]
               info = subprocess.check_output(["diskutil", "info", "-plist", device])
               fs = plistlib.loads(info)["FilesystemType"]
               expected = "apfs"
           print(json.dumps({"audit_filesystem": fs, "platform": sys.platform}), flush=True)
           assert fs.lower() == expected, f"Expected {expected} temp volume, found {fs}"
-          for audit in ["check_review_triage.py", "check_synthetic_review.py", "check_metadata_decisions.py"]:
-              subprocess.run([sys.executable, Path("scripts") / audit, binary], check=True)
+          for audit in ["check_review_triage.py", "check_synthetic_review.py"]:
+              subprocess.run([sys.executable, Path("scripts") / audit, os.environ["DEDUP_CLI"]], check=True)
+      - name: Audit verified metadata decisions
+        run: python scripts/check_metadata_decisions.py "${{ env.DEDUP_CLI }}"
   docs:
     runs-on: ubuntu-latest
     steps:

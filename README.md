@@ -96,45 +96,74 @@ stop the run before it writes any report rows.
 
 ### Verify a copy found through metadata
 
-Use a metadata decision sheet when a named RIS queue surfaces a plausible copy
-without a shared identifier. Create the sheet and inspect the original records
-using the labels, ordinals and byte spans in the queue.
+This example creates two synthetic RIS exports of one journal article. The
+catalog has a DOI and the index copy lacks one. From the repository root on
+`review/native-ris-audits`, run the blocks in the same Bash session (Git
+Bash on Windows).
 
 ```sh
-dedup review-ids --init-metadata-decisions choices.tsv --ris-source cat catalog.ris --ris-source idx index.ris
+cargo build --release --locked -p dedup-cli
+export PATH="$PWD/target/release:$PATH"
+cd "$(mktemp -d)"
+cat > catalog.ris <<'RIS'
+TY  - JOUR
+TI  - Marsh transects
+AU  - Reed, E.
+PY  - 2021
+JO  - Fable Ecology
+VL  - 8
+SP  - 21-26
+DO  - 10.0000/marsh-a
+ER  -
+RIS
+sed '/^DO  - /d' catalog.ris > index.ris
+review() { dedup review-ids "$@" --ris-source cat catalog.ris --ris-source idx index.ris; }
+review --init-metadata-decisions pending.tsv
+cat catalog.ris index.ris
 ```
 
-Every editable occurrence starts as `pending`. If both records describe the
-same publication, mark its representative `keep`. On the copy's row, enter
-`verified-duplicate-of=` followed by that representative and a tab-separated
-rationale (one line, up to 512 UTF-8 bytes). For example, these two edited rows
-record what the reviewer checked. Use literal tabs and preserve row order.
-
-```text
-cat:1	keep
-idx:1	verified-duplicate-of=cat:1	Compared both reports. Same authors, journal, volume 8 and pages 21–26.
-```
-
-All members assigned to that representative must belong to one metadata hint
-of at most 16 records. They must agree on title, first author, year and RIS
-type, plus the complete listed authors, journal, volume and final page range
-or article number in `SP`/`EP`. Work type (`M3`) and issue (`IS`) must
-also agree when supplied. Conflicting supported DOIs or PMIDs
-block the set. Leave unresolved copies and distinct reports pending or mark
-them keep. A metadata hint alone keeps every member.
+The `triage` row names `cat:1,idx:1`. Compare the two source records before
+editing the sheet. Both list Reed's article in *Fable Ecology*, volume 8,
+pages 21–26. For this pair, keep `cat:1` and record that evidence on the
+`idx:1` row. These commands make the same two edits you can make in a TSV
+editor and show the validated decisions and export mapping.
 
 ```sh
-dedup review-ids --resume-decisions choices.tsv --ris-source cat catalog.ris --ris-source idx index.ris
-dedup review-ids --export-reviewed choices.tsv reviewed --ris-source cat catalog.ris --ris-source idx index.ris
+awk -F '\t' '
+  $1 == "cat:1" {print "cat:1\tkeep"; next}
+  $1 == "idx:1" {print "idx:1\tverified-duplicate-of=cat:1\tMatched Reed, Fable Ecology 8, pages 21-26."; next}
+  {print}
+' pending.tsv > choices.tsv
+review --resume-decisions choices.tsv
+review --export-reviewed choices.tsv reviewed
+cat reviewed/mapping.tsv
 ```
 
-Reopening checks the original source fingerprints and displays the recorded
-target and rationale. Export creates a new directory with `reviewed.ris` and
-`mapping.tsv`. Each mapping row identifies the input occurrence, original byte
-span and output ordinal. Schema 2 adds a `rationale` row for each verified
-metadata copy. To undo, restore the copy's decision to `pending`, remove its
-rationale column and export to a fresh directory. Existing identifier-only
-sheets still open with the same commands.
+The summary reads `retained=1;suppressed=1`. Both `map` rows point to
+`output=1` in `reviewed/reviewed.ris`, each with its own source byte span.
+The schema 2 `rationale` row carries the reviewer's explanation for `idx:1`.
+
+To undo only the copy decision, restore its row to `pending` and drop the
+rationale column. Export to a fresh directory and inspect the new mapping.
+
+```sh
+awk -F '\t' '$1 == "idx:1" {print "idx:1\tpending"; next} {print}' choices.tsv > undo.tsv
+review --export-reviewed undo.tsv restored
+cat restored/mapping.tsv
+```
+
+The second summary reads `retained=2;suppressed=0`. The kept catalog entry
+maps to `output=1` and the pending index entry maps to `output=2`.
+
+Every editable row starts pending. Reopening or exporting checks the original
+source fingerprints. A verified copy needs an explicit keep target and a
+single-line rationale of up to 512 UTF-8 bytes. All records assigned to that
+target must belong to one metadata hint of at most 16 records and agree on
+title, authors, year, RIS type, journal, volume and final page range or
+article number (`SP`/`EP`). Work type (`M3`) and issue (`IS`) must also
+agree when supplied. Conflicting supported DOIs or PMIDs block the set.
+Leave unresolved copies and distinct reports pending or mark them keep.
+Existing identifier-only sheets still open with `--resume-decisions`.
 
 ### Review a single RIS export
 
