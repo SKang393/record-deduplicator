@@ -55,6 +55,8 @@ jobs:
               subprocess.run([sys.executable, Path("scripts") / audit, os.environ["DEDUP_CLI"]], check=True)
       - name: Check pending metadata decisions against the reviewed export
         run: python scripts/check_metadata_decisions.py "${{ env.DEDUP_CLI }}"
+      - name: Check inspection-only title variants
+        run: python scripts/check_title_variants.py "${{ env.DEDUP_CLI }}"
   docs:
     runs-on: ubuntu-latest
     steps:

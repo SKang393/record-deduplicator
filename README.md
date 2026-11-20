@@ -96,8 +96,8 @@ even when their filenames or contents are identical.
   At least five title words must agree. The rule skips keys shared by more
   than four records, conflicting identifiers and differing first-author
   surnames when both names use comma form. Use `--inspect-pair` to see the
-  evidence. A title-variant lead alone leaves both records outside the
-  decision sheet and retains both in the export.
+  evidence. The `inspect_only` row adds no editable decision and removes
+  zero records. Either occurrence can have a sheet row through other evidence.
 - Each `source` row gives the original half-open byte range and a disposition.
   `review_candidate` means inspect its candidate groups and any `issue` rows.
   `review_input` means inspect a damaged record or identifier issue.
@@ -111,17 +111,17 @@ stop the run before it writes any report rows.
 
 ### Verify a copy found through metadata
 
-This example creates two synthetic RIS exports of one journal article. The
-catalog has a DOI and the index copy lacks one. After building the review
-branch above, start at the repository root and run the blocks in the same
-Bash session (Git Bash on Windows).
+This example creates a catalog article, an index copy missing its DOI, and
+an index record with an extra subtitle at the same journal location. After
+building the review branch above, start at the repository root and run the
+blocks in the same Bash session (Git Bash on Windows).
 
 ```sh
 export PATH="$PWD/target/release:$PATH"
 cd "$(mktemp -d)"
 cat > catalog.ris <<'RIS'
 TY  - JOUR
-TI  - Marsh transects
+TI  - Marsh transects after spring flooding
 AU  - Reed, E.
 PY  - 2021
 JO  - Fable Ecology
@@ -131,17 +131,27 @@ DO  - 10.0000/marsh-a
 ER  -
 RIS
 sed '/^DO  - /d' catalog.ris > index.ris
+sed '/^DO  - /d; s/^TI  - .*/&: seasonal observations/' catalog.ris >> index.ris
 review() { dedup review-ids "$@" --ris-source cat catalog.ris --ris-source idx index.ris; }
 review --init-metadata-decisions choices.tsv
 review --inspect-pair choices.tsv cat:1 idx:1
+review --inspect-pair choices.tsv cat:1 idx:2
 ```
 
-The `triage` row names `cat:1,idx:1`. The inspection shows each selected RIS
-record under its occurrence key, current decision and original byte range.
-Both list Reed's article in *Fable Ecology*, volume 8,
-pages 21–26. For this pair, keep `cat:1` and record that evidence on the
-`idx:1` row. These commands make the same two edits you can make in a TSV
-editor and show the validated decisions and export mapping.
+Find these two lines in the queue from `--init-metadata-decisions`.
+
+```text
+triage	title_author_year_type	cat:1,idx:1	inspect_metadata_only
+triage	title_variant_locator	cat:1,idx:2	inspect_only
+```
+
+The first pair has two pending sheet rows. In the comparison, both records
+give the same title and author in *Fable Ecology*, volume 8, pages 21–26.
+For the second pair, read the extra subtitle under `[idx:2] outside-decision-sheet`.
+Each heading gives the occurrence's sheet status and original byte range.
+`cat:1` is editable because of its exact-title pair with `idx:1`.
+Leave `idx:2` in the export. Record the keep target and rationale for the
+verified index copy by editing the two existing rows as follows.
 
 ```sh
 awk -F '\t' '
@@ -156,11 +166,14 @@ cat reviewed/mapping.tsv
 cat reviewed/reconciliation.tsv
 ```
 
-The pending view shows zero open decisions. The reconciliation total shows
-two inputs, one copy removed by the verified metadata decision and one record
-retained for screening. Both `map` rows point to
-`output=1` in `reviewed/reviewed.ris`, each with its own source byte span.
-The schema 2 `rationale` row carries the reviewer's explanation for `idx:1`.
+In the reopened queue, the `decision` row for `idx:1` now reads
+`verified-duplicate-of=cat:1` and the `rationale` row records why. The
+title-variant lead still appears in that queue even though the pending view
+counts zero open sheet decisions. Reconciliation counts three occurrences,
+one verified copy removed and two retained. In `reviewed/mapping.tsv`,
+`cat:1` and `idx:1` point to `output=1` in `reviewed/reviewed.ris`, each
+with its own byte span. The `not-candidate` mapping for `idx:2` means it
+falls outside this sheet and keeps its own `output=2`.
 
 To [open this export in Zotero](#import-the-reviewed-ris-into-zotero), get
 the full filename before leaving the walkthrough shell. In Git Bash on
@@ -177,9 +190,9 @@ cat restored/mapping.tsv
 cat restored/reconciliation.tsv
 ```
 
-The restored total shows two retained, one under `keep` and one under
-`pending_metadata`. The kept catalog entry maps to `output=1` and the pending
-index entry maps to `output=2`.
+The restored total shows all three retained. The kept catalog entry maps to
+`output=1`, the reopened index copy to `output=2`, and the subtitled record
+to `output=3`.
 
 Every editable row starts pending. Reopening or exporting checks the original
 source fingerprints. A verified copy needs an explicit keep target and a

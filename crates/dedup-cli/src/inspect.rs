@@ -45,14 +45,14 @@ pub(super) fn pair(
     let write_error = |_: io::Error| "Cannot write comparison.";
     for (index, rec, raw) in [first, second] {
         let entry = &queue.entries[index];
+        let status = match &decisions[index] {
+            Decision::NotCandidate => "outside-decision-sheet".into(),
+            decision => decision.label(queue),
+        };
         writeln!(
             out,
             "[{}:{}] {} (bytes {}..{})",
-            entry.label,
-            entry.ordinal,
-            decisions[index].label(queue),
-            rec.bytes.start,
-            rec.bytes.end
+            entry.label, entry.ordinal, status, rec.bytes.start, rec.bytes.end
         )
         .map_err(write_error)?;
         // Keep source lines separate from headings, including malformed lines.

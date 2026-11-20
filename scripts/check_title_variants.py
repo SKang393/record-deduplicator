@@ -133,6 +133,7 @@ def check_review(root, binary, before):
     signal = "triage\ttitle_variant_locator\t"
     leads = [line for line in lines if line.startswith(signal)]
     assert len(leads) == len(direct_pairs(leads)) == 8
+    assert all(line.endswith("\tinspect_only") for line in leads)
     assert lines == queue(binary, flags[3:] + flags[:3])
     assert any("conflicting_dois_in_record" in line for line in lines)
     sheet = root / "choices.tsv"
@@ -159,7 +160,7 @@ def check_review(root, binary, before):
     left, right = keys("omitted-subtitle")
     inspected = review(binary, "--inspect-pair", sheet, left, right).stdout.decode()
     for key in (left, right):
-        assert f"[{key}] not-candidate" in inspected
+        assert f"[{key}] outside-decision-sheet (bytes " in inspected
     pending = root / "pending"
     review(binary, "--export-reviewed", sheet, pending)
     assert (pending / "reviewed.ris").read_bytes() == b"".join(originals.values())
@@ -179,9 +180,19 @@ def check_review(root, binary, before):
     approved = template.replace(f"{left}\tpending".encode(), f"{left}\tkeep".encode()).replace(
         f"{right}\tpending".encode(), f"{right}\tverified-duplicate-of={left}\tCompared authors and final pages.".encode())
     sheet.write_bytes(approved)
+    reopened = review(binary, "--resume-decisions", sheet).stdout.decode().splitlines()
+    assert [line for line in reopened if line.startswith(signal)] == leads
+    assert f"decision\thuman\t{right}\tverified-duplicate-of={left}" in reopened
+    assert f"rationale\tmetadata\t{right}\tCompared authors and final pages." in reopened
     reviewed = root / "reviewed"
     review(binary, "--export-reviewed", sheet, reviewed)
-    assert b"retained=46;suppressed=1" in (reviewed / "mapping.tsv").read_bytes()
+    mapping = (reviewed / "mapping.tsv").read_bytes().decode().splitlines()
+    assert "summary\tall\t47\tretained=46;suppressed=1" in mapping
+    mapped = {key: (status, detail) for kind, status, key, detail in
+              (line.split("\t") for line in mapping) if kind == "map"}
+    for a, b in direct_pairs(leads):
+        assert mapped[a][0] == mapped[b][0] == "not-candidate"
+        assert mapped[a][1].split(";output=")[1] != mapped[b][1].split(";output=")[1]
     if before:
         prior = root / "prior"
         review(before, "--export-reviewed", sheet, prior)
