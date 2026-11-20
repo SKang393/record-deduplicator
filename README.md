@@ -101,14 +101,18 @@ even when their filenames or contents are identical.
   zero records. Either occurrence can have a sheet row through other evidence.
 - Each `source` row gives the original half-open byte range and a disposition.
   `review_candidate` means inspect its candidate groups and any `issue` rows.
-  `review_input` means inspect a damaged record or identifier issue.
+  `review_input` means inspect the record's identifier issues.
   `retained` means the occurrence has no flagged issue or shared identifier.
   All three dispositions keep the record. Reports of the same study that
   share only a title, accession or study identifier stay separate.
 
 The command accepts up to 128 named files. The combined limits are 16 MiB,
 100,000 occurrences and 250,000 tagged fields. Input errors and exceeded limits
-stop the run before it writes any report rows.
+stop the run before it writes any report rows. An empty source counts as zero
+occurrences. If a named source contains a fragment, an unclosed record, or a
+malformed line, the command stops before creating a decision sheet. The error
+identifies the first damaged occurrence by label, ordinal and byte range.
+Run `dedup review-ids --ris <file>` for a read-only diagnostic report.
 
 ### Bring a BibTeX export into a named RIS review
 
@@ -128,8 +132,8 @@ Compare the index `input` occurrence count with the original BibTeX entry
 count. Check the citation keys, titles and identifiers against the converted
 RIS. In the tested bibutils 7.2 example, citation keys became RIS `ID`
 values, a quoted comma survived in the title and a wrapped abstract became
-one line. Passing raw BibTeX to `--ris-source` can yield a `source` row
-marked `fragment`. A single retained fragment can cover several BibTeX entries.
+one line. Naming a raw BibTeX file with a `.ris` suffix still produces a
+fragment error in the named review. Use the converted file for this step.
 
 Once the counts and fields reconcile, create the sheet with
 `--init-decisions choices.tsv` before the same two `--ris-source` arguments.

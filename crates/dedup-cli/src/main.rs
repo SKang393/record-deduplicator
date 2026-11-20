@@ -146,13 +146,8 @@ fn input_error(error: InputError) -> &'static str {
     }
 }
 
-fn render_occurrence(
-    out: &mut impl Write,
-    row: impl std::fmt::Display,
-    rec: &ris::Occurrence<'_>,
-    disposition: Option<&str>,
-) -> io::Result<()> {
-    let status = if !rec.has_type {
+fn occurrence_status(rec: &ris::Occurrence<'_>) -> &'static str {
+    if !rec.has_type {
         "fragment"
     } else if !rec.has_end {
         "partial"
@@ -160,7 +155,16 @@ fn render_occurrence(
         "malformed"
     } else {
         "complete"
-    };
+    }
+}
+
+fn render_occurrence(
+    out: &mut impl Write,
+    row: impl std::fmt::Display,
+    rec: &ris::Occurrence<'_>,
+    disposition: Option<&str>,
+) -> io::Result<()> {
+    let status = occurrence_status(rec);
     write!(
         out,
         "source\tris\t{row}\tbytes={}..{};status={status};closed={};malformed_lines={};fields={};unmapped_fields={}",

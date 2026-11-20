@@ -101,20 +101,30 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
     for (label, path, text) in &snapshots {
         super::recheck(path, text.as_bytes()).map_err(|error| format!("{label}: {error}"))?;
     }
-    let manifest: Vec<_> = queue
-        .sources
-        .iter()
-        .map(|named| {
-            let original = named.source.original.as_bytes();
-            let hash = Sha256::digest(original);
-            format!(
-                "input\tris\t{}\tbytes={};occurrences={};sha256={hash:x}",
+    let mut manifest = Vec::with_capacity(queue.sources.len());
+    for named in &queue.sources {
+        let records = &named.source.occurrences;
+        if let Some((index, rec)) = records.iter().enumerate().find(|(_, rec)| !rec.usable()) {
+            return Err(format!(
+                "Invalid RIS at {}:{} (bytes {}..{}, {}). Expected complete TY/ER records. \
+                 Inspect with `dedup review-ids --ris <file>`. For BibTeX, see the README section \
+                 \"Bring a BibTeX export into a named RIS review\".",
                 named.label,
-                original.len(),
-                named.source.occurrences.len()
-            )
-        })
-        .collect();
+                index + 1,
+                rec.bytes.start,
+                rec.bytes.end,
+                super::occurrence_status(rec)
+            ));
+        }
+        let original = named.source.original.as_bytes();
+        let hash = Sha256::digest(original);
+        manifest.push(format!(
+            "input\tris\t{}\tbytes={};occurrences={};sha256={hash:x}",
+            named.label,
+            original.len(),
+            records.len()
+        ));
+    }
     let pending_only = matches!(action, Action::Pending(_));
     let sheet = match action {
         Action::Review => None,

@@ -50,7 +50,7 @@ impl Drop for Inputs {
 fn named_sources_preserve_identical_exports_local_ordinals_and_empty_inputs() {
     let inputs = Inputs::new("provenance");
     let duplicate = b"TY  - JOUR\rDO  - 10.0000/example\rUR  - https://pubmed.ncbi.nlm.nih.gov/fixture/\rER  -\r";
-    let other = b"TY  - BOOK\nER  -\nTY  - JOUR\nDO  - 10.0000/single\nER  -\noutside record";
+    let other = b"TY  - BOOK\nER  -\nTY  - JOUR\nDO  - 10.0000/single\nER  -\n";
     inputs.write("first/export.ris", duplicate);
     inputs.write("second folder/export.ris", duplicate);
     inputs.write("other.ris", other);
@@ -71,7 +71,7 @@ fn named_sources_preserve_identical_exports_local_ordinals_and_empty_inputs() {
     let text = String::from_utf8(output.stdout).unwrap();
     let lines: Vec<_> = text.lines().collect();
     assert!(
-        lines.contains(&"summary\tall\t5\tretained=5;suppressed=0;candidate_records=2;groups=1")
+        lines.contains(&"summary\tall\t4\tretained=4;suppressed=0;candidate_records=2;groups=1")
     );
     assert!(lines.contains(&"candidate\tdoi\tleft:1,right:1\tother_id_incomplete"));
     assert!(lines.contains(&"issue\tinput\tother:1\tmissing_identifiers"));
@@ -92,7 +92,7 @@ fn named_sources_preserve_identical_exports_local_ordinals_and_empty_inputs() {
         .filter(|line| line.starts_with("source\tris\tother:"))
         .map(|line| line.rsplit_once("disposition=").unwrap().1)
         .collect::<Vec<_>>();
-    assert_eq!(dispositions, ["review_input", "retained", "review_input"]);
+    assert_eq!(dispositions, ["review_input", "retained"]);
     assert!(!text.contains("export.ris") && !text.contains("10.0000/"));
     for path in ["first/export.ris", "second folder/export.ris"] {
         assert_eq!(fs::read(inputs.0.join(path)).unwrap(), duplicate);
@@ -104,6 +104,109 @@ fn assert_failed_before_report(output: Output) {
     assert!(!output.status.success());
     assert!(output.stdout.is_empty());
     assert!(!output.stderr.is_empty());
+}
+
+#[test]
+fn damaged_named_sources_fail_before_queue_or_sheet() {
+    let inputs = Inputs::new("structure");
+    let good = "TY  - JOUR\r\nER  -\r\n";
+    inputs.write("good.ris", good.as_bytes());
+    let sources = [
+        "--ris-source",
+        "a",
+        "good.ris",
+        "--ris-source",
+        "b",
+        "renamed.ris",
+    ];
+    let bib = "@article{fixture1, title={Canopy}}\n@article{fixture2, title={Shade}}\n@book{fixture3, title={Sun}}\n";
+    for (prefix, damaged, suffix, ordinal, status) in [
+        ("", bib, "", 1, "fragment"),
+        (good, "outside records\n", good, 2, "fragment"),
+        (good, "TY  - JOUR\nTI  - Unclosed\n", good, 2, "partial"),
+        (
+            good,
+            "TY  - JOUR\nUnexpected line\nER  -\n",
+            good,
+            2,
+            "malformed",
+        ),
+    ] {
+        let data = format!("{prefix}{damaged}{suffix}");
+        inputs.write("renamed.ris", data.as_bytes());
+        for action in [
+            &[][..],
+            &["--init-decisions", "new.tsv"],
+            &["--init-metadata-decisions", "new.tsv"],
+        ] {
+            let failed = inputs.run(&[action, &sources].concat());
+            let error = String::from_utf8_lossy(&failed.stderr);
+            assert!(
+                error.contains(&format!(
+                    "b:{ordinal} (bytes {}..{}, {status})",
+                    prefix.len(),
+                    prefix.len() + damaged.len()
+                )),
+                "{error}"
+            );
+            assert!(
+                error.contains("--ris <file>")
+                    && error.contains("Bring a BibTeX export into a named RIS review")
+            );
+            assert!(
+                !error.contains("renamed.ris") && !damaged.lines().any(|line| error.contains(line))
+            );
+            assert_failed_before_report(failed);
+            assert!(!inputs.0.join("new.tsv").exists());
+        }
+        assert_eq!(
+            fs::read(inputs.0.join("renamed.ris")).unwrap(),
+            data.as_bytes()
+        );
+    }
+}
+
+#[test]
+fn converted_ris_and_blank_sources_can_be_reviewed_together() {
+    let inputs = Inputs::new("converted");
+    // A synthetic bibutils 7.2 conversion, with the file BOM and mixed line endings.
+    let converted = "\u{feff}TY  - JOUR\r\nAU  - Fen, Uma\rPY  - 2022\nDA  - 2022//\nTI  - Canopée, light and shade\nJO  - Fictional Shore Botany\nID  - CanopyNotes\nER  - \n";
+    inputs.write("converted.data", converted.as_bytes());
+    inputs.write("empty.ris", b"");
+    inputs.write("blank.ris", "\u{feff}\t \r\n\n".as_bytes());
+    let sources = [
+        "--ris-source",
+        "bib",
+        "converted.data",
+        "--ris-source",
+        "empty",
+        "empty.ris",
+        "--ris-source",
+        "blank",
+        "blank.ris",
+    ];
+    let init = inputs.run(&[&["--init-decisions", "choices.tsv"][..], &sources].concat());
+    assert!(init.status.success(), "{:?}", init.stderr);
+    let text = String::from_utf8(init.stdout).unwrap();
+    assert!(text.contains("summary\tall\t1\tretained=1;suppressed=0;"));
+    for (label, bytes) in [("empty", 0), ("blank", 8)] {
+        assert!(text.contains(&format!(
+            "input\tris\t{label}\tbytes={bytes};occurrences=0;"
+        )));
+    }
+    assert!(inputs.export("out", &sources).status.success());
+    let expected = converted
+        .trim_start_matches('\u{feff}')
+        .replace("\r\n", "\n")
+        .replace('\r', "\n");
+    assert_eq!(
+        fs::read(inputs.0.join("out/reviewed.ris")).unwrap(),
+        expected.as_bytes()
+    );
+    assert_eq!(
+        fs::read(inputs.0.join("converted.data")).unwrap(),
+        converted.as_bytes()
+    );
 }
 
 #[test]
@@ -371,12 +474,14 @@ fn reviewed_export_rejects_invalid_inputs_and_preserves_existing_destinations() 
         "src.ris",
         format!("{ris}TY  - JOUR\nTI  - Unterminated").as_bytes(),
     );
-    fs::remove_file(inputs.0.join("choices.tsv")).unwrap();
-    assert!(init().status.success());
     let failed = inputs.export("out", &sources);
-    assert!(String::from_utf8_lossy(&failed.stderr).contains("damaged occurrence s:3"));
+    assert!(String::from_utf8_lossy(&failed.stderr).contains("Invalid RIS at s:3"));
     assert_failed_before_report(failed);
     assert!(!inputs.0.join("out").exists());
+    assert_eq!(
+        fs::read(inputs.0.join("choices.tsv")).unwrap(),
+        sheet.as_bytes()
+    );
 }
 
 #[test]
