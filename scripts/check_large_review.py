@@ -84,7 +84,7 @@ def exercise(binary, directory, baseline):
             keys = members.split(",")
             groups[signal] += 1
             mixed[signal] += len({copies[k].report for k in keys}) > 1
-            membership[kind].update(keys)
+            membership[signal if kind == "triage" else kind].update(keys)
             pairs.update(combinations(sorted(keys), 2))
 
     # The untouched sheet must export every occurrence, even in mixed ID groups.
@@ -96,7 +96,7 @@ def exercise(binary, directory, baseline):
                  for field in ("doi", "pmid")}
     assert membership["candidate"] == {k for k, rec in copies.items()
                                        if id_counts["doi"][rec.doi] > 1 or id_counts["pmid"][rec.pmid] > 1}
-    assert editable == membership["candidate"] | membership["triage"]
+    assert editable == membership["candidate"] | membership["title_author_year_type"]
     assert edits.keys() <= editable
     for i, line in enumerate(lines):
         key, _, value = line.partition("\t")

@@ -87,6 +87,17 @@ even when their filenames or contents are identical.
   `catalog:3,index:3` points to the third occurrence in each file. Groups can
   overlap and can include several records from one file. The final column
   reports agreement, conflict or incomplete evidence for the other identifier.
+- A `triage` row with signal `title_variant_locator` names two occurrences
+  from different sources, at least one without a usable DOI or PMID. They share
+  a year, RIS type, journal, volume and final page range or article number.
+  Issue and work type must also match, including when absent. The titles
+  agree across selected punctuation
+  changes or after dropping one delimited subtitle of up to eight words.
+  At least five title words must agree. The rule skips keys shared by more
+  than four records, conflicting identifiers and differing first-author
+  surnames when both names use comma form. Use `--inspect-pair` to see the
+  evidence. A title-variant lead alone leaves both records outside the
+  decision sheet and retains both in the export.
 - Each `source` row gives the original half-open byte range and a disposition.
   `review_candidate` means inspect its candidate groups and any `issue` rows.
   `review_input` means inspect a damaged record or identifier issue.
@@ -335,6 +346,12 @@ To measure a 15,210-occurrence synthetic search, build the release CLI and
 run `python scripts/check_large_review.py target/release/dedup` (use
 `dedup.exe` on Windows). It checks the export against generated report
 identities and prints candidate load, unresolved categories and CLI timings.
+
+To measure title variants on 47 independently labeled synthetic occurrences,
+run `python scripts/check_title_variants.py target/release/dedup`. Supply
+`--before <original-cli>` to compare queues, sheet membership and export
+bytes against the previous CLI. Add `--scale-targets` to count the 111
+variant-title copies from the earlier scale audit separately.
 
 Documentation contributors can check local Markdown links with Python 3.10 or
 newer:

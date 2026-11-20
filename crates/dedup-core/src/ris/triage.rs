@@ -4,6 +4,8 @@ use std::collections::BTreeMap;
 use super::{Field, Occurrence, ReviewQueue};
 use crate::normalize::pagination::{Pagination, parse_pagination};
 
+mod variants;
+
 pub const MAX_HINT_MEMBERS: usize = 16;
 
 /// Members and the overflow reference are one-based rows in the named review queue.
@@ -74,28 +76,36 @@ fn year(field: &Field<'_>) -> Option<u16> {
     (parts.next().is_none() && year != 0).then_some(year)
 }
 
-fn key(rec: &Occurrence<'_>) -> Option<(String, String, u16, String)> {
-    if !rec.usable() {
-        return None;
-    }
-    let title = agreed(
+fn title(rec: &Occurrence<'_>) -> Option<String> {
+    agreed(
         rec.fields
             .iter()
             .filter(|f| matches!(f.tag, "TI" | "T1"))
             .map(text),
-    )?;
+    )
+}
+
+fn publication_year(rec: &Occurrence<'_>) -> Option<u16> {
+    agreed(
+        rec.fields
+            .iter()
+            .filter(|f| matches!(f.tag, "PY" | "Y1"))
+            .map(year),
+    )
+}
+
+fn key(rec: &Occurrence<'_>) -> Option<(String, String, u16, String)> {
+    if !rec.usable() {
+        return None;
+    }
+    let title = title(rec)?;
     let author = agreed(
         ["AU", "A1"]
             .into_iter()
             .filter_map(|tag| rec.fields.iter().find(|f| f.tag == tag))
             .map(text),
     )?;
-    let year = agreed(
-        rec.fields
-            .iter()
-            .filter(|f| matches!(f.tag, "PY" | "Y1"))
-            .map(year),
-    )?;
+    let year = publication_year(rec)?;
     Some((title, author, year, text(rec.fields.first()?)?))
 }
 
@@ -104,6 +114,11 @@ fn key(rec: &Occurrence<'_>) -> Option<(String, String, u16, String)> {
 #[derive(Debug, PartialEq, Eq)]
 pub struct PublicationDetails {
     authors: Vec<String>,
+    locator: PublicationLocator,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct PublicationLocator {
     work_type: Option<String>,
     journal: String,
     volume: String,
@@ -113,6 +128,18 @@ pub struct PublicationDetails {
 
 impl Occurrence<'_> {
     pub fn publication_details(&self) -> Option<PublicationDetails> {
+        let authors = agreed(["AU", "A1"].into_iter().filter_map(|tag| {
+            let mut fields = self.fields.iter().filter(|f| f.tag == tag).peekable();
+            fields.peek()?;
+            Some(fields.map(text).collect::<Option<Vec<_>>>())
+        }))?;
+        Some(PublicationDetails {
+            authors,
+            locator: self.publication_locator()?,
+        })
+    }
+
+    fn publication_locator(&self) -> Option<PublicationLocator> {
         // Distinguish an absent optional field from ambiguous or continued values.
         let scalar = |tag: &str| {
             let mut fields = self.fields.iter().filter(|f| f.tag == tag).peekable();
@@ -125,11 +152,6 @@ impl Occurrence<'_> {
             }))
             .map(Some)
         };
-        let authors = agreed(["AU", "A1"].into_iter().filter_map(|tag| {
-            let mut fields = self.fields.iter().filter(|f| f.tag == tag).peekable();
-            fields.peek()?;
-            Some(fields.map(text).collect::<Option<Vec<_>>>())
-        }))?;
         let journal = agreed(
             self.fields
                 .iter()
@@ -147,8 +169,7 @@ impl Occurrence<'_> {
         ) {
             return None;
         }
-        Some(PublicationDetails {
-            authors,
+        Some(PublicationLocator {
             work_type: scalar("M3")?.map(str::to_owned),
             journal,
             volume: volume.to_owned(),

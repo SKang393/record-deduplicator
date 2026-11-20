@@ -181,6 +181,14 @@ fn render_queue(
             }
         }
     }
+    for [left, right] in queue.variant_title_pairs() {
+        writeln!(
+            out,
+            "triage\ttitle_variant_locator\t{},{}\tinspect_only",
+            reference(left),
+            reference(right)
+        )?;
+    }
     let mut entries = queue.entries.iter();
     for (named, identity) in queue.sources.iter().zip(manifest) {
         writeln!(out, "{identity}")?;
