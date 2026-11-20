@@ -41,14 +41,17 @@ cat catalog.ris index.ris | cmp - restored/reviewed.ris
 echo "PASS: packaged CLI verified one copy, retained the subtitled record and restored all three occurrences."
 
 # Mimic pasted file paths in the packaged guide, including Windows drive letters.
-project='Search exports'
-sheet="$project/Review choices.tsv"
-mkdir "$project"
-cp catalog.ris "$project/Catalog export.ris"
+project='Étude de terrain'
+handoff='Résultats partagés'
+catalog="$project/Catalogue d'été.ris"
+index="$project/Índice final.ris"
+sheet="$project/Décisions de revue.tsv"
+mkdir "$project" "$handoff"
+cp catalog.ris "$catalog"
 # The index has one true copy and one distinct report on different pages.
 sed '/^DO  - /d' catalog.ris > guide-index.ris
 sed '/^DO  - /d;s/^SP  - .*/SP  - 41-46/' catalog.ris >> guide-index.ris
-cp guide-index.ris "$project/Index export.ris"
+cp guide-index.ris "$index"
 reference_review() {
     dedup review-ids "$@" --ris-source cat catalog.ris --ris-source idx guide-index.ris
 }
@@ -56,6 +59,7 @@ start_shell=direct
 case "${RUNNER_OS:-$(uname -s)}" in
     Windows|MINGW*|MSYS*) start_shell=pwsh ;;
     macOS|Darwin) start_shell=zsh ;;
+    Linux) if [[ $# == 1 && -x /bin/zsh ]]; then start_shell=zsh; fi ;;
 esac
 
 guide_path() {
@@ -66,11 +70,20 @@ guide_path() {
     esac
 }
 sheet_path=$(guide_path "$sheet")
-catalog_path=$(guide_path "$project/Catalog export.ris")
-index_path=$(guide_path "$project/Index export.ris")
+catalog_path=$(guide_path "$catalog")
+index_path=$(guide_path "$index")
+sheet_answer="\"$sheet_path\""
+index_answer=$index_path
+case "$start_shell" in
+    pwsh) index_answer="'$index_path'" ;; # PowerShell-style single-quoted argument.
+    zsh)
+        sheet_answer="'$sheet_path'"
+        index_answer=$(/bin/zsh -fc 'print -r -- ${(q)1}' -- "$index_path")
+        ;;
+esac
 
 guided_start() (
-    printf '%s\n' "\"$sheet_path\"" cat "\"$catalog_path\"" idx "$index_path" '' "$@" > "$work/answers.txt"
+    printf '%s\n' "$sheet_answer" cat "\"$catalog_path\"" idx "$index_answer" '' "$@" > "$work/answers.txt"
     case "$start_shell" in
         pwsh)
             export REVIEW_ANSWERS
@@ -78,6 +91,7 @@ guided_start() (
             cd "$package_dir"
             pwsh -NoProfile -NonInteractive -Command '
                 $ErrorActionPreference = "Stop"
+                [Console]::OutputEncoding = $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
                 Get-Content -LiteralPath $env:REVIEW_ANSWERS -Encoding utf8 | .\dedup.exe start
                 exit $LASTEXITCODE
             ' | sed $'s/\r$//'  # Compare displayed rows across shell line endings.
@@ -90,13 +104,15 @@ guided_start() (
     esac
 )
 
-find "$project" -print | LC_ALL=C sort > "$work/before.txt"
+find "$project" "$handoff" -print | LC_ALL=C sort > "$work/before.txt"
 guided_start :cancel > cancelled.tsv 2> prompts.txt
-find "$project" -print | LC_ALL=C sort | cmp - "$work/before.txt"
-cmp catalog.ris "$project/Catalog export.ris"
-cmp guide-index.ris "$project/Index export.ris"
+find "$project" "$handoff" -print | LC_ALL=C sort | cmp - "$work/before.txt"
+cmp catalog.ris "$catalog"
+cmp guide-index.ris "$index"
 test ! -s cancelled.tsv
 grep -Fq 'Review setup cancelled.' prompts.txt
+grep -Fq "cat = $catalog_path" prompts.txt
+grep -Fq "idx = $index_path" prompts.txt
 
 guided_start yes > guided.tsv 2> prompts.txt
 reference_review --init-metadata-decisions reference.tsv > reference-queue.tsv
@@ -117,19 +133,27 @@ grep -Fxq $'pending\ttitle_author_year_type\tidx:2\tinspect_metadata_only;keep=c
 guided_start yes '' > guided-pending.tsv 2> prompts.txt
 cmp reference-pending.tsv guided-pending.tsv
 
-dest="$project/Reviewed export"
+dest="$handoff/À transmettre"
 dest_path=$(guide_path "$dest")
-mkdir "$project/Existing folder"
-printf '%s\n' 'Previous output' > "$project/Existing folder/reviewed.ris"
-find "$project" -print | LC_ALL=C sort > "$work/with-sheet.txt"
+dest_answer=$dest_path
+cancel_paths=("$dest_path")
+if [[ $start_shell == zsh ]]; then
+    dest_answer=$(/bin/zsh -fc 'print -r -- ${(q)1}' -- "$dest_path")
+    # Escaping just the new basename could also name a literal backslash.
+    cancel_paths=("${dest_path%/*}/À\ transmettre" "$dest_path")
+fi
+mkdir "$handoff/Dossier occupé"
+printf '%s\n' 'Previous output' > "$handoff/Dossier occupé/reviewed.ris"
+find "$project" "$handoff" -print | LC_ALL=C sort > "$work/with-sheet.txt"
 check_untouched() {
-    find "$project" -print | LC_ALL=C sort | cmp - "$work/with-sheet.txt"
-    printf '%s\n' 'Previous output' | cmp - "$project/Existing folder/reviewed.ris"
+    find "$project" "$handoff" -print | LC_ALL=C sort | cmp - "$work/with-sheet.txt"
+    printf '%s\n' 'Previous output' | cmp - "$handoff/Dossier occupé/reviewed.ris"
     cmp saved.tsv "$sheet"
-    cmp catalog.ris "$project/Catalog export.ris"
-    cmp guide-index.ris "$project/Index export.ris"
+    cmp catalog.ris "$catalog"
+    cmp guide-index.ris "$index"
 }
-guided_start yes "$dest_path" '' > guided-pending.tsv 2> prompts.txt
+guided_start yes "${cancel_paths[@]}" '' > guided-pending.tsv 2> prompts.txt
+if [[ $start_shell == zsh ]]; then grep -Fq 'Paste the full path with spaces as written.' prompts.txt; fi
 cmp reference-pending.tsv guided-pending.tsv
 grep -Fq "Decision sheet: $sheet_path" prompts.txt
 grep -Fq "New export folder: $dest_path" prompts.txt
@@ -137,12 +161,13 @@ grep -Fq 'Explicitly marked duplicates to remove: 1' prompts.txt
 grep -Fq 'Records retained: 2 (including 1 pending).' prompts.txt
 grep -Fq 'Export cancelled.' prompts.txt
 check_untouched
-if guided_start yes "$(guide_path "$project/Existing folder")" write > guided-pending.tsv 2> prompts.txt; then exit 1; fi
+if guided_start yes "$(guide_path "$handoff/Dossier occupé")" write > guided-pending.tsv 2> prompts.txt; then exit 1; fi
 grep -Fq 'Destination already exists.' prompts.txt
 check_untouched
 
-guided_start yes "$dest_path" write > guided-pending.tsv 2> prompts.txt
+guided_start yes "$dest_answer" write > guided-pending.tsv 2> prompts.txt
 reference_review --export-reviewed saved.tsv reference-export
+test "$(find "$dest" -print | wc -l)" -eq 4  # Directory and its three files.
 for file in reviewed.ris mapping.tsv reconciliation.tsv; do
     cmp "reference-export/$file" "$dest/$file"
 done
@@ -156,14 +181,22 @@ for label in cat idx; do
     grep -F $'input\tris\t'"$label"$'\t' "$dest/mapping.tsv" | grep -Fq "sha256=${digest%% *}"
 done
 cmp saved.tsv "$sheet"
-cmp catalog.ris "$project/Catalog export.ris"
-cmp guide-index.ris "$project/Index export.ris"
+cmp catalog.ris "$catalog"
+cmp guide-index.ris "$index"
 echo "PASS: guided export reconciled 3 inputs, removed 1 verified copy and kept the pending distinct report. Cancellation and an existing destination preserved the project."
 
 # A changed source must be diagnosed before emitting any saved decisions.
-printf '\n' >> "$project/Index export.ris"
+if [[ $start_shell == zsh ]]; then
+    # Both names exist. The literal spelling must select the different source.
+    literal_index="$project/Índice\ final.ris"
+    cp "$index" "$literal_index"
+    printf '\n' >> "$literal_index"
+    index_answer=$(guide_path "$literal_index")
+else
+    printf '\n' >> "$index"
+fi
 if guided_start yes > rejected.tsv 2> prompts.txt; then exit 1; fi
 test ! -s rejected.tsv
 grep -Fq 'Decision sheet inputs differ.' prompts.txt
 cmp saved.tsv "$sheet"
-echo "PASS: $start_shell guided start with spaced paths; cancellation preserved project bytes and entries; created 3 pending; reopened the partially reviewed sheet; changed source refused."
+echo "PASS: $start_shell guided start with spaced Unicode paths; cancellation preserved project bytes and entries; created 3 pending; reopened the partially reviewed sheet; changed source refused."

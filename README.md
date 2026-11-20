@@ -60,7 +60,12 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
 2. Give your first export a short label such as `catalog`, then paste its
    RIS file path on the next line. To copy a full path, use **Copy as path**
    in Windows Explorer or select the file in Finder and press **Option-Command-C**.
-   Spaces and surrounding double quotes are accepted. Repeat for each export.
+   Paste the path on one line, with spaces and accents as written. You can
+   enclose a full path in single or double quotes. On macOS the guide also
+   recognizes backslash-escaped spaces in an existing path. If it asks again
+   about a new name, use plain spaces, or double-quote the full path to keep
+   a literal backslash. For other shell escapes, copy the plain path from
+   the file manager. Repeat for each export.
 3. Press Enter at the next label prompt. Check the sheet, labels and paths
    shown, then type `yes`. Type `:cancel` at any prompt to stop.
 4. For a new sheet, the terminal shows the candidate queue and every editable
@@ -71,8 +76,9 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    It checks their fingerprints and shows pending decisions and keeper context.
 5. After reviewing the pending rows, press Enter to finish, or enter a new
    folder path to preview an export. Choose a folder name inside an existing
-   directory. Check the sheet path, destination, explicit duplicate count,
-   and how many pending records will be kept. Type `write` to save the three
+   directory, which can be outside the project. Check the sheet path,
+   destination, explicit duplicate count, and how many pending records will
+   be kept. Type `write` to save the three
    files, or press Enter to cancel. Open `reviewed.ris` in your reference
    manager. Use `mapping.tsv` for individual decisions and `reconciliation.tsv`
    for counts by source.

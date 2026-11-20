@@ -31,28 +31,63 @@ fn ask(input: &mut dyn BufRead, prompt: &str) -> Result<Option<String>, String> 
     }
 }
 
-fn path_text(answer: &str) -> &str {
-    answer
-        .strip_prefix('"')
-        .and_then(|s| s.strip_suffix('"'))
-        .unwrap_or(answer)
+fn ask_path(input: &mut dyn BufRead, prompt: &str) -> Result<Option<String>, String> {
+    while let Some(answer) = ask(input, prompt)? {
+        // An existing literal name wins, including names containing quotes or backslashes.
+        match fs::symlink_metadata(&answer) {
+            Ok(_) => return Ok(Some(answer)),
+            Err(e) if e.kind() == ErrorKind::PermissionDenied => return Ok(Some(answer)),
+            Err(_) => {}
+        }
+        let quoted = answer.strip_prefix('"').and_then(|s| s.strip_suffix('"'));
+        let single_quoted = answer
+            .strip_prefix('\'')
+            .and_then(|s| s.strip_suffix('\''))
+            .filter(|s| Path::new(s).is_absolute());
+        if let Some(path) = quoted.or(single_quoted) {
+            return Ok(Some(path.to_owned()));
+        }
+        if cfg!(unix)
+            && answer.starts_with('/')
+            && answer.contains("\\ ")
+            && answer.split('\\').skip(1).all(|s| s.starts_with(' '))
+        {
+            let path = answer.replace("\\ ", " ");
+            if fs::symlink_metadata(&path).is_ok() {
+                return Ok(Some(path));
+            }
+            // A new name is unambiguous when only the unescaped parent exists.
+            if Path::new(&answer)
+                .parent()
+                .is_some_and(|p| fs::metadata(p).is_err_and(|e| e.kind() == ErrorKind::NotFound))
+                && Path::new(&path).parent().is_some_and(Path::is_dir)
+            {
+                return Ok(Some(path));
+            }
+            eprintln!(
+                "Paste the full path with spaces as written. To keep a literal backslash in a new name, enclose the full path in double quotes."
+            );
+            continue;
+        }
+        return Ok(Some(answer));
+    }
+    Ok(None)
 }
 
 pub(super) fn run() -> Result<(), String> {
     let mut input = io::stdin().lock();
     eprintln!("Start a local RIS review. Type :cancel at any prompt to stop.");
-    let Some(answer) = ask(
+    let Some(sheet) = ask_path(
         &mut input,
         "New or saved decision sheet path (e.g. choices.tsv):",
     )?
     else {
         return Ok(());
     };
-    let sheet = path_text(&answer);
     if sheet.is_empty() {
         return Err("Enter a filename for the decision sheet.".into());
     }
-    let existing = match fs::metadata(sheet) {
+    let existing = match fs::metadata(&sheet) {
         Ok(m) if m.is_file() => true,
         Ok(_) => return Err("Choose a file for the decision sheet.".into()),
         Err(e) if e.kind() == ErrorKind::NotFound => false,
@@ -92,15 +127,16 @@ pub(super) fn run() -> Result<(), String> {
             continue;
         }
         let path = loop {
-            let Some(answer) = ask(&mut input, "Paste or type the path to this RIS export:")?
+            let Some(path) = ask_path(&mut input, "Paste or type the path to this RIS export:")?
             else {
                 return Ok(());
             };
-            let path = path_text(&answer);
-            if Path::new(path).is_file() {
-                break path.to_owned();
+            if Path::new(&path).is_file() {
+                break path;
             }
-            eprintln!("Cannot locate a regular file there. Try its full path.");
+            eprintln!(
+                "Cannot locate a regular file there. Paste its full path from Explorer or Finder."
+            );
         };
         sources.push((label, path));
     }
@@ -140,14 +176,13 @@ pub(super) fn run() -> Result<(), String> {
 }
 
 pub(super) fn export_destination(input: &mut dyn BufRead) -> Result<Option<PathBuf>, String> {
-    let Some(answer) = ask(
+    let Some(path) = ask_path(
         input,
         "To preview an export, enter a new folder path. Press Enter to finish reviewing:",
     )?
     else {
         return Ok(None);
     };
-    let path = path_text(&answer);
     Ok((!path.is_empty()).then(|| PathBuf::from(path)))
 }
 
