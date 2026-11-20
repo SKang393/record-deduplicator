@@ -5,6 +5,7 @@ use super::{Field, Occurrence, ReviewQueue};
 use crate::normalize::pagination::{Pagination, parse_pagination};
 
 mod variants;
+pub use variants::LocatorPairs;
 
 pub const MAX_HINT_MEMBERS: usize = 16;
 
@@ -127,14 +128,17 @@ struct PublicationLocator {
 }
 
 impl Occurrence<'_> {
-    pub fn publication_details(&self) -> Option<PublicationDetails> {
-        let authors = agreed(["AU", "A1"].into_iter().filter_map(|tag| {
+    fn authors(&self) -> Option<Vec<String>> {
+        agreed(["AU", "A1"].into_iter().filter_map(|tag| {
             let mut fields = self.fields.iter().filter(|f| f.tag == tag).peekable();
             fields.peek()?;
             Some(fields.map(text).collect::<Option<Vec<_>>>())
-        }))?;
+        }))
+    }
+
+    pub fn publication_details(&self) -> Option<PublicationDetails> {
         Some(PublicationDetails {
-            authors,
+            authors: self.authors()?,
             locator: self.publication_locator()?,
         })
     }

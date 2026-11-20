@@ -183,6 +183,15 @@ even when their filenames or contents are identical.
   surnames when both names use comma form. Use `--inspect-pair` to see the
   evidence. The `inspect_only` row adds no editable decision and removes
   zero records. Either occurrence can have a sheet row through other evidence.
+- A `complementary_id_locator` triage row gives an inspection lead when one
+  export supplies only a DOI and another supplies only a PMID. Both occurrences
+  must be free of identifier issues and shared-ID groups. They must be the only
+  two occurrences at the matching title and location, with the same full title
+  of at least five words, the same listed authors in order, year, RIS type,
+  journal, volume and final page range or article number. Issue and work type
+  must agree as well. Use `--inspect-pair` to read each original. A protocol
+  and follow-up abstract can share a heading and printed pages. Both stay in
+  the export, and the lead adds no editable decision.
 - Each `source` row gives the original half-open byte range and a disposition.
   `review_candidate` means inspect its candidate groups and any `issue` rows.
   `review_input` means inspect the record's identifier issues.
@@ -488,6 +497,12 @@ run `python scripts/check_title_variants.py target/release/dedup`. Supply
 `--before <original-cli>` to compare queues, sheet membership and export
 bytes against the previous CLI. Add `--scale-targets` to count the 111
 variant-title copies from the earlier scale audit separately.
+
+Run `python scripts/check_split_identifiers.py <baseline-cli> <current-cli>`
+with the baseline CLI built at `059128ad57a5` to compare direct review pairs
+on the frozen search, its index and update exports alone, the title-variant
+cases and a fresh synthetic contrast. The contrast includes separate abstracts
+with identical citation details and checks the unchanged sheet and export.
 
 Documentation contributors can check local Markdown links with Python 3.10 or
 newer:
