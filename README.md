@@ -151,6 +151,11 @@ retained for screening. Both `map` rows point to
 `output=1` in `reviewed/reviewed.ris`, each with its own source byte span.
 The schema 2 `rationale` row carries the reviewer's explanation for `idx:1`.
 
+To [open this export in Zotero](#import-the-reviewed-ris-into-zotero), get
+the full filename before leaving the walkthrough shell. In Git Bash on
+Windows, run `cygpath -aw reviewed/reviewed.ris`. On macOS or Linux, run
+`printf '%s/reviewed/reviewed.ris\n' "$PWD"`.
+
 To undo only the copy decision, restore its row to `pending` and drop the
 rationale column. Export to a fresh directory and inspect the new mapping.
 
