@@ -121,12 +121,13 @@ ER  -
 RIS
 sed '/^DO  - /d' catalog.ris > index.ris
 review() { dedup review-ids "$@" --ris-source cat catalog.ris --ris-source idx index.ris; }
-review --init-metadata-decisions pending.tsv
-cat catalog.ris index.ris
+review --init-metadata-decisions choices.tsv
+review --inspect-pair choices.tsv cat:1 idx:1
 ```
 
-The `triage` row names `cat:1,idx:1`. Compare the two source records before
-editing the sheet. Both list Reed's article in *Fable Ecology*, volume 8,
+The `triage` row names `cat:1,idx:1`. The inspection shows each selected RIS
+record under its occurrence key, current decision and original byte range.
+Both list Reed's article in *Fable Ecology*, volume 8,
 pages 21–26. For this pair, keep `cat:1` and record that evidence on the
 `idx:1` row. These commands make the same two edits you can make in a TSV
 editor and show the validated decisions and export mapping.
@@ -136,7 +137,7 @@ awk -F '\t' '
   $1 == "cat:1" {print "cat:1\tkeep"; next}
   $1 == "idx:1" {print "idx:1\tverified-duplicate-of=cat:1\tMatched Reed, Fable Ecology 8, pages 21-26."; next}
   {print}
-' pending.tsv > choices.tsv
+' choices.tsv > edit.tmp && mv edit.tmp choices.tsv
 review --resume-decisions choices.tsv
 review --pending-decisions choices.tsv
 review --export-reviewed choices.tsv reviewed
@@ -154,8 +155,8 @@ To undo only the copy decision, restore its row to `pending` and drop the
 rationale column. Export to a fresh directory and inspect the new mapping.
 
 ```sh
-awk -F '\t' '$1 == "idx:1" {print "idx:1\tpending"; next} {print}' choices.tsv > undo.tsv
-review --export-reviewed undo.tsv restored
+awk -F '\t' '$1 == "idx:1" {print "idx:1\tpending"; next} {print}' choices.tsv > edit.tmp && mv edit.tmp choices.tsv
+review --export-reviewed choices.tsv restored
 cat restored/mapping.tsv
 cat restored/reconciliation.tsv
 ```
@@ -180,7 +181,7 @@ Reopen your saved sheet with the same named exports. This command uses the
 sheet saved by the undo example above.
 
 ```sh
-dedup review-ids --pending-decisions undo.tsv --ris-source cat catalog.ris --ris-source idx index.ris
+dedup review-ids --pending-decisions choices.tsv --ris-source cat catalog.ris --ris-source idx index.ris
 ```
 
 The command checks the saved fingerprints and writes a read-only TSV report
@@ -199,9 +200,12 @@ the order is DOI, PMID, then opt-in metadata hints. Every group with a pending
 member appears, even when it has zero or several keepers. Groups can overlap and
 the summary counts each pending occurrence once.
 
-Use `--resume-decisions` for source byte spans, issues and existing decisions.
-Compare the original records, edit the saved sheet, then rerun
-`--pending-decisions` to see what remains.
+Pass two keys from a group to `--inspect-pair` to read their tagged fields and
+continuation lines in source order. The display checks the sheet's fingerprints
+and escapes control characters for reading in a terminal. If the records give
+insufficient evidence, leave the decision pending. Edit `choices.tsv` when you
+reach a decision, then rerun `--pending-decisions`. Use `--resume-decisions`
+for the full queue, including input issues.
 
 ### Reconcile a reviewed export before screening
 

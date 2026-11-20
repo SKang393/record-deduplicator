@@ -56,6 +56,7 @@ enum Action<'a> {
     Init { path: &'a OsStr, metadata: bool },
     Resume(&'a OsStr),
     Pending(&'a OsStr),
+    InspectPair(&'a OsStr, &'a OsStr, &'a OsStr),
     Export(&'a OsStr, &'a OsStr),
 }
 
@@ -74,6 +75,9 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
         }
         [flag, path, rest @ ..] if flag == "--resume-decisions" => (Action::Resume(path), rest),
         [flag, path, rest @ ..] if flag == "--pending-decisions" => (Action::Pending(path), rest),
+        [flag, path, left, right, rest @ ..] if flag == "--inspect-pair" => {
+            (Action::InspectPair(path, left, right), rest)
+        }
         [flag, path, dir, rest @ ..] if flag == "--export-reviewed" => {
             (Action::Export(path, dir), rest)
         }
@@ -120,6 +124,10 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
         }
         Action::Resume(path) | Action::Pending(path) => {
             Some(super::decisions::resume(path, &queue, &manifest)?)
+        }
+        Action::InspectPair(path, left, right) => {
+            let sheet = super::decisions::resume(path, &queue, &manifest)?;
+            return super::inspect::pair(&queue, &sheet.decisions, left, right);
         }
         Action::Export(path, dir) => {
             let sheet = super::decisions::resume(path, &queue, &manifest)?;

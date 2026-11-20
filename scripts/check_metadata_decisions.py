@@ -18,12 +18,13 @@ def exercise(directory, binary, baseline):
     b = record("cat-b", pages="27-31")
     e = record("cat-e", pages="40-42", extra="DO  - 10.0000/marsh-a\n")
     copy = (record("idx-a").replace(b"JO  -", b"JF  -").replace(b"AU  -", b"A1  -")
-            .replace(b"SP  - 21-26", b"SP  - 21\nEP  - 26"))
+            .replace(b"SP  - 21-26", b"SP  - 21\nEP  - 26")
+            .replace(b"ER  -", "N1  - Tidal survey\n  Île\tsector\nER  -".encode()))
     c = record("idx-c", year="2022")
     d = record("idx-d", extra="DO  - 10.0000/east\nDO  - 10.0000/west\n")
     catalog = directory / "cat.ris"
     index = directory / "idx.ris"
-    catalog.write_bytes(a + b + e)
+    catalog.write_bytes((a + b + e).replace(b"\n", b"\r"))
     index.write_bytes((copy + c + d).replace(b"\n", b"\r\n"))
     original = (catalog.read_bytes(), index.read_bytes())
     sources = ["--ris-source", "cat", catalog, "--ris-source", "idx", index]
@@ -59,6 +60,16 @@ def exercise(directory, binary, baseline):
     template = sheet.read_bytes()
     eligible = [line.split(b"\t")[0] for line in template.splitlines() if line.endswith(b"\tpending")]
     assert eligible == [b"cat:1", b"cat:2", b"cat:3", b"idx:1", b"idx:3"]
+    pair = run("--inspect-pair", sheet, "cat:3", "cat:1").stdout.splitlines()
+    assert [line for line in pair if line.startswith(b"[")] == [
+        f"[cat:3] pending (bytes {len(a+b)}..{len(a+b+e)})".encode(),
+        f"[cat:1] pending (bytes 0..{len(a)})".encode(),
+    ]
+    assert [line for line in pair if line.startswith(b"  SP  -")] == [b"  SP  - 40-42", b"  SP  - 21-26"]
+    assert [line for line in pair if line.startswith(b"  AN  -")] == [b"  AN  - cat-e", b"  AN  - cat-a"]
+    for bad in ("cat:1", "cat:0", "cat:4", "idx:bad", "absent:1"):
+        run("--inspect-pair", sheet, "cat:1", bad, ok=False)
+    assert sheet.read_bytes() == template
     run("--export-reviewed", sheet, "pending")
     assert output("pending", "reviewed.ris") == a + b + e + copy + c + d
 
@@ -84,9 +95,16 @@ def exercise(directory, binary, baseline):
     rejected(approved.replace(b"end\n", b"idx:2\t" + verified + b"\nend\n"), b"unexpected rows")
     index.write_bytes(original[1].replace(b"idx-a", b"idx-z"))
     rejected(approved, b"inputs differ")
+    assert b"inputs differ" in run("--inspect-pair", sheet, "cat:1", "idx:1", ok=False).stderr
     index.write_bytes(original[1])
 
     sheet.write_bytes(approved)
+    pair = run("--inspect-pair", sheet, "cat:1", "idx:1").stdout.decode().splitlines()
+    copy_bytes = len(copy.replace(b"\n", b"\r\n"))
+    assert f"[cat:1] keep (bytes 0..{len(a)})" in pair
+    assert f"[idx:1] verified-duplicate-of=cat:1 (bytes 0..{copy_bytes})" in pair
+    assert [line for line in pair if line.startswith("  A1  -")] == ["  A1  - Reed, E.", "  A1  - Moss, T."]
+    assert "    Île\\tsector" in pair
     preview = run("--resume-decisions", sheet).stdout.splitlines()
     rationale = b"rationale\tmetadata\tidx:1\t" + reason
     assert b"decision\thuman\tidx:1\tverified-duplicate-of=cat:1" in preview and rationale in preview
@@ -97,6 +115,9 @@ def exercise(directory, binary, baseline):
     pending_keys = {key for group in groups for key in group[2].split(b",")}
     run("--export-reviewed", sheet, "reviewed")
     assert output("reviewed", "reviewed.ris") == a + b + e + c + d
+    reopened = subprocess.check_output([binary, "review-ids", "--ris", directory / "reviewed/reviewed.ris"])
+    assert sum(line.startswith(b"source\tris\t") and b";status=complete;" in line
+               for line in reopened.splitlines()) == 5
     tally = output("reviewed", "reconciliation.tsv").splitlines()
     assert tally[1:] == [
         b"source\tcat\t3\t0\t0\t3\t1\t1\t1\t0\t0",
@@ -112,7 +133,6 @@ def exercise(directory, binary, baseline):
     rows = [line.split(b"\t") for line in mapping if line.startswith(b"map\t")]
     assert [(key, action, int(detail.split(b";output=")[1])) for _, action, key, detail in rows] == expected
     assert pending_keys == {key for _, action, key, _ in rows if action == b"pending"}
-    copy_bytes = len(copy.replace(b"\n", b"\r\n"))
     assert rows[3][3] == f"bytes=0..{copy_bytes};output=1".encode()
     assert sheet.read_bytes() == approved
     sheet.write_bytes(kept)
@@ -125,6 +145,7 @@ def exercise(directory, binary, baseline):
     for name in ["reviewed.ris", "mapping.tsv", "reconciliation.tsv"]:
         assert output("replay", name) == output("reviewed", name)
     assert (catalog.read_bytes(), index.read_bytes()) == original
+    print("Inspected the copied DOI and the verified pair. All 3 pending occurrences survived; 5 complete RIS records reopened.")
     print("Verified sheet: 5 editable, 6 mapped, 1 verified copy, all 5 distinct reports retained.")
     print("Nine invalid edits/input changes rejected before output. Undo restored all 6; replay matched all export files.")
 
