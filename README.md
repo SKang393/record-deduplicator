@@ -367,10 +367,12 @@ the summary counts each pending occurrence once.
 
 Pass two keys from a group to `--inspect-pair` to read their tagged fields and
 continuation lines in source order. The display checks the sheet's fingerprints
-and escapes control characters for reading in a terminal. If the records give
-insufficient evidence, leave the decision pending. Edit `choices.tsv` when you
-reach a decision, then rerun `--pending-decisions`. Use `--resume-decisions`
-for the full queue, including input issues.
+and escapes control characters for reading in a terminal. If a record lacks a
+usable final page range or article number, the comparison identifies its source
+and ordinal and tells you whether it supplied any pagination fields (SP/EP).
+If the records give insufficient evidence, leave the decision pending. Edit
+`choices.tsv` when you reach a decision, then rerun `--pending-decisions`.
+Use `--resume-decisions` for the full queue, including input issues.
 
 ### Reconcile a reviewed export before screening
 
@@ -507,6 +509,10 @@ with the baseline CLI built at `059128ad57a5` to compare direct review pairs
 on the frozen search, its index and update exports alone, the title-variant
 cases and a fresh synthetic contrast. The contrast includes separate abstracts
 with identical citation details and checks the unchanged sheet and export.
+For the 164 pairs lacking final pagination, run the same script with
+`--missing-pages`, a baseline CLI built at `417b9b491ea2`, and the current CLI.
+It tests exact abstract text and publisher article URLs offline on the frozen
+slice and a separate ahead-of-print and follow-up fixture.
 
 Documentation contributors can check local Markdown links with Python 3.10 or
 newer:

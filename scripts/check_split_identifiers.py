@@ -203,6 +203,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("before", type=Path, nargs="?", help="Baseline CLI for frozen-corpus and export comparison")
     parser.add_argument("after", type=Path)
+    parser.add_argument("--missing-pages", action="store_true", help="Probe independent evidence for the 164 misses")
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="complementary-ids-") as temp:
-        exercise(Path(temp), args.before.resolve() if args.before else None, args.after.resolve())
+        before = args.before.resolve() if args.before else None
+        if args.missing_pages:
+            from check_missing_pages import exercise as probe_missing_pages
+            probe_missing_pages(Path(temp), before, args.after.resolve())
+        else:
+            exercise(Path(temp), before, args.after.resolve())

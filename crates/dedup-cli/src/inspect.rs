@@ -55,6 +55,14 @@ pub(super) fn pair(
             entry.label, entry.ordinal, status, rec.bytes.start, rec.bytes.end
         )
         .map_err(write_error)?;
+        if rec.final_pagination().is_none() {
+            let detail = if rec.fields.iter().any(|f| matches!(f.tag, "SP" | "EP")) {
+                "supplies pagination fields without a usable final page range or article number"
+            } else {
+                "has no SP or EP field for a final page range or article number"
+            };
+            writeln!(out, "{}:{} {detail}.", entry.label, entry.ordinal).map_err(write_error)?;
+        }
         // Keep source lines separate from headings, including malformed lines.
         let lines = raw
             .strip_prefix('\u{feff}')

@@ -143,42 +143,46 @@ impl Occurrence<'_> {
         })
     }
 
+    // Distinguish an absent optional field from ambiguous or continued values.
+    fn scalar(&self, tag: &str) -> Option<Option<&str>> {
+        let mut fields = self.fields.iter().filter(|f| f.tag == tag).peekable();
+        if fields.peek().is_none() {
+            return Some(None);
+        }
+        agreed(fields.map(|f| {
+            let value = f.first_line_value.trim();
+            (!f.continued && !value.is_empty()).then_some(value)
+        }))
+        .map(Some)
+    }
+
+    /// Final page range or article number from this occurrence's original SP/EP fields.
+    pub fn final_pagination(&self) -> Option<Pagination> {
+        let pages = parse_pagination(self.scalar("SP")??, self.scalar("EP")?);
+        matches!(
+            &pages,
+            Pagination::Pages { end: Some(_), .. } | Pagination::ArticleNumber(_)
+        )
+        .then_some(pages)
+    }
+
     fn publication_locator(&self) -> Option<PublicationLocator> {
-        // Distinguish an absent optional field from ambiguous or continued values.
-        let scalar = |tag: &str| {
-            let mut fields = self.fields.iter().filter(|f| f.tag == tag).peekable();
-            if fields.peek().is_none() {
-                return Some(None);
-            }
-            agreed(fields.map(|f| {
-                let value = f.first_line_value.trim();
-                (!f.continued && !value.is_empty()).then_some(value)
-            }))
-            .map(Some)
-        };
         let journal = agreed(
             self.fields
                 .iter()
                 .filter(|f| matches!(f.tag, "JO" | "JF" | "T2"))
                 .map(text),
         )?;
-        let volume = scalar("VL")??;
+        let volume = self.scalar("VL")??;
         if !volume.bytes().any(|b| b.is_ascii_digit()) {
             return None;
         }
-        let pages = parse_pagination(scalar("SP")??, scalar("EP")?);
-        if !matches!(
-            pages,
-            Pagination::Pages { end: Some(_), .. } | Pagination::ArticleNumber(_)
-        ) {
-            return None;
-        }
         Some(PublicationLocator {
-            work_type: scalar("M3")?.map(str::to_owned),
+            work_type: self.scalar("M3")?.map(str::to_owned),
             journal,
             volume: volume.to_owned(),
-            issue: scalar("IS")?.map(str::to_owned),
-            pages,
+            issue: self.scalar("IS")?.map(str::to_owned),
+            pages: self.final_pagination()?,
         })
     }
 }
