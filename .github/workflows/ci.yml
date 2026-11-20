@@ -51,7 +51,7 @@ jobs:
               expected = "apfs"
           print(json.dumps({"audit_filesystem": fs, "platform": sys.platform}), flush=True)
           assert fs.lower() == expected, f"Expected {expected} temp volume, found {fs}"
-          for audit in ["check_review_triage.py", "check_synthetic_review.py"]:
+          for audit in ["check_review_triage.py", "check_synthetic_review.py", "check_metadata_decisions.py"]:
               subprocess.run([sys.executable, Path("scripts") / audit, binary], check=True)
   docs:
     runs-on: ubuntu-latest

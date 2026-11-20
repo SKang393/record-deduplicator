@@ -13,7 +13,7 @@ pub use queue::{
     Disposition, MAX_SOURCES, NamedSource, QueueEntry, QueueError, ReviewQueue, review_sources,
     valid_source_label,
 };
-pub use triage::{MAX_HINT_MEMBERS, MetadataHint};
+pub use triage::{MAX_HINT_MEMBERS, MetadataHint, PublicationDetails};
 
 pub const MAX_FIELDS: usize = 250_000;
 

@@ -10,40 +10,73 @@ use std::{
 
 use dedup_core::{
     identifier_review::{Identifier, MAX_INPUT_BYTES},
-    ris::{Disposition, ReviewQueue},
+    ris::{Disposition, MetadataHint, ReportIdentifiers, ReviewQueue},
 };
 
 const VERSION: &str = "dedup-ris-decisions\t1";
+const METADATA_VERSION: &str = "dedup-ris-decisions\t2";
 const END: &str = "end";
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(super) enum Decision {
     NotCandidate,
     Pending,
     Keep,
     DuplicateOf(usize),
+    VerifiedMetadata { target: usize, rationale: String },
 }
 
 impl Decision {
-    pub(super) fn label(self, queue: &ReviewQueue<'_>) -> Cow<'static, str> {
+    pub(super) fn target(&self) -> Option<usize> {
+        match self {
+            Self::DuplicateOf(target) | Self::VerifiedMetadata { target, .. } => Some(*target),
+            _ => None,
+        }
+    }
+
+    pub(super) fn label(&self, queue: &ReviewQueue<'_>) -> Cow<'static, str> {
         match self {
             Self::NotCandidate => "not-candidate".into(),
             Self::Pending => "pending".into(),
             Self::Keep => "keep".into(),
             Self::DuplicateOf(index) => {
-                let target = &queue.entries[index];
+                let target = &queue.entries[*index];
                 format!("duplicate-of={}:{}", target.label, target.ordinal).into()
+            }
+            Self::VerifiedMetadata { target, .. } => {
+                let target = &queue.entries[*target];
+                format!("verified-duplicate-of={}:{}", target.label, target.ordinal).into()
             }
         }
     }
 }
 
-fn candidates<'a>(queue: &'a ReviewQueue<'_>) -> impl Iterator<Item = (usize, String)> + 'a {
+fn metadata_groups(queue: &ReviewQueue<'_>, enabled: bool) -> Vec<Option<usize>> {
+    let mut groups = vec![None; queue.entries.len()];
+    if enabled {
+        for hint in queue.metadata_hints() {
+            if let MetadataHint::Inspect(rows) = hint {
+                let group = rows[0];
+                for row in rows {
+                    groups[row - 1] = Some(group);
+                }
+            }
+        }
+    }
+    groups
+}
+
+fn candidates<'a>(
+    queue: &'a ReviewQueue<'_>,
+    groups: &'a [Option<usize>],
+) -> impl Iterator<Item = (usize, String)> + 'a {
     queue
         .entries
         .iter()
         .enumerate()
-        .filter(|(_, entry)| entry.disposition == Disposition::ReviewCandidate)
+        .filter(|(i, entry)| {
+            entry.disposition == Disposition::ReviewCandidate || groups[*i].is_some()
+        })
         .map(|(index, entry)| (index, format!("{}:{}", entry.label, entry.ordinal)))
 }
 
@@ -51,12 +84,14 @@ pub(super) fn create(
     path: &OsStr,
     queue: &ReviewQueue<'_>,
     manifest: &[String],
+    metadata: bool,
 ) -> Result<(), String> {
-    let mut sheet = format!("{VERSION}\n");
+    let version = if metadata { METADATA_VERSION } else { VERSION };
+    let mut sheet = format!("{version}\n");
     for identity in manifest {
         writeln!(sheet, "{identity}").unwrap();
     }
-    for (_, key) in candidates(queue) {
+    for (_, key) in candidates(queue, &metadata_groups(queue, metadata)) {
         writeln!(sheet, "{key}\tpending").unwrap();
     }
     writeln!(sheet, "{END}").unwrap();
@@ -85,9 +120,11 @@ pub(super) fn resume(
         return Err("Decision sheet exceeds 16 MiB.".into());
     }
     let mut lines = text.strip_prefix('\u{feff}').unwrap_or(&text).lines();
-    if lines.next() != Some(VERSION) {
-        return Err("Unsupported decision sheet header or version.".into());
-    }
+    let metadata = match lines.next() {
+        Some(VERSION) => false,
+        Some(METADATA_VERSION) => true,
+        _ => return Err("Unsupported decision sheet header or version.".into()),
+    };
     for identity in manifest {
         if lines.next() != Some(identity.as_str()) {
             return Err(
@@ -95,8 +132,9 @@ pub(super) fn resume(
             );
         }
     }
+    let hints = metadata_groups(queue, metadata);
     let mut choices = BTreeMap::new();
-    for (index, key) in candidates(queue) {
+    for (index, key) in candidates(queue, &hints) {
         let (saved_key, choice) = lines
             .next()
             .and_then(|line| line.split_once('\t'))
@@ -122,18 +160,32 @@ pub(super) fn resume(
     }
     let mut decisions = vec![Decision::NotCandidate; queue.entries.len()];
     for (&key, &(index, choice)) in &choices {
+        let keep_target = |other: &str| match choices.get(other) {
+            Some(&(target, "keep")) => Ok(target),
+            _ => Err(format!(
+                "The duplicate target for {key} must have a keep decision."
+            )),
+        };
         decisions[index] = match choice {
             "keep" => Decision::Keep,
             "pending" => Decision::Pending,
+            _ if metadata && choice.starts_with("verified-duplicate-of=") => {
+                let (other, rationale) = choice["verified-duplicate-of=".len()..]
+                    .split_once('\t')
+                    .filter(|(_, s)| !s.trim().is_empty() && s.len() <= 512
+                        && !s.contains(|ch: char| ch.is_control() || matches!(ch, '\u{2028}' | '\u{2029}')))
+                    .ok_or_else(|| format!("Expected a tab and a single-line rationale (1 to 512 UTF-8 bytes) for {key}."))?;
+                let target = keep_target(other)?;
+                Decision::VerifiedMetadata {
+                    target,
+                    rationale: rationale.to_owned(),
+                }
+            }
             _ => {
                 let other = choice.strip_prefix("duplicate-of=").ok_or_else(|| format!(
                     "Unknown decision for {key}. Expected pending, keep or duplicate-of=<occurrence>."
                 ))?;
-                let Some(&(target, "keep")) = choices.get(other) else {
-                    return Err(format!(
-                        "The duplicate target for {key} must have a keep decision."
-                    ));
-                };
+                let target = keep_target(other)?;
                 if !groups[index]
                     .iter()
                     .flatten()
@@ -147,5 +199,60 @@ pub(super) fn resume(
             }
         };
     }
+    validate_metadata_sets(queue, &decisions, &hints)?;
     Ok(decisions)
+}
+
+/// Apply the same guards to every member, including copies assigned via an identifier.
+fn validate_metadata_sets(
+    queue: &ReviewQueue<'_>,
+    decisions: &[Decision],
+    hints: &[Option<usize>],
+) -> Result<(), String> {
+    let mut sets: BTreeMap<_, _> = decisions
+        .iter()
+        .filter_map(|decision| match decision {
+            Decision::VerifiedMetadata { target, .. } => {
+                Some((*target, (None, ReportIdentifiers::default())))
+            }
+            _ => None,
+        })
+        .collect();
+    if sets.is_empty() {
+        return Ok(());
+    }
+    let records = queue.sources.iter().flat_map(|s| &s.source.occurrences);
+    for (i, (rec, decision)) in records.zip(decisions).enumerate() {
+        let target = decision.target().unwrap_or(i);
+        let Some((publication, ids)) = sets.get_mut(&target) else {
+            continue;
+        };
+        let entry = &queue.entries[i];
+        let key = format!("{}:{}", entry.label, entry.ordinal);
+        if hints[i].is_none() || hints[i] != hints[target] {
+            return Err(format!(
+                "{key} and its keep target must belong to the same bounded metadata hint."
+            ));
+        }
+        let details = rec.publication_details();
+        if details.is_none() || (publication.is_some() && *publication != details) {
+            return Err(format!(
+                "Missing or differing publication details (authors, work type, journal, volume, issue or final pages/article number) for {key} and its keep target."
+            ));
+        }
+        if publication.is_none() {
+            *publication = details;
+        }
+        ids.observe(rec);
+        if let Some(kind) = ids.conflict() {
+            return Err(format!(
+                "Conflicting {} in the verified metadata set at {key}.",
+                match kind {
+                    Identifier::Doi => "DOI",
+                    Identifier::Pmid => "PMID",
+                }
+            ));
+        }
+    }
+    Ok(())
 }

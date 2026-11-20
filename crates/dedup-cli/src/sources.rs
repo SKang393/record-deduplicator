@@ -53,14 +53,24 @@ fn named_paths(args: &[OsString]) -> Result<BTreeMap<&str, &OsStr>, &'static str
 
 enum Action<'a> {
     Review,
-    Init(&'a OsStr),
+    Init { path: &'a OsStr, metadata: bool },
     Resume(&'a OsStr),
     Export(&'a OsStr, &'a OsStr),
 }
 
 pub(super) fn run(args: &[OsString]) -> Result<(), String> {
     let (action, args) = match args {
-        [flag, path, rest @ ..] if flag == "--init-decisions" => (Action::Init(path), rest),
+        [flag, path, rest @ ..]
+            if flag == "--init-decisions" || flag == "--init-metadata-decisions" =>
+        {
+            (
+                Action::Init {
+                    path,
+                    metadata: flag == "--init-metadata-decisions",
+                },
+                rest,
+            )
+        }
         [flag, path, rest @ ..] if flag == "--resume-decisions" => (Action::Resume(path), rest),
         [flag, path, dir, rest @ ..] if flag == "--export-reviewed" => {
             (Action::Export(path, dir), rest)
@@ -101,8 +111,8 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
         .collect();
     let decisions = match action {
         Action::Review => None,
-        Action::Init(path) => {
-            super::decisions::create(path, &queue, &manifest)?;
+        Action::Init { path, metadata } => {
+            super::decisions::create(path, &queue, &manifest, metadata)?;
             None
         }
         Action::Resume(path) => Some(super::decisions::resume(path, &queue, &manifest)?),
@@ -170,8 +180,8 @@ fn render_queue(
         }
     }
     if let Some(decisions) = decisions {
-        for (entry, &decision) in queue.entries.iter().zip(decisions) {
-            if decision != Decision::NotCandidate {
+        for (entry, decision) in queue.entries.iter().zip(decisions) {
+            if *decision != Decision::NotCandidate {
                 writeln!(
                     out,
                     "decision\thuman\t{}:{}\t{}",
@@ -179,6 +189,13 @@ fn render_queue(
                     entry.ordinal,
                     decision.label(queue)
                 )?;
+                if let Decision::VerifiedMetadata { rationale, .. } = decision {
+                    writeln!(
+                        out,
+                        "rationale\tmetadata\t{}:{}\t{rationale}",
+                        entry.label, entry.ordinal
+                    )?;
+                }
             }
         }
     }

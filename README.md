@@ -94,6 +94,48 @@ The command accepts up to 128 named files. The combined limits are 16 MiB,
 100,000 occurrences and 250,000 tagged fields. Input errors and exceeded limits
 stop the run before it writes any report rows.
 
+### Verify a copy found through metadata
+
+Use a metadata decision sheet when a named RIS queue surfaces a plausible copy
+without a shared identifier. Create the sheet and inspect the original records
+using the labels, ordinals and byte spans in the queue.
+
+```sh
+dedup review-ids --init-metadata-decisions choices.tsv --ris-source cat catalog.ris --ris-source idx index.ris
+```
+
+Every editable occurrence starts as `pending`. If both records describe the
+same publication, mark its representative `keep`. On the copy's row, enter
+`verified-duplicate-of=` followed by that representative and a tab-separated
+rationale (one line, up to 512 UTF-8 bytes). For example, these two edited rows
+record what the reviewer checked. Use literal tabs and preserve row order.
+
+```text
+cat:1	keep
+idx:1	verified-duplicate-of=cat:1	Compared both reports. Same authors, journal, volume 8 and pages 21–26.
+```
+
+All members assigned to that representative must belong to one metadata hint
+of at most 16 records. They must agree on title, first author, year and RIS
+type, plus the complete listed authors, journal, volume and final page range
+or article number in `SP`/`EP`. Work type (`M3`) and issue (`IS`) must
+also agree when supplied. Conflicting supported DOIs or PMIDs
+block the set. Leave unresolved copies and distinct reports pending or mark
+them keep. A metadata hint alone keeps every member.
+
+```sh
+dedup review-ids --resume-decisions choices.tsv --ris-source cat catalog.ris --ris-source idx index.ris
+dedup review-ids --export-reviewed choices.tsv reviewed --ris-source cat catalog.ris --ris-source idx index.ris
+```
+
+Reopening checks the original source fingerprints and displays the recorded
+target and rationale. Export creates a new directory with `reviewed.ris` and
+`mapping.tsv`. Each mapping row identifies the input occurrence, original byte
+span and output ordinal. Schema 2 adds a `rationale` row for each verified
+metadata copy. To undo, restore the copy's decision to `pending`, remove its
+rationale column and export to a fresh directory. Existing identifier-only
+sheets still open with the same commands.
+
 ### Review a single RIS export
 
 ```sh

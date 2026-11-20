@@ -2,6 +2,7 @@
 use std::collections::BTreeMap;
 
 use super::{Field, Occurrence, ReviewQueue};
+use crate::normalize::pagination::{Pagination, parse_pagination};
 
 pub const MAX_HINT_MEMBERS: usize = 16;
 
@@ -96,6 +97,65 @@ fn key(rec: &Occurrence<'_>) -> Option<(String, String, u16, String)> {
             .map(year),
     )?;
     Some((title, author, year, text(rec.fields.first()?)?))
+}
+
+/// Additional evidence required for an explicitly verified metadata decision.
+/// Equality is deliberately strict. A hint by itself supplies none of this evidence.
+#[derive(Debug, PartialEq, Eq)]
+pub struct PublicationDetails {
+    authors: Vec<String>,
+    work_type: Option<String>,
+    journal: String,
+    volume: String,
+    issue: Option<String>,
+    pages: Pagination,
+}
+
+impl Occurrence<'_> {
+    pub fn publication_details(&self) -> Option<PublicationDetails> {
+        // Distinguish an absent optional field from ambiguous or continued values.
+        let scalar = |tag: &str| {
+            let mut fields = self.fields.iter().filter(|f| f.tag == tag).peekable();
+            if fields.peek().is_none() {
+                return Some(None);
+            }
+            agreed(fields.map(|f| {
+                let value = f.first_line_value.trim();
+                (!f.continued && !value.is_empty()).then_some(value)
+            }))
+            .map(Some)
+        };
+        let authors = agreed(["AU", "A1"].into_iter().filter_map(|tag| {
+            let mut fields = self.fields.iter().filter(|f| f.tag == tag).peekable();
+            fields.peek()?;
+            Some(fields.map(text).collect::<Option<Vec<_>>>())
+        }))?;
+        let journal = agreed(
+            self.fields
+                .iter()
+                .filter(|f| matches!(f.tag, "JO" | "JF" | "T2"))
+                .map(text),
+        )?;
+        let volume = scalar("VL")??;
+        if !volume.bytes().any(|b| b.is_ascii_digit()) {
+            return None;
+        }
+        let pages = parse_pagination(scalar("SP")??, scalar("EP")?);
+        if !matches!(
+            pages,
+            Pagination::Pages { end: Some(_), .. } | Pagination::ArticleNumber(_)
+        ) {
+            return None;
+        }
+        Some(PublicationDetails {
+            authors,
+            work_type: scalar("M3")?.map(str::to_owned),
+            journal,
+            volume: volume.to_owned(),
+            issue: scalar("IS")?.map(str::to_owned),
+            pages,
+        })
+    }
 }
 
 impl ReviewQueue<'_> {

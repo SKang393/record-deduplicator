@@ -26,14 +26,23 @@ pub(super) fn export(
     let mut output_ordinals = Vec::with_capacity(decisions.len());
     let mut proposed_sets = BTreeMap::<usize, ReportIdentifiers>::new();
     for decision in decisions {
-        if let Decision::DuplicateOf(target) = decision {
-            proposed_sets.entry(*target).or_default();
+        if let Some(target) = decision.target() {
+            proposed_sets.entry(target).or_default();
         } else {
             retained += 1;
         }
         output_ordinals.push(retained);
     }
-    let mut mapping = String::from("type\tsignal\trows\tdetail\nschema\texport\t1\treviewed-ris\n");
+    let version = if decisions
+        .iter()
+        .any(|d| matches!(d, Decision::VerifiedMetadata { .. }))
+    {
+        2
+    } else {
+        1
+    };
+    let mut mapping =
+        format!("type\tsignal\trows\tdetail\nschema\texport\t{version}\treviewed-ris\n");
     for identity in manifest {
         writeln!(mapping, "{identity}").unwrap();
     }
@@ -61,10 +70,10 @@ pub(super) fn export(
                 entry.label, entry.ordinal
             ));
         }
-        let decision = decisions[index];
-        let representative = match decision {
-            Decision::DuplicateOf(target) => target,
-            _ => {
+        let decision = &decisions[index];
+        let representative = match decision.target() {
+            Some(target) => target,
+            None => {
                 let raw = &original[rec.bytes.clone()];
                 let raw = raw.strip_prefix('\u{feff}').unwrap_or(raw);
                 ris.push_str(&raw.replace("\r\n", "\n").replace('\r', "\n"));
@@ -100,6 +109,14 @@ pub(super) fn export(
             output_ordinals[representative]
         )
         .unwrap();
+        if let Decision::VerifiedMetadata { rationale, .. } = decision {
+            writeln!(
+                mapping,
+                "rationale\tmetadata\t{}:{}\t{rationale}",
+                entry.label, entry.ordinal
+            )
+            .unwrap();
+        }
     }
     writeln!(
         mapping,
