@@ -1,7 +1,8 @@
 use std::{
     collections::BTreeMap,
     ffi::{OsStr, OsString},
-    io::{self, Write},
+    io::{self, BufRead, Write},
+    path::Path,
 };
 
 use super::decisions::{Decision, ResumedSheet};
@@ -51,13 +52,13 @@ fn named_paths(args: &[OsString]) -> Result<BTreeMap<&str, &OsStr>, &'static str
     Ok(paths)
 }
 
-enum Action<'a> {
+pub(super) enum Action<'a> {
     Review,
     Init { path: &'a OsStr, metadata: bool },
     Resume(&'a OsStr),
-    Pending(&'a OsStr),
+    Pending(&'a OsStr, Option<&'a mut dyn BufRead>),
     InspectPair(&'a OsStr, &'a OsStr, &'a OsStr),
-    Export(&'a OsStr, &'a OsStr),
+    Export(&'a OsStr, &'a Path),
 }
 
 pub(super) fn run(args: &[OsString]) -> Result<(), String> {
@@ -74,15 +75,21 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
             )
         }
         [flag, path, rest @ ..] if flag == "--resume-decisions" => (Action::Resume(path), rest),
-        [flag, path, rest @ ..] if flag == "--pending-decisions" => (Action::Pending(path), rest),
+        [flag, path, rest @ ..] if flag == "--pending-decisions" => {
+            (Action::Pending(path, None), rest)
+        }
         [flag, path, left, right, rest @ ..] if flag == "--inspect-pair" => {
             (Action::InspectPair(path, left, right), rest)
         }
         [flag, path, dir, rest @ ..] if flag == "--export-reviewed" => {
-            (Action::Export(path, dir), rest)
+            (Action::Export(path, dir.as_ref()), rest)
         }
         _ => (Action::Review, args),
     };
+    run_action(action, args)
+}
+
+pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), String> {
     let paths = named_paths(args)?;
     let mut remaining = ids::MAX_INPUT_BYTES;
     let mut snapshots = Vec::with_capacity(paths.len());
@@ -98,9 +105,12 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
         .collect();
     let queue = ris::review_sources(&inputs).map_err(queue_error)?;
     // Validate every captured file before emitting any part of the review.
-    for (label, path, text) in &snapshots {
-        super::recheck(path, text.as_bytes()).map_err(|error| format!("{label}: {error}"))?;
-    }
+    let recheck_sources = || {
+        snapshots.iter().try_for_each(|(label, path, text)| {
+            super::recheck(path, text.as_bytes()).map_err(|error| format!("{label}: {error}"))
+        })
+    };
+    recheck_sources()?;
     let mut manifest = Vec::with_capacity(queue.sources.len());
     for named in &queue.sources {
         let records = &named.source.occurrences;
@@ -125,32 +135,57 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
             records.len()
         ));
     }
-    let pending_only = matches!(action, Action::Pending(_));
     let sheet = match action {
         Action::Review => None,
         Action::Init { path, metadata } => {
             super::decisions::create(path, &queue, &manifest, metadata)?;
             None
         }
-        Action::Resume(path) | Action::Pending(path) => {
-            Some(super::decisions::resume(path, &queue, &manifest)?)
-        }
+        Action::Resume(path) => Some(super::decisions::resume(path, &queue, &manifest)?),
         Action::InspectPair(path, left, right) => {
             let sheet = super::decisions::resume(path, &queue, &manifest)?;
             return super::inspect::pair(&queue, &sheet.decisions, left, right);
         }
-        Action::Export(path, dir) => {
+        Action::Export(path, directory) => {
             let sheet = super::decisions::resume(path, &queue, &manifest)?;
-            return super::reviewed::export(dir.as_ref(), &queue, &manifest, &sheet.decisions);
+            return super::reviewed::prepare(&queue, &manifest, &sheet.decisions)?
+                .publish(directory);
+        }
+        Action::Pending(path, guide) => {
+            let sheet = super::decisions::resume(path, &queue, &manifest)?;
+            {
+                let mut out = io::BufWriter::new(io::stdout().lock());
+                super::pending::render(&queue, &manifest, &sheet, &mut out)
+                    .and_then(|()| out.flush())
+                    .map_err(|_| "Cannot write report.")?;
+            }
+            if let Some(input) = guide {
+                let Some(directory) = super::start::export_destination(input)? else {
+                    return Ok(());
+                };
+                super::reviewed::require_new_destination(&directory).map_err(|e| e.to_string())?;
+                let export = super::reviewed::prepare(&queue, &manifest, &sheet.decisions)?;
+                if super::start::confirm_export(input, path.as_ref(), &directory, &export)? {
+                    recheck_sources()?;
+                    if super::decisions::resume(path, &queue, &manifest)?.decisions
+                        != sheet.decisions
+                    {
+                        return Err("Decisions changed during confirmation. Reopen the sheet to preview again.".into());
+                    }
+                    export.publish(&directory)?;
+                    eprintln!(
+                        "Saved {} with mapping.tsv and reconciliation.tsv.",
+                        directory.join("reviewed.ris").display()
+                    );
+                }
+            }
+            return Ok(());
         }
     };
     let mut out = io::BufWriter::new(io::stdout().lock());
-    match sheet {
-        Some(sheet) if pending_only => super::pending::render(&queue, &manifest, &sheet, &mut out),
-        sheet => render_queue(&queue, &manifest, sheet, &mut out),
-    }
-    .and_then(|()| out.flush())
-    .map_err(|_| String::from("Cannot write report."))
+    render_queue(&queue, &manifest, sheet, &mut out)
+        .and_then(|()| out.flush())
+        .map_err(|_| String::from("Cannot write report."))
 }
 
 fn render_queue(

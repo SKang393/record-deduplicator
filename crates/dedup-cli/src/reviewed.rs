@@ -15,12 +15,20 @@ use sha2::{Digest, Sha256};
 
 use super::decisions::Decision;
 
-pub(super) fn export(
-    directory: &Path,
+pub(super) struct PreparedExport {
+    ris: String,
+    mapping: String,
+    reconciliation: String,
+    pub retained: usize,
+    pub removed: usize,
+    pub pending: usize,
+}
+
+pub(super) fn prepare(
     queue: &ReviewQueue<'_>,
     manifest: &[String],
     decisions: &[Decision],
-) -> Result<(), String> {
+) -> Result<PreparedExport, String> {
     // A removed occurrence may name a keep target later in the queue.
     let mut retained = 0;
     let mut output_ordinals = Vec::with_capacity(decisions.len());
@@ -125,9 +133,15 @@ pub(super) fn export(
         Sha256::digest(ris.as_bytes())
     )
     .unwrap();
-    let summary = reconciliation(queue, decisions);
-    publish(directory, &ris, &mapping, &summary)
-        .map_err(|e| format!("Cannot create reviewed export: {e}"))
+    let (reconciliation, counts) = reconciliation(queue, decisions);
+    Ok(PreparedExport {
+        ris,
+        mapping,
+        reconciliation,
+        retained,
+        removed: total - retained,
+        pending: counts.pending_id + counts.pending_metadata,
+    })
 }
 
 #[derive(Default)]
@@ -180,7 +194,7 @@ impl Counts {
     }
 }
 
-fn reconciliation(queue: &ReviewQueue<'_>, decisions: &[Decision]) -> String {
+fn reconciliation(queue: &ReviewQueue<'_>, decisions: &[Decision]) -> (String, Counts) {
     let mut table = String::from(
         "scope\tsource\tinput\tremoved_id\tremoved_metadata\tretained\tkeep\tpending_id\tpending_metadata\toutside_sheet_flagged\toutside_sheet_unflagged\n",
     );
@@ -200,28 +214,47 @@ fn reconciliation(queue: &ReviewQueue<'_>, decisions: &[Decision]) -> String {
         );
     }
     total.write_row(&mut table, "total", "", queue.entries.len());
-    table
+    (table, total)
 }
 
-fn publish(directory: &Path, ris: &str, mapping: &str, summary: &str) -> io::Result<()> {
-    let parent = directory
-        .parent()
-        .filter(|p| !p.as_os_str().is_empty())
-        .unwrap_or(Path::new("."));
-    let staging = tempfile::Builder::new()
-        .prefix(".dedup-export-")
-        .tempdir_in(parent)?;
-    for (name, contents) in [
-        ("reviewed.ris", ris),
-        ("mapping.tsv", mapping),
-        ("reconciliation.tsv", summary),
-    ] {
-        let mut file = File::create_new(staging.path().join(name))?;
-        file.write_all(contents.as_bytes())?;
-        file.sync_all()?;
+pub(super) fn require_new_destination(directory: &Path) -> io::Result<()> {
+    match std::fs::symlink_metadata(directory) {
+        Ok(_) => Err(io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            "Destination already exists. Choose a new folder name.",
+        )),
+        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(e),
     }
-    // Publish all files together. An existing or concurrently created destination wins.
-    renamore::rename_exclusive(staging.path(), directory)?;
-    let _ = staging.keep();
-    Ok(())
+}
+
+impl PreparedExport {
+    pub(super) fn publish(self, directory: &Path) -> Result<(), String> {
+        self.write_new_directory(directory)
+            .map_err(|e| format!("Cannot create reviewed export: {e}"))
+    }
+
+    fn write_new_directory(self, directory: &Path) -> io::Result<()> {
+        require_new_destination(directory)?;
+        let parent = directory
+            .parent()
+            .filter(|p| !p.as_os_str().is_empty())
+            .unwrap_or(Path::new("."));
+        let staging = tempfile::Builder::new()
+            .prefix(".dedup-export-")
+            .tempdir_in(parent)?;
+        for (name, contents) in [
+            ("reviewed.ris", self.ris),
+            ("mapping.tsv", self.mapping),
+            ("reconciliation.tsv", self.reconciliation),
+        ] {
+            let mut file = File::create_new(staging.path().join(name))?;
+            file.write_all(contents.as_bytes())?;
+            file.sync_all()?;
+        }
+        // Publish all files together. An existing or concurrently created destination wins.
+        renamore::rename_exclusive(staging.path(), directory)?;
+        let _ = staging.keep();
+        Ok(())
+    }
 }

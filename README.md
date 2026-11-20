@@ -69,6 +69,13 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    A key such as `catalog:2` means the second RIS record in the export labeled `catalog`.
    To reopen, run the guide again with the same labels and original files.
    It checks their fingerprints and shows pending decisions and keeper context.
+5. After reviewing the pending rows, press Enter to finish, or enter a new
+   folder path to preview an export. Choose a folder name inside an existing
+   directory. Check the sheet path, destination, explicit duplicate count,
+   and how many pending records will be kept. Type `write` to save the three
+   files, or press Enter to cancel. Open `reviewed.ris` in your reference
+   manager. Use `mapping.tsv` for individual decisions and `reconciliation.tsv`
+   for counts by source.
 
 Compare the source reports before editing a decision. Leave uncertain rows
 pending. For a worked example of pair inspection, an explicit decision and

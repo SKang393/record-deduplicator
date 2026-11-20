@@ -1,13 +1,17 @@
 //! Prompt for the arguments to an ordinary, local named-RIS review.
+use super::{
+    reviewed::PreparedExport,
+    sources::{self, Action},
+};
 use dedup_core::ris;
 use std::{
     ffi::OsString,
     fs,
     io::{self, BufRead, ErrorKind, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
-fn ask(input: &mut impl BufRead, prompt: &str) -> Result<Option<String>, String> {
+fn ask(input: &mut dyn BufRead, prompt: &str) -> Result<Option<String>, String> {
     eprint!("{prompt} ");
     io::stderr()
         .flush()
@@ -17,7 +21,9 @@ fn ask(input: &mut impl BufRead, prompt: &str) -> Result<Option<String>, String>
         .read_line(&mut line)
         .map_err(|_| "Cannot read an answer.")?;
     let answer = line.trim_end_matches(['\r', '\n']);
-    if count == 0 || answer == ":cancel" {
+    if count == 0 {
+        Ok(None)
+    } else if answer == ":cancel" {
         eprintln!("Review setup cancelled.");
         Ok(None)
     } else {
@@ -52,14 +58,14 @@ pub(super) fn run() -> Result<(), String> {
         Err(e) if e.kind() == ErrorKind::NotFound => false,
         Err(e) => return Err(format!("Cannot inspect the decision sheet: {e}")),
     };
-    let (verb, flag) = if existing {
+    let verb = if existing {
         eprintln!("Use the same source labels and original RIS exports as the saved sheet.");
-        ("Reopen", "--pending-decisions")
+        "Reopen"
     } else {
         eprintln!(
             "The new sheet will include candidates for human verification by identifier or metadata."
         );
-        ("Create", "--init-metadata-decisions")
+        "Create"
     };
 
     let mut sources = Vec::new();
@@ -100,7 +106,7 @@ pub(super) fn run() -> Result<(), String> {
     }
 
     eprintln!("{verb} sheet {sheet} with these exports:");
-    let mut args = vec![OsString::from(flag), OsString::from(sheet)];
+    let mut args = Vec::<OsString>::new();
     for (label, path) in sources {
         eprintln!("  {label} = {path}");
         args.extend(["--ris-source".into(), label.into(), path.into()]);
@@ -117,9 +123,57 @@ pub(super) fn run() -> Result<(), String> {
         return Ok(());
     }
 
-    super::sources::run(&args)?;
+    if existing {
+        return sources::run_action(Action::Pending(sheet.as_ref(), Some(&mut input)), &args);
+    }
+    sources::run_action(
+        Action::Init {
+            path: sheet.as_ref(),
+            metadata: true,
+        },
+        &args,
+    )?;
     eprintln!(
         "Open {sheet} in a plain-text editor or follow the LibreOffice Calc steps in the README. Each label:number refers to a numbered record in that export. Leave uncertain decisions pending."
     );
     Ok(())
+}
+
+pub(super) fn export_destination(input: &mut dyn BufRead) -> Result<Option<PathBuf>, String> {
+    let Some(answer) = ask(
+        input,
+        "To preview an export, enter a new folder path. Press Enter to finish reviewing:",
+    )?
+    else {
+        return Ok(None);
+    };
+    let path = path_text(&answer);
+    Ok((!path.is_empty()).then(|| PathBuf::from(path)))
+}
+
+pub(super) fn confirm_export(
+    input: &mut dyn BufRead,
+    sheet: &Path,
+    directory: &Path,
+    export: &PreparedExport,
+) -> Result<bool, String> {
+    eprintln!("Decision sheet: {}", sheet.display());
+    eprintln!("New export folder: {}", directory.display());
+    eprintln!("Explicitly marked duplicates to remove: {}", export.removed);
+    eprintln!(
+        "Records retained: {} (including {} pending).",
+        export.retained, export.pending
+    );
+    let Some(answer) = ask(
+        input,
+        "Type write to create this export, or press Enter to cancel:",
+    )?
+    else {
+        return Ok(false);
+    };
+    if answer.eq_ignore_ascii_case("write") {
+        return Ok(true);
+    }
+    eprintln!("Export cancelled.");
+    Ok(false)
 }
