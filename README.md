@@ -45,15 +45,35 @@ archive's SHA-256 digest. Review artifacts expire after seven
 days. [Review branch runs](https://github.com/SKang393/record-deduplicator/actions/workflows/ci.yml?query=branch%3Areview%2Fnative-ris-audits)
 
 Extract the archive (for example, `tar -xzf <downloaded-filename>`) and open
-a terminal in the extracted `recorddedu-…` directory. In PowerShell, run
-`.\dedup.exe --version`. In macOS Terminal, run `./dedup --version`.
-`BUILD.txt` identifies the commit and compiler, and `SHA256SUMS` gives the
-executable digest. These are development builds without publisher signing
-or macOS notarization.
+a terminal in the extracted `recorddedu-…` directory. `BUILD.txt` identifies
+the commit and compiler. `SHA256SUMS` gives the executable digest. These are
+development builds without publisher signing or macOS notarization.
 
-To run the [first review](#verify-a-copy-found-through-metadata), open Bash
-(Git Bash on Windows) in the extracted directory and run
-`export PATH="$PWD:$PATH"`. The walkthrough also ships in this README.
+### Start a review with your own exports
+
+In a build with guided setup, run **`.\dedup.exe start`** in Windows
+PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
+
+1. Enter the full path for your decision sheet in an existing project folder,
+   for example a file named `Review choices.tsv`. Use the saved sheet's path
+   to return to a review.
+2. Give your first export a short label such as `catalog`, then paste its
+   RIS file path on the next line. To copy a full path, use **Copy as path**
+   in Windows Explorer or select the file in Finder and press **Option-Command-C**.
+   Spaces and surrounding double quotes are accepted. Repeat for each export.
+3. Press Enter at the next label prompt. Check the sheet, labels and paths
+   shown, then type `yes`. Type `:cancel` at any prompt to stop.
+4. For a new sheet, the terminal shows the candidate queue and every editable
+   row starts pending. Open the sheet in a plain-text editor. A key such as
+   `catalog:2` means the second RIS record in the export labeled `catalog`.
+   To reopen, run the guide again with the same labels and original files.
+   It checks their fingerprints and shows pending decisions and keeper context.
+
+Compare the source reports before editing a decision. Leave uncertain rows
+pending. For a worked example of pair inspection, an explicit decision and
+export, follow the [two-export walkthrough](#verify-a-copy-found-through-metadata).
+To run that example, open Bash (Git Bash on Windows) in the extracted
+directory and run `export PATH="$PWD:$PATH"`.
 
 ## Build from source
 
@@ -82,9 +102,9 @@ build.
 
 ## Usage
 
-For a first run, follow the [two-export walkthrough](#verify-a-copy-found-through-metadata).
-It creates its own inputs and shows how to verify a copy, reopen pending
-decisions and reconcile the export.
+Use [guided setup](#start-a-review-with-your-own-exports) for your own files.
+The [two-export walkthrough](#verify-a-copy-found-through-metadata) creates
+synthetic inputs and shows how to verify a copy and reconcile the export.
 Other examples assume `dedup` is on your path. Use `--help` for syntax or
 `--version` for the build version.
 

@@ -36,3 +36,40 @@ grep -Fq $'map\tverified-duplicate-of=cat:1\tidx:1\t' reviewed/mapping.tsv
 grep -Fxq 'TI  - Marsh transects after spring flooding: seasonal observations' reviewed/reviewed.ris
 cat catalog.ris index.ris | cmp - restored/reviewed.ris
 echo "PASS: packaged CLI verified one copy, retained the subtitled record and restored all three occurrences."
+
+# Use the same three synthetic occurrences through the prompt-driven entry.
+mkdir 'Search exports'
+cp catalog.ris 'Search exports/Catalog export.ris'
+cp index.ris 'Search exports/Index export.ris'
+guided_inputs() {
+    printf '%s\n' '"Review choices.tsv"' cat '"Search exports/Catalog export.ris"' \
+        idx 'Search exports/Index export.ris' '' "$1"
+}
+guided_inputs :cancel | dedup start > cancelled.tsv 2> prompts.txt
+test ! -e 'Review choices.tsv'
+test ! -s cancelled.tsv
+grep -Fq 'Review setup cancelled.' prompts.txt
+
+guided_inputs yes | dedup start > guided.tsv 2> prompts.txt
+review --init-metadata-decisions reference.tsv > reference-queue.tsv
+cmp reference.tsv 'Review choices.tsv'
+cmp reference-queue.tsv guided.tsv
+grep -Fxq $'cat:1\tpending' 'Review choices.tsv'
+grep -Fxq $'idx:1\tpending' 'Review choices.tsv'
+
+# Reopen the partially reviewed sheet left by the walkthrough.
+cp choices.tsv 'Review choices.tsv'
+guided_inputs yes | dedup start > guided-pending.tsv 2> prompts.txt
+review --pending-decisions choices.tsv > reference-pending.tsv
+cmp reference-pending.tsv guided-pending.tsv
+cmp choices.tsv 'Review choices.tsv'
+cmp catalog.ris 'Search exports/Catalog export.ris'
+cmp index.ris 'Search exports/Index export.ris'
+
+# A changed source must be diagnosed before emitting any saved decisions.
+printf '\n' >> 'Search exports/Index export.ris'
+if guided_inputs yes | dedup start > rejected.tsv 2> prompts.txt; then exit 1; fi
+test ! -s rejected.tsv
+grep -Fq 'Decision sheet inputs differ.' prompts.txt
+cmp choices.tsv 'Review choices.tsv'
+echo "PASS: guided cancel, create, reopen and changed-source refusal with spaced paths."
