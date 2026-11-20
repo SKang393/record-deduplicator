@@ -527,3 +527,107 @@ fn metadata_hints_cannot_authorize_a_duplicate_decision() {
         assert!(!inputs.0.join("bad").exists());
     }
 }
+
+#[test]
+fn pending_view_shows_direct_context_in_conflict_order_without_changing_decisions() {
+    let inputs = Inputs::new("pending");
+    let simple = "TY  - JOUR\nDO  - 10.0000/early\nER  -\n";
+    let marsh = "TY  - JOUR\nTI  - Marsh results\nDO  - 10.0000/marsh\nUR  - https://pubmed.ncbi.nlm.nih.gov/111/\nER  -\n";
+    // A protocol shares the results DOI and its own PMID connects it to another
+    // occurrence. Its two direct groups have different kept members.
+    let protocol = marsh.replace("results", "protocol").replace("111/", "222/");
+    let pmid_only = protocol.replace("DO  - 10.0000/marsh\n", "");
+    let meta = "TY  - JOUR\nTI  - Tidal survey\nAU  - Reed, A.\nPY  - 2020\nER  -\n";
+    let ambiguous = meta.replace("ER  -", "DO  - 10.0000/east\nDO  - 10.0000/west\nER  -");
+    let cat = [simple, marsh, meta].concat();
+    let idx = [simple, &protocol, &pmid_only, &ambiguous, meta, marsh].concat();
+    inputs.write("cat.ris", cat.as_bytes());
+    inputs.write("idx.ris", idx.as_bytes());
+    let a = ["--ris-source", "cat", "cat.ris"];
+    let b = ["--ris-source", "idx", "idx.ris"];
+    let sources = [a, b].concat();
+    let run = |flag, sheet| inputs.run(&[&[flag, sheet][..], &sources].concat());
+    let init = run("--init-metadata-decisions", "choices.tsv");
+    assert!(init.status.success());
+    let template = fs::read_to_string(inputs.0.join("choices.tsv")).unwrap();
+    let edited = template
+        .replace("cat:2\tpending", "cat:2\tkeep")
+        .replace("cat:3\tpending", "cat:3\tkeep")
+        .replace("idx:3\tpending", "idx:3\tkeep")
+        .replace("idx:5\tpending", "idx:5\tkeep")
+        .replace("idx:6\tpending", "idx:6\tduplicate-of=cat:2");
+    inputs.write("choices.tsv", edited.as_bytes());
+    assert!(inputs.export("before", &sources).status.success());
+    let view = run("--pending-decisions", "choices.tsv");
+    assert!(view.status.success(), "{:?}", view.stderr);
+    let text = std::str::from_utf8(&view.stdout).unwrap();
+    let rows: Vec<_> = text.lines().collect();
+    assert_eq!(rows[0], "type\tsignal\trows\tdetail");
+    assert_eq!(rows[1], "summary\tpending\t4\tgroups=4;flagged_groups=2");
+    assert_eq!(
+        &rows[2..4],
+        template
+            .lines()
+            .filter(|l| l.starts_with("input\t"))
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(
+        &rows[4..],
+        [
+            "pending\tdoi\tidx:2\tother_id_conflict;keep=cat:2;assigned=idx:6",
+            "pending\ttitle_author_year_type\tidx:4\tinspect_metadata_only;keep=cat:3,idx:5;assigned=;conflicting_ids_in=idx:4",
+            "pending\tdoi\tcat:1,idx:1\tother_id_incomplete;keep=;assigned=",
+            "pending\tpmid\tidx:2\tother_id_incomplete;keep=idx:3;assigned=",
+        ]
+    );
+    let reversed = inputs.run(&[&["--pending-decisions", "choices.tsv"][..], &b, &a].concat());
+    assert!(reversed.status.success());
+    assert_eq!(view.stdout, reversed.stdout);
+    assert!(inputs.export("after", &sources).status.success());
+    for file in ["mapping.tsv", "reconciliation.tsv", "reviewed.ris"] {
+        assert_eq!(
+            fs::read(inputs.0.join("before").join(file)).unwrap(),
+            fs::read(inputs.0.join("after").join(file)).unwrap()
+        );
+    }
+    assert_eq!(
+        fs::read(inputs.0.join("choices.tsv")).unwrap(),
+        edited.as_bytes()
+    );
+    assert_eq!(fs::read(inputs.0.join("cat.ris")).unwrap(), cat.as_bytes());
+    assert_eq!(fs::read(inputs.0.join("idx.ris")).unwrap(), idx.as_bytes());
+
+    // V1 displays ID groups only. A fully resolved sheet still has its manifest.
+    assert!(run("--init-decisions", "ids.tsv").status.success());
+    let legacy = run("--pending-decisions", "ids.tsv");
+    assert!(legacy.status.success());
+    assert!(
+        !String::from_utf8(legacy.stdout)
+            .unwrap()
+            .contains("title_author_year_type")
+    );
+    inputs.write(
+        "choices.tsv",
+        edited.replace("\tpending", "\tkeep").as_bytes(),
+    );
+    let done = run("--pending-decisions", "choices.tsv");
+    assert!(done.status.success());
+    let done = String::from_utf8(done.stdout).unwrap();
+    assert!(done.contains("summary\tpending\t0\tgroups=0;flagged_groups=0\n"));
+    assert_eq!(done.lines().count(), 4);
+
+    inputs.write("report.tsv", &view.stdout);
+    assert_failed_before_report(run("--pending-decisions", "report.tsv"));
+    inputs.write(
+        "choices.tsv",
+        edited
+            .replace("duplicate-of=cat:2", "duplicate-of=idx:1")
+            .as_bytes(),
+    );
+    assert_failed_before_report(run("--pending-decisions", "choices.tsv"));
+    inputs.write("choices.tsv", edited.as_bytes());
+    inputs.write("idx.ris", idx.replace("Marsh", "Marls").as_bytes());
+    let stale = run("--pending-decisions", "choices.tsv");
+    assert!(String::from_utf8_lossy(&stale.stderr).contains("inputs differ"));
+    assert_failed_before_report(stale);
+}

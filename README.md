@@ -165,6 +165,35 @@ agree when supplied. Conflicting supported DOIs or PMIDs block the set.
 Leave unresolved copies and distinct reports pending or mark them keep.
 Existing identifier-only sheets still open with `--resume-decisions`.
 
+### Return to pending decisions
+
+Reopen your saved sheet with the same named exports. This command uses the
+sheet saved by the undo example above.
+
+```sh
+dedup review-ids --pending-decisions undo.tsv --ris-source cat catalog.ris --ris-source idx index.ris
+```
+
+The command checks the saved fingerprints and writes a read-only TSV report
+to standard output. In this example the summary counts one pending occurrence
+and the group row identifies its keeper.
+
+```text
+pending	title_author_year_type	idx:1	inspect_metadata_only;keep=cat:1;assigned=
+```
+
+The third column lists pending occurrences in one direct evidence group.
+`keep` lists its explicitly kept members and `assigned` lists members already
+marked as copies. Groups flagged for conflicting alternate IDs or containing
+a record with contradictory IDs appear first. Within each tier
+the order is DOI, PMID, then opt-in metadata hints. Every group with a pending
+member appears, even when it has zero or several keepers. Groups can overlap and
+the summary counts each pending occurrence once.
+
+Use `--resume-decisions` for source byte spans, issues and existing decisions.
+Compare the original records, edit the saved sheet, then rerun
+`--pending-decisions` to see what remains.
+
 ### Reconcile a reviewed export before screening
 
 Open `reconciliation.tsv` in the export directory. It has one row per named

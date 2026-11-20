@@ -106,6 +106,16 @@ def exercise(binary, directory, baseline):
     sheet.write_bytes(saved)
     preview = run("resume", "--resume-decisions", sheet)
     assert sum(line.startswith("decision\t") for line in preview) == len(editable)
+    pending_metrics = {}
+    if not baseline:
+        worklist = run("pending_view", "--pending-decisions", sheet)
+        open_groups = [line.split("\t") for line in worklist if line.startswith("pending\t")]
+        expected = editable - edits.keys()
+        assert {key for _, _, members, _ in open_groups for key in members.split(",")} == expected
+        assert worklist[1].startswith(f"summary\tpending\t{len(expected)}\tgroups={len(open_groups)};")
+        assert [r for r in worklist if r.startswith("input\t")] == [r for r in queue if r.startswith("input\t")]
+        pending_metrics = {"pending_view_lines": len(worklist), "pending_groups": len(open_groups),
+                           "pending_occurrences": len(expected)}
     run("reviewed_export", "--export-reviewed", sheet, "reviewed")
     retained = [key for key in copies if not edits.get(key, "").startswith(("duplicate-of=", "verified-duplicate-of="))]
     ordinals = {key: n for n, key in enumerate(retained, 1)}
@@ -162,7 +172,7 @@ def exercise(binary, directory, baseline):
         "reports": dict(Counter(kind for _, kind in first)), "groups": groups, "mixed_report_groups": mixed,
         "true_pairs_in_fixture": sum(n * (n - 1) // 2 for n in family_sizes.values()),
         "distinct_direct_pairs": len(pairs), "distinct_report_pairs": sum(copies[a].report != copies[b].report for a, b in pairs),
-        "editable_rows": len(editable), "resume_lines": len(preview), "map_rows": len(mapped),
+        "editable_rows": len(editable), "resume_lines": len(preview), **pending_metrics, "map_rows": len(mapped),
         "dispositions_by_source": by_source, "total": total, "true_extra_copies_retained": Counter(deferred.values()),
         "cli_wall_seconds": times,
         "sha256": {"reviewed.ris": hashlib.sha256(ris).hexdigest(), "mapping.tsv": hashlib.sha256(mapping).hexdigest()},

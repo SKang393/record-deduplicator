@@ -4,7 +4,7 @@ use std::{
     io::{self, Write},
 };
 
-use super::decisions::Decision;
+use super::decisions::{Decision, ResumedSheet};
 use dedup_core::{
     identifier_review as ids,
     ris::{self, Disposition, QueueError, ReviewQueue},
@@ -55,6 +55,7 @@ enum Action<'a> {
     Review,
     Init { path: &'a OsStr, metadata: bool },
     Resume(&'a OsStr),
+    Pending(&'a OsStr),
     Export(&'a OsStr, &'a OsStr),
 }
 
@@ -72,6 +73,7 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
             )
         }
         [flag, path, rest @ ..] if flag == "--resume-decisions" => (Action::Resume(path), rest),
+        [flag, path, rest @ ..] if flag == "--pending-decisions" => (Action::Pending(path), rest),
         [flag, path, dir, rest @ ..] if flag == "--export-reviewed" => {
             (Action::Export(path, dir), rest)
         }
@@ -109,28 +111,34 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
             )
         })
         .collect();
-    let decisions = match action {
+    let pending_only = matches!(action, Action::Pending(_));
+    let sheet = match action {
         Action::Review => None,
         Action::Init { path, metadata } => {
             super::decisions::create(path, &queue, &manifest, metadata)?;
             None
         }
-        Action::Resume(path) => Some(super::decisions::resume(path, &queue, &manifest)?),
+        Action::Resume(path) | Action::Pending(path) => {
+            Some(super::decisions::resume(path, &queue, &manifest)?)
+        }
         Action::Export(path, dir) => {
-            let decisions = super::decisions::resume(path, &queue, &manifest)?;
-            return super::reviewed::export(dir.as_ref(), &queue, &manifest, &decisions);
+            let sheet = super::decisions::resume(path, &queue, &manifest)?;
+            return super::reviewed::export(dir.as_ref(), &queue, &manifest, &sheet.decisions);
         }
     };
     let mut out = io::BufWriter::new(io::stdout().lock());
-    render_queue(&queue, &manifest, decisions.as_deref(), &mut out)
-        .and_then(|()| out.flush())
-        .map_err(|_| String::from("Cannot write report."))
+    match sheet {
+        Some(sheet) if pending_only => super::pending::render(&queue, &manifest, &sheet, &mut out),
+        sheet => render_queue(&queue, &manifest, sheet, &mut out),
+    }
+    .and_then(|()| out.flush())
+    .map_err(|_| String::from("Cannot write report."))
 }
 
 fn render_queue(
     queue: &ReviewQueue<'_>,
     manifest: &[String],
-    decisions: Option<&[Decision]>,
+    sheet: Option<ResumedSheet>,
     out: &mut impl Write,
 ) -> io::Result<()> {
     let reference = |global: usize| {
@@ -138,7 +146,11 @@ fn render_queue(
         format!("{}:{}", entry.label, entry.ordinal)
     };
     super::render(&queue.review, out, reference)?;
-    for hint in queue.metadata_hints() {
+    let (decisions, hints) = match sheet {
+        Some(sheet) => (Some(sheet.decisions), sheet.metadata_hints),
+        None => (None, None),
+    };
+    for hint in hints.unwrap_or_else(|| queue.metadata_hints()) {
         match hint {
             ris::MetadataHint::Inspect(rows) => {
                 let refs = rows
@@ -179,7 +191,7 @@ fn render_queue(
             )?;
         }
     }
-    if let Some(decisions) = decisions {
+    if let Some(ref decisions) = decisions {
         for (entry, decision) in queue.entries.iter().zip(decisions) {
             if *decision != Decision::NotCandidate {
                 writeln!(

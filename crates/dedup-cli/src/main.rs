@@ -1,4 +1,5 @@
 mod decisions;
+mod pending;
 mod reviewed;
 mod sources;
 
@@ -14,9 +15,22 @@ use dedup_core::ris;
 
 fn help() {
     println!(
-        "record-deduplicator {}\n\nUsage: dedup --help | --version\n       dedup review-ids <input.tsv | ->\n       dedup review-ids --ris <input.ris | ->\n       dedup review-ids [--init-decisions <new.tsv> | --init-metadata-decisions <new.tsv> | --resume-decisions <saved.tsv> | --export-reviewed <saved.tsv> <new-dir>] --ris-source <label> <file> [--ris-source <label> <file> ...]\n\nGroup rows by a shared full DOI or PMID for review. Named RIS queues also show metadata inspection hints for records without usable identifiers.\nInput: UTF-8, header doi<TAB>pmid, one occurrence per data line. With --ris, review TY/ER records and report original byte spans.\nReview output: TSV on standard output; occurrence numbers start at 1.\nFor metadata verification, create a sheet with --init-metadata-decisions. Mark the target keep and enter verified-duplicate-of=<label:row><TAB><rationale> on the copy after comparing the source reports.\nReviewed export: apply the verified sheet decisions and write reviewed.ris, mapping.tsv and per-source reconciliation.tsv in a new directory.",
+        "record-deduplicator {}\n\nUsage: dedup --help | --version\n       dedup review-ids <input.tsv | ->\n       dedup review-ids --ris <input.ris | ->\n       dedup review-ids [--init-decisions <new.tsv> | --init-metadata-decisions <new.tsv> | --resume-decisions <saved.tsv> | --pending-decisions <saved.tsv> | --export-reviewed <saved.tsv> <new-dir>] --ris-source <label> <file> [--ris-source <label> <file> ...]\n\nGroup rows by a shared full DOI or PMID for review. Named RIS queues also show metadata inspection hints for records without usable identifiers.\nInput: UTF-8, header doi<TAB>pmid, one occurrence per data line. With --ris, review TY/ER records and report original byte spans.\nReview output: TSV on standard output; occurrence numbers start at 1. Use --pending-decisions to view unresolved groups with their direct kept members.\nFor metadata verification, create a sheet with --init-metadata-decisions. Mark the target keep and enter verified-duplicate-of=<label:row><TAB><rationale> on the copy after comparing the source reports.\nReviewed export: apply the verified sheet decisions and write reviewed.ris, mapping.tsv and per-source reconciliation.tsv in a new directory.",
         dedup_core::VERSION
     );
+}
+
+fn group_labels(group: &ids::Group) -> (&'static str, &'static str) {
+    let kind = match group.shared {
+        Identifier::Doi => "doi",
+        Identifier::Pmid => "pmid",
+    };
+    let detail = match group.other_evidence {
+        OtherEvidence::Conflict => "other_id_conflict",
+        OtherEvidence::Agreement => "other_id_agreement",
+        OtherEvidence::Incomplete => "other_id_incomplete",
+    };
+    (kind, detail)
 }
 
 fn render<T: std::fmt::Display>(
@@ -34,15 +48,7 @@ fn render<T: std::fmt::Display>(
         report.groups.len()
     )?;
     for group in &report.groups {
-        let kind = match group.shared {
-            Identifier::Doi => "doi",
-            Identifier::Pmid => "pmid",
-        };
-        let detail = match group.other_evidence {
-            OtherEvidence::Conflict => "other_id_conflict",
-            OtherEvidence::Agreement => "other_id_agreement",
-            OtherEvidence::Incomplete => "other_id_incomplete",
-        };
+        let (kind, detail) = group_labels(group);
         write!(out, "candidate\t{kind}\t")?;
         for (index, row) in group.rows.iter().enumerate() {
             if index > 0 {
@@ -210,6 +216,7 @@ fn main() -> ExitCode {
                     | "--init-decisions"
                     | "--init-metadata-decisions"
                     | "--resume-decisions"
+                    | "--pending-decisions"
                     | "--export-reviewed"
             )
         ) {

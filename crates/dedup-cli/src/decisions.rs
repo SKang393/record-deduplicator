@@ -51,15 +51,12 @@ impl Decision {
     }
 }
 
-fn metadata_groups(queue: &ReviewQueue<'_>, enabled: bool) -> Vec<Option<usize>> {
+fn metadata_groups(queue: &ReviewQueue<'_>, hints: &[MetadataHint]) -> Vec<Option<usize>> {
     let mut groups = vec![None; queue.entries.len()];
-    if enabled {
-        for hint in queue.metadata_hints() {
-            if let MetadataHint::Inspect(rows) = hint {
-                let group = rows[0];
-                for row in rows {
-                    groups[row - 1] = Some(group);
-                }
+    for hint in hints {
+        if let MetadataHint::Inspect(rows) = hint {
+            for &row in rows {
+                groups[row - 1] = Some(rows[0]);
             }
         }
     }
@@ -91,7 +88,12 @@ pub(super) fn create(
     for identity in manifest {
         writeln!(sheet, "{identity}").unwrap();
     }
-    for (_, key) in candidates(queue, &metadata_groups(queue, metadata)) {
+    let hints = if metadata {
+        queue.metadata_hints()
+    } else {
+        Vec::new()
+    };
+    for (_, key) in candidates(queue, &metadata_groups(queue, &hints)) {
         writeln!(sheet, "{key}\tpending").unwrap();
     }
     writeln!(sheet, "{END}").unwrap();
@@ -102,11 +104,17 @@ pub(super) fn create(
         .map_err(|e| format!("Cannot finish decision sheet: {e}"))
 }
 
+pub(super) struct ResumedSheet {
+    pub decisions: Vec<Decision>,
+    /// Only opt-in sheets can use metadata hint membership for decisions.
+    pub metadata_hints: Option<Vec<MetadataHint>>,
+}
+
 pub(super) fn resume(
     path: &OsStr,
     queue: &ReviewQueue<'_>,
     manifest: &[String],
-) -> Result<Vec<Decision>, String> {
+) -> Result<ResumedSheet, String> {
     if !fs::metadata(path).is_ok_and(|m| m.is_file()) {
         return Err("Expected a regular decision sheet file.".into());
     }
@@ -132,7 +140,8 @@ pub(super) fn resume(
             );
         }
     }
-    let hints = metadata_groups(queue, metadata);
+    let metadata_hints = metadata.then(|| queue.metadata_hints());
+    let hints = metadata_groups(queue, metadata_hints.as_deref().unwrap_or_default());
     let mut choices = BTreeMap::new();
     for (index, key) in candidates(queue, &hints) {
         let (saved_key, choice) = lines
@@ -200,7 +209,10 @@ pub(super) fn resume(
         };
     }
     validate_metadata_sets(queue, &decisions, &hints)?;
-    Ok(decisions)
+    Ok(ResumedSheet {
+        decisions,
+        metadata_hints,
+    })
 }
 
 /// Apply the same guards to every member, including copies assigned via an identifier.
