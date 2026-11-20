@@ -230,6 +230,19 @@ The total `retained` count is the number of records in `reviewed.ris` going
 forward to screening. Title/abstract exclusions, full-text exclusions and
 study inclusion decisions belong to later screening stages.
 
+### Import the reviewed RIS into Zotero
+
+In Zotero, choose **File → Import… → A file** and select `reviewed.ris` from
+the export directory. Import into a new collection so you can compare its item
+count with `retained` in the total row of `reconciliation.tsv`. Pending records
+count toward that total. Keep the original exports, decision sheet and
+`mapping.tsv` together to trace each item back to its source occurrences.
+
+The [synthetic Zotero handoff](testdata/fixtures/README.md#zotero-ris-handoff)
+includes a ready-to-import file and the fields observed in Zotero Desktop.
+Zotero's [file import guide](https://www.zotero.org/support/kb/importing_standardized_formats)
+lists the supported import formats.
+
 ### Review a single RIS export
 
 ```sh
