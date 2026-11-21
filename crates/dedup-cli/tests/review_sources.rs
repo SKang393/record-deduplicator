@@ -1487,6 +1487,37 @@ fn optional_keep_reason_follows_the_selected_kept_report() {
 }
 
 #[test]
+fn guided_review_flags_whole_file_matches_and_keeps_each_occurrence() {
+    let inputs = Inputs::new("repeated-download");
+    let first = "TY  - JOUR\nTI  - Inlet survey\nAN  - A1\nER  -\n";
+    let second = "TY  - JOUR\nTI  - Inlet survey\nAN  - A2\nER  -\n";
+    let batch = format!("{first}{second}");
+    let other = format!("{first}{}", second.replace("A2", "B2"));
+    inputs.write("first.ris", batch.as_bytes());
+    inputs.write("copy.ris", batch.as_bytes());
+    inputs.write("index.ris", other.as_bytes());
+    inputs.write(
+        "answers.txt",
+        b"choices.tsv\nfirst\nfirst.ris\ncopy\ncopy.ris\nindex\nindex.ris\n\nreview\nreviewed\nwrite\n",
+    );
+    let guide = Command::new(env!("CARGO_BIN_EXE_dedup"))
+        .arg("start")
+        .current_dir(&inputs.0)
+        .stdin(fs::File::open(inputs.0.join("answers.txt")).unwrap())
+        .output()
+        .unwrap();
+    assert!(guide.status.success(), "{:?}", guide.stderr);
+    let stderr = String::from_utf8(guide.stderr).unwrap();
+    let (before_write, _) = stderr.split_once("Type write").unwrap();
+    assert!(before_write.contains("Source labels copy, first have the same whole-file SHA-256."));
+    assert_eq!(stderr.matches("same whole-file SHA-256").count(), 1);
+    assert_eq!(
+        fs::read_to_string(inputs.0.join("reviewed/reviewed.ris")).unwrap(),
+        format!("{batch}{batch}{other}")
+    );
+}
+
+#[test]
 fn guided_setup_can_edit_a_path_and_add_a_missing_source() {
     let inputs = Inputs::new("edit-add");
     inputs.write(

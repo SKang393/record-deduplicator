@@ -156,6 +156,11 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
     };
     recheck_sources()?;
     let mut manifest = Vec::with_capacity(queue.sources.len());
+    let guided_review = matches!(
+        action,
+        Action::Init { guided: true, .. }
+            | Action::Pending(_, PendingMode::CreateAndReview(_) | PendingMode::Reopen(_))
+    );
     let mut labels_by_fingerprint = BTreeMap::new();
     for named in &queue.sources {
         let records = &named.source.occurrences;
@@ -187,13 +192,25 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
             original.len(),
             records.len()
         ));
-        if matches!(action, Action::Coverage(_)) {
+        if matches!(action, Action::Coverage(_)) || (guided_review && !records.is_empty()) {
             labels_by_fingerprint
                 .entry(hash.into())
                 .or_insert_with(Vec::new)
                 .push(named.label);
         }
     }
+    let show_repeated_downloads = || {
+        for labels in labels_by_fingerprint
+            .values()
+            .filter(|labels| labels.len() > 1)
+        {
+            eprintln!(
+                "Source labels {} have the same whole-file SHA-256. Each label contributes its own occurrences. \
+                 Check your search log. If a download was selected by mistake, start a new sheet with the intended sources.",
+                labels.join(", ")
+            );
+        }
+    };
     let mut guided_pending_rows = None;
     let sheet = match action {
         Action::Review => None,
@@ -292,6 +309,7 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
             };
             show_pending(&sheet)?;
             if let Some(input) = guide {
+                show_repeated_downloads();
                 let read_current_sheet = || {
                     recheck_sources()?;
                     super::decisions::read_sheet(path)
@@ -397,6 +415,7 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
     .and_then(|()| out.flush())
     .map_err(|_| String::from("Cannot write report."))?;
     if let Some(count) = guided_pending_rows {
+        show_repeated_downloads();
         eprintln!(
             "Pending rows in your new decision sheet: {count}. The queue's candidate_records and groups count only shared DOI or PMID matches. Metadata comparisons can add editable rows."
         );
