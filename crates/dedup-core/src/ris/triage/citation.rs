@@ -8,15 +8,21 @@ pub enum CitationValue {
     Absent,
     Unresolved,
     Conflicting,
+    /// One supported key alongside an unsupported field of the same identifier kind.
+    IdentifierWithUnsupportedField(String),
     Known(Vec<String>),
 }
 
 impl CitationValue {
-    fn identifier(mut values: Values) -> Self {
+    fn identifier(values: Values) -> Self {
         if values.conflict {
             Self::Conflicting
-        } else if let Some(key) = values.take_key() {
-            Self::Known(vec![key])
+        } else if let Some(key) = values.key {
+            if values.unsupported {
+                Self::IdentifierWithUnsupportedField(key)
+            } else {
+                Self::Known(vec![key])
+            }
         } else if values.had_field {
             Self::Unresolved
         } else {

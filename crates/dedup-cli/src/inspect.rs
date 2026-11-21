@@ -4,28 +4,34 @@ use std::{
     io::{self, Write},
 };
 
-use dedup_core::ris::{CitationValue, ReviewQueue};
+use dedup_core::{
+    identifier_review::Identifier,
+    ris::{CitationValue, ReportIdentifiers, ReviewQueue},
+};
 
 use super::decisions::Decision;
 
 fn display_value(value: &CitationValue) -> String {
-    match value {
-        CitationValue::Absent => "absent".into(),
-        CitationValue::Unresolved => "see original".into(),
-        CitationValue::Conflicting => "conflicting values".into(),
-        CitationValue::Known(values) => {
-            let mut text = values
-                .iter()
-                .map(|v| format!("{v:?}"))
-                .collect::<Vec<_>>()
-                .join(", ");
-            if let Some((end, _)) = text.char_indices().nth(72) {
-                text.truncate(end);
-                text.push('…');
-            }
-            text
-        }
+    let values = match value {
+        CitationValue::Absent => return "absent".into(),
+        CitationValue::Unresolved => return "see original".into(),
+        CitationValue::Conflicting => return "conflicting values".into(),
+        CitationValue::Known(values) => values.as_slice(),
+        CitationValue::IdentifierWithUnsupportedField(key) => std::slice::from_ref(key),
+    };
+    let mut text = values
+        .iter()
+        .map(|v| format!("{v:?}"))
+        .collect::<Vec<_>>()
+        .join(", ");
+    if let Some((end, _)) = text.char_indices().nth(72) {
+        text.truncate(end);
+        text.push('…');
     }
+    if matches!(value, CitationValue::IdentifierWithUnsupportedField(_)) {
+        text.push_str(" (additional unsupported field)");
+    }
+    text
 }
 
 pub(super) fn pair(
@@ -92,6 +98,16 @@ pub(super) fn pair(
             _ => format!("{name}  {} | {}", display_value(&a), display_value(&b)),
         };
         writeln!(out, "  {line}").map_err(write_error)?;
+    }
+    let mut ids = ReportIdentifiers::default();
+    ids.observe(first.1);
+    ids.observe(second.1);
+    if let Some(conflict) = ids.conflict() {
+        let kind = match conflict {
+            Identifier::Doi => "DOI",
+            Identifier::Pmid => "PMID",
+        };
+        writeln!(out, "Conflicting supported {kind} values prevent combining these two occurrences in a reviewed export.").map_err(write_error)?;
     }
     for (index, rec, raw) in [first, second] {
         let entry = &queue.entries[index];

@@ -576,6 +576,24 @@ fn reviewed_export_checks_all_members_of_each_proposed_set() {
                 .status
                 .success()
         );
+        let inspect = |left, right| {
+            let args = ["--inspect-pair", "choices.tsv", left, right];
+            let view = inputs.run(&[&args[..], &sources].concat());
+            assert!(view.status.success());
+            String::from_utf8(view.stdout).unwrap()
+        };
+        let view = inspect("s:2", "s:3");
+        let summary = view.split_once("\n[").unwrap().0;
+        assert!(summary.contains(&format!(
+            "Conflicting supported {kind} values prevent combining"
+        )));
+        if kind == "DOI" {
+            assert!(
+                summary
+                    .contains(r#"DOI  "10.0000/a" | "10.0000/b" (additional unsupported field)"#)
+            );
+        }
+        assert!(!inspect("s:1", "s:3").contains("prevent combining"));
         let sheet = fs::read_to_string(inputs.0.join("choices.tsv"))
             .unwrap()
             .replace("s:1\tpending", "s:1\tkeep")

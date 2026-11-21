@@ -472,7 +472,11 @@ full normalized field values, even when a long value is shortened onscreen.
 `absent` means the source has no recognized field for that value. Fields absent
 on both sides are omitted. `see original` marks supplied fields that could not
 be summarized, and `conflicting values` marks contradictory IDs within one
-record.
+record. If a source supplies one supported identifier value alongside an
+unsupported field of the same kind, the comparison shows the supported value
+and labels the extra field. When the two selected occurrences contain
+conflicting supported IDs, the summary names the identifier that blocks
+combining them in a reviewed export.
 
 Both complete records follow, with their tagged fields and continuation lines
 in source order and control characters escaped for terminal display. If a record lacks a
