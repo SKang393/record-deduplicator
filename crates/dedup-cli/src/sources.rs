@@ -294,8 +294,9 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 }
             };
             let parse = |text: &str| super::decisions::parse_sheet(text, &queue, &manifest);
-            let mut validated_text = super::decisions::read_sheet(path)?;
-            let mut sheet = parse(&validated_text)?;
+            let text = super::decisions::read_sheet(path)?;
+            let mut sheet = parse(&text)?;
+            let mut validated_text = Some(text);
             let guided = guide.is_some();
             let show_pending = |sheet: &ResumedSheet| -> Result<(), String> {
                 let mut out = io::BufWriter::new(io::stdout().lock());
@@ -316,9 +317,18 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 };
                 let Some(directory) = super::start::export_destination(input, |request| {
                     let current = read_current_sheet()?;
-                    if current != validated_text {
-                        sheet = parse(&current)?;
-                        validated_text = current;
+                    if validated_text.as_deref() != Some(current.as_str()) {
+                        sheet = match parse(&current) {
+                            Ok(updated) => updated,
+                            Err(error) => {
+                                validated_text = None;
+                                eprintln!(
+                                    "{error}\nResolve the sheet error, then retry this command or press Enter to close."
+                                );
+                                return Ok(());
+                            }
+                        };
+                        validated_text = Some(current);
                         eprintln!("Reloaded the saved decision sheet.");
                     }
                     match request {

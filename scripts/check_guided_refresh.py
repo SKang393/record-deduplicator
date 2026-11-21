@@ -50,6 +50,14 @@ def check(binary, job):
                 guide.stdin.write(b"choices.tsv\ncat\ncat.ris\nidx\nidx.ris\n\nyes\n")
                 read_prompt(log, guide, b"Press Enter to close this session:")
                 if outcome == "inspect":
+                    sheet.write_bytes(one_removed.replace(b"cat:1\tkeep", b"cat:1\tpending"))
+                    guide.stdin.write(b":inspect cat:1,idx:1\n")
+                    rejected = read_prompt(log, guide, b"Press Enter to close this session:")
+                    assert b"The duplicate target for idx:1 must have a keep decision." in rejected
+                    sheet.write_bytes(one_removed)
+                    guide.stdin.write(b":pending\n")
+                    restored = read_prompt(log, guide, b"Press Enter to close this session:")
+                    assert b"Reloaded the saved decision sheet." in restored
                     # An equivalent spreadsheet save can still be inspected. Moving the
                     # removal to another row keeps the byte count but changes the decisions.
                     bom = b"\xef\xbb\xbf"
