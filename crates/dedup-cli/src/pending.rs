@@ -65,7 +65,13 @@ pub(super) fn earlier_choices(
     Ok(())
 }
 
+pub(super) enum Groups {
+    All,
+    Metadata,
+}
+
 pub(super) fn render(
+    groups: Groups,
     queue: &ReviewQueue<'_>,
     manifest: &[String],
     sheet: &ResumedSheet,
@@ -120,14 +126,16 @@ pub(super) fn render(
             remaining.push(line);
         }
     };
-    for group in &queue.review.groups {
-        let (signal, evidence) = crate::group_labels(group);
-        add(
-            &group.rows,
-            signal,
-            evidence,
-            group.other_evidence == OtherEvidence::Conflict,
-        );
+    if matches!(groups, Groups::All) {
+        for group in &queue.review.groups {
+            let (signal, evidence) = crate::group_labels(group);
+            add(
+                &group.rows,
+                signal,
+                evidence,
+                group.other_evidence == OtherEvidence::Conflict,
+            );
+        }
     }
     if let Some(hints) = &sheet.metadata_hints {
         for hint in hints {
@@ -148,12 +156,18 @@ pub(super) fn render(
         .filter(|d| **d == Decision::Pending)
         .count();
     writeln!(out, "type\tsignal\trows\tdetail")?;
-    writeln!(
-        out,
-        "summary\tpending\t{count}\tgroups={};flagged_groups={}",
-        conflicts.len() + remaining.len(),
-        conflicts.len()
-    )?;
+    let shown = conflicts.len() + remaining.len();
+    let flagged = conflicts.len();
+    match groups {
+        Groups::All => writeln!(
+            out,
+            "summary\tpending\t{count}\tgroups={shown};flagged_groups={flagged}"
+        )?,
+        Groups::Metadata => writeln!(
+            out,
+            "summary\tpending_in_sheet\t{count}\tshown_metadata_groups={shown};flagged_metadata_groups={flagged}"
+        )?,
+    }
     for identity in manifest {
         writeln!(out, "{identity}")?;
     }

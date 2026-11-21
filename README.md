@@ -496,6 +496,12 @@ the order is DOI, PMID, then opt-in metadata hints. Every group with a pending
 member appears, even when it has zero or several keepers. Groups can overlap and
 the summary counts each pending occurrence once.
 
+In the guide, type `:pending metadata` to show just the unresolved
+title/author/year/type groups. The summary gives the pending occurrence count
+for the entire sheet and the number of metadata groups shown. Use `:inspect`
+to compare originals in a group. Use `:pending` for the full list or `:leads`
+for inspection-only pairs.
+
 In the reopened guide, type `:inspect idx:1,cat:1` to compare the two records
 in the example above. When a group has three or more members, choose the two
 you want to read. Either key can come first. Inspection leaves the sheet as saved.

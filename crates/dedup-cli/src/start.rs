@@ -1,6 +1,7 @@
 //! Prompt for the arguments to an ordinary, local named-RIS review.
 use super::{
     decisions::Decision,
+    pending::Groups,
     reviewed::PreparedExport,
     sources::{self, Action, PendingMode},
 };
@@ -257,7 +258,7 @@ pub(super) fn run() -> Result<(), String> {
 }
 
 pub(super) enum Inspection<'a> {
-    Pending,
+    Pending(Groups),
     ListLeads,
     Find(&'a str),
     Pair(&'a str, &'a str),
@@ -269,12 +270,8 @@ pub(super) fn export_destination(
 ) -> Result<Option<PathBuf>, String> {
     while let Some(path) = ask_path_or_action(
         input,
-        "To compare two keys, type :inspect KEY,KEY. Look up records with :find TEXT, :find --author NAME | TITLE or :find --venue VENUE | TITLE. Type :pending for the current pending groups or :leads for inspection-only pairs. To preview an export, enter a new folder path. Press Enter to close this session:",
+        "To compare two keys, type :inspect KEY,KEY. Look up records with :find TEXT, :find --author NAME | TITLE or :find --venue VENUE | TITLE. Type :pending for all pending groups, :pending metadata for title/author/year/type groups, or :leads for inspection-only pairs. To preview an export, enter a new folder path. Press Enter to close this session:",
         |answer| {
-            if answer == ":pending" {
-                inspect(Inspection::Pending)?;
-                return Ok(true);
-            }
             if answer == ":leads" {
                 inspect(Inspection::ListLeads)?;
                 return Ok(true);
@@ -282,6 +279,14 @@ pub(super) fn export_destination(
             let (command, argument) = answer
                 .split_once(char::is_whitespace)
                 .unwrap_or((answer, ""));
+            if command == ":pending" {
+                match argument.trim() {
+                    "" => inspect(Inspection::Pending(Groups::All))?,
+                    "metadata" => inspect(Inspection::Pending(Groups::Metadata))?,
+                    _ => eprintln!("Use :pending or :pending metadata."),
+                }
+                return Ok(true);
+            }
             if command == ":find" {
                 let query = argument.trim();
                 if query.is_empty() {

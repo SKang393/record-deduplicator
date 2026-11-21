@@ -298,17 +298,18 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
             let mut sheet = parse(&text)?;
             let mut validated_text = Some(text);
             let guided = guide.is_some();
-            let show_pending = |sheet: &ResumedSheet| -> Result<(), String> {
+            let show_pending = |sheet: &ResumedSheet, groups| -> Result<(), String> {
                 let mut out = io::BufWriter::new(io::stdout().lock());
-                let first_group = super::pending::render(&queue, &manifest, sheet, &mut out)
-                    .and_then(|first| out.flush().map(|()| first))
-                    .map_err(|_| "Cannot write report.")?;
+                let first_group =
+                    super::pending::render(groups, &queue, &manifest, sheet, &mut out)
+                        .and_then(|first| out.flush().map(|()| first))
+                        .map_err(|_| "Cannot write report.")?;
                 if let Some(row) = first_group.filter(|_| guided) {
                     eprintln!("First unresolved group from the pending list:\n  {row}");
                 }
                 Ok(())
             };
-            show_pending(&sheet)?;
+            show_pending(&sheet, super::pending::Groups::All)?;
             if let Some(input) = guide {
                 show_repeated_downloads();
                 let read_current_sheet = || {
@@ -332,7 +333,7 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                         eprintln!("Reloaded the saved decision sheet.");
                     }
                     match request {
-                        Inspection::Pending => show_pending(&sheet),
+                        Inspection::Pending(groups) => show_pending(&sheet, groups),
                         Inspection::Find(query) => {
                             super::inspect::find(&queue, &sheet.decisions, query)
                                 .map_err(|e| e.to_string())

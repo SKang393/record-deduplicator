@@ -984,7 +984,7 @@ fn pending_view_shows_direct_context_in_conflict_order_without_changing_decision
     assert_eq!(view.stdout, reversed.stdout);
     inputs.write(
         "guide.txt",
-        b"choices.tsv\ncat\ncat.ris\nidx\nidx.ris\n\nyes\n:inspect cat:1,idx:1\n:inspect idx:2,cat:2\n:cancel\n",
+        b"choices.tsv\ncat\ncat.ris\nidx\nidx.ris\n\nyes\n:pending metadata\n:inspect cat:1,idx:1\n:inspect idx:2,cat:2\n:cancel\n",
     );
     let guided = Command::new(env!("CARGO_BIN_EXE_dedup"))
         .current_dir(&inputs.0)
@@ -999,6 +999,15 @@ fn pending_view_shows_direct_context_in_conflict_order_without_changing_decision
         rows[4]
     )));
     let mut expected = view.stdout.clone();
+    let metadata_view = [
+        rows[0],
+        "summary\tpending_in_sheet\t4\tshown_metadata_groups=1;flagged_metadata_groups=1",
+        rows[2],
+        rows[3],
+        rows[5],
+    ];
+    expected.extend_from_slice(metadata_view.join("\n").as_bytes());
+    expected.push(b'\n');
     for keys in [["cat:1", "idx:1"], ["idx:2", "cat:2"]] {
         let pair = inputs.run(&[&["--inspect-pair", "choices.tsv"][..], &keys, &sources].concat());
         assert!(pair.status.success());
