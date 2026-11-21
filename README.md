@@ -670,6 +670,41 @@ the saved RIS for source-specific `ID`, `AN`, `TY` and `M3` values. ASReview
 assigns its own record IDs. The mapping fingerprints `reviewed.ris` and the
 separate checksum file identifies both RIS files.
 
+#### Trace ASReview screening decisions to the original downloads
+
+In ASReview LAB 3.0.8, open **Collection → Export**, choose CSV, and select
+both **Relevant** and **Not relevant**. The initial Relevant-only selection
+returned just one of the two labeled records in this example. Include
+**Not seen (yet)** if you also need unscreened records. In the CSV,
+`asreview_label` is `1` for relevant, `0` for not relevant and blank for
+unseen. [ASReview dataset export guide](https://asreview.readthedocs.io/en/stable/lab/progress.html#export-dataset)
+
+The fictional keeper and follow-up shared a DOI. ASReview exported the
+keeper first even though it was second in the input. Each decision could
+be identified by a source field that survived the export.
+
+| ASReview CSV field and exact value | Screening label | Retained occurrence | Saved dedup decision |
+| --- | --- | --- | --- |
+| `id` = `CLOCK-ID-000614` | Relevant | `idx:1` | keep |
+| `accession_number` = `CLOCK-CAT-000097` | Not relevant | `cat:2` | pending |
+
+Use the verified handoff above. Find the exact `ID` or `AN` in the original
+downloads and compare the title and publication type. The named source and
+the record's one-based ordinal in that download give the key for `trace`.
+Check its saved disposition and the original file fingerprint and byte span.
+With the two downloads in the current directory, run
+
+```sh
+dedup trace for-screening/mapping.tsv idx:1 .
+dedup trace for-screening/mapping.tsv cat:2 .
+```
+
+Only link a screening decision when the evidence identifies one retained
+occurrence. Source identifiers can be missing or reused. Leave ambiguous
+links unresolved. ASReview's row position, group ID and a shared DOI cannot
+establish that link. The follow-up's pending status belongs to deduplication
+and can coexist with its later screening decision.
+
 ### Import the reviewed RIS into Zotero
 
 In Zotero, choose **File → Import… → A file** and select `reviewed.ris` from
