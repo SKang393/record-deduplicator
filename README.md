@@ -326,9 +326,19 @@ mkdir converted && (
 ) && dedup review-ids --ris-source catalog catalog.ris --ris-source index converted/index.ris
 ```
 
+If the database identifies the BibTeX encoding as ISO-8859-1, first create
+a UTF-8 copy at a new path with
+`iconv -f ISO-8859-1 -t UTF-8 index.bib > index-utf8.bib`. Use
+`index-utf8.bib` in the `bib2xml -i utf8` command above. If the encoding
+is unknown, request a UTF-8 export. In a synthetic bibutils 7.2 conversion,
+passing ISO-8859-1 directly to `bib2xml` garbled an accented author initial
+even though every citation key and the entry count survived. Converting to
+UTF-8 first preserved the accent, but `Reed, É.` became `Reed, É`. This
+changed which copies appeared together for metadata review.
+
 Compare the index `input` occurrence count with the original BibTeX entry
-count. Check the citation keys, titles and identifiers against the converted
-RIS. In the tested bibutils 7.2 example, citation keys became RIS `ID`
+count. Check the citation keys, titles, author names and identifiers against
+the converted RIS. In the tested bibutils 7.2 example, citation keys became RIS `ID`
 values, a quoted comma survived in the title and a wrapped abstract became
 one line. Naming a raw BibTeX file with a `.ris` suffix still produces a
 fragment error in the named review. Use the converted file for this step.
