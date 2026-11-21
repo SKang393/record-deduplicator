@@ -54,17 +54,27 @@ def check(binary, job):
                     # removal to another row keeps the byte count but changes the decisions.
                     bom = b"\xef\xbb\xbf"
                     sheet.write_bytes(bom + one_removed)
+                    guide.stdin.write(b":leads\n")
+                    listed = read_prompt(log, guide, b"Press Enter to close this session:")
+                    assert b"Inspection-only pairs: 0." in listed, listed
+                    sheet.write_bytes(one_removed)
                     guide.stdin.write(b":inspect cat:1,idx:1\n")
                     read_prompt(log, guide, b"Press Enter to close this session:")
-                    edited = bom + pending.replace(b"idx:2\tpending", b"idx:2\tduplicate-of=cat:1")
+                    edited = pending.replace(b"idx:2\tpending", b"idx:2\tduplicate-of=cat:1")
                     assert len(edited) == sheet.stat().st_size
+                    # Change and restore the exact sheet while the guide is waiting.
+                    sheet.write_bytes(edited)
+                    sheet.write_bytes(one_removed)
+                    guide.stdin.write(b":inspect cat:1,idx:2\n")
+                    read_prompt(log, guide, b"Press Enter to close this session:")
                     sheet.write_bytes(edited)
                     output, _ = guide.communicate(b":inspect cat:1,idx:2\n", timeout=10)
                     assert guide.returncode == 2 and b"Decisions changed." in log.read()
-                    assert output.count(b"Citation fields (normalized,") == 1
+                    assert output.count(b"Citation fields (normalized,") == 2
                     assert b"Citation fields (normalized, cat:1 | idx:1)" in output
+                    assert b"[idx:2] pending (bytes " in output
                     assert sheet.read_bytes() == edited
-                    print("PASS: inspection accepted the equivalent BOM save and refused the same-size decision edit.")
+                    print("PASS: the restored sheet showed idx:2 pending. The observed same-size decision edit refused inspection.")
                     continue
                 sheet.write_bytes(one_removed)
                 guide.stdin.write(outcome.encode() + b"\n")
@@ -85,6 +95,16 @@ def check(binary, job):
                     assert b"Explicitly marked duplicates to remove: 0" in refreshed, refreshed
                     assert b"Records to export for screening: 3 (including 2 pending duplicate review)." in refreshed, refreshed
                     assert not (job / outcome).exists()
+                    if outcome == "cancel":
+                        # Restoring the first preview cannot resurrect its earlier approval.
+                        edited = one_removed
+                        sheet.write_bytes(edited)
+                        guide.stdin.write(b"write\n")
+                        restored = read_prompt(log, guide, question)
+                        assert b"Saved decisions changed after the preview" in restored, restored
+                        assert b"Explicitly marked duplicates to remove: 1" in restored, restored
+                        assert not (job / outcome).exists()
+                        print("PASS: restoring the first preview required fresh confirmation and wrote no export.")
                     guide.communicate(b"write\n" if outcome == "write" else b"\n", timeout=10)
                     assert guide.returncode == 0, log.read()
             finally:
