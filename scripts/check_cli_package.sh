@@ -55,7 +55,7 @@ echo "PASS: packaged CLI verified one copy, retained the subtitled record and re
     grep -Fxq 'cat:1 has no SP or EP field for a final page range or article number.' inspection.txt
     grep -Fxq 'idx:1 supplies pagination fields without a usable final page range or article number.' inspection.txt
     review_input --export-reviewed choices.tsv clean
-    "${checksum[@]}" -c <<'SUMS'
+    cat > baseline.sha256 <<'SUMS'
 1d82abac0229ac0219fbac70bee42653b1e944bfe23a075b75693c97a2c95d4e *catalog.ris
 390bb4a3fbc69f21eb4dc04f448c3fc8624c641dd8fca22b726ed0dc815d88b1 *index.ris
 8106ad9551dfe5a8fa74ac6c12292a837affdc72495b1bbc7e6961d1d027a6b0 *choices.tsv
@@ -63,6 +63,7 @@ echo "PASS: packaged CLI verified one copy, retained the subtitled record and re
 48314f0dce442cd7c83355e561c2e6f0977e8c91c66cb9c917ccd22134d28afe *clean/mapping.tsv
 59def875d9cd1a68023e3e9301e260a21965fc7a04345a9c4d4915d0a7b2c0c5 *clean/reconciliation.tsv
 SUMS
+    "${checksum[@]}" -c baseline.sha256
     echo "PASS: two pending reports and literal field BOMs matched the baseline sheet and export."
 
     printf 'TY  - JOUR\r\nTI  - Enquêt' >> index.ris
