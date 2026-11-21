@@ -53,8 +53,21 @@ echo "PASS: packaged CLI verified one copy, retained the subtitled record and re
         'DO  - 10.0000/tide' 'ER  -' > index.ris
     review_input() { dedup review-ids "$@" --ris-source cat catalog.ris --ris-source idx index.ris; }
     review_input --init-decisions choices.tsv > queue.tsv
+    tide_guide() {
+        printf '%s\n' choices.tsv cat catalog.ris idx index.ris '' yes "$@" '' | dedup start
+    }
+    review_input --pending-decisions choices.tsv > "$work/tide-pending.tsv"
+    tide_guide > "$work/tide-guide.tsv" 2> "$work/tide-prompts.txt"
+    cmp "$work/tide-pending.tsv" "$work/tide-guide.tsv"
+    if grep -Ei 'Citation fields \(normalized|Tidal survey|^  TY  -' \
+        queue.tsv "$work/tide-pending.tsv" "$work/tide-prompts.txt"; then exit 1; fi
+
     review_input --inspect-pair choices.tsv cat:1 idx:1 > "$work/comparison.txt"
+    grep -Fxq '  DOI (same)  "10.0000/tide"' "$work/comparison.txt"
+    grep -Fxq '  Title (different)  "tidal survey protocol" | "tidal survey follow-up"' "$work/comparison.txt"
     grep -Fxq '  Final pages/article  absent | see original' "$work/comparison.txt"
+    tide_guide ':inspect cat:1,idx:1' > "$work/tide-guide.tsv" 2> "$work/tide-prompts.txt"
+    cat "$work/tide-pending.tsv" "$work/comparison.txt" | cmp - "$work/tide-guide.tsv"
     # The frozen hash covers the original two source displays and pagination notes.
     sed -n '/^\[cat:1\] /,$p' "$work/comparison.txt" > inspection.txt
     grep -Fxq 'cat:1 has no SP or EP field for a final page range or article number.' inspection.txt
@@ -112,6 +125,7 @@ SUMS
     test -s "$work/coverage.err"
     find . -print | LC_ALL=C sort | cmp - "$work/project-before.txt"
     "${checksum[@]}" -c "$work/baseline.sha256"
+    echo "PASS: both inspection routes showed the shared DOI, different titles, missing and provisional pages, and original RIS only on request. Decisions and all three export hashes matched the baseline."
     cmp catalog.ris renamed.ris
     cat catalog.ris index.ris | cmp - combined.ris
     review_input | cmp - queue.tsv
