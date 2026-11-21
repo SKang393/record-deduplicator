@@ -1467,3 +1467,47 @@ fn guided_find_shows_named_authors_in_either_order_and_filters_by_title() {
     assert!(rows[7].ends_with("AU=\"de Orrel, N.\""));
     assert!(rows[8].ends_with("AU=\"Ivo de Orrel\""));
 }
+
+#[test]
+fn guided_find_requires_venue_and_title_on_the_same_occurrence() {
+    let inputs = Inputs::new("find-venue");
+    inputs.write("folio.ris", b"TY  - JOUR\nTI  - Field notes\nJO  - Slate Inlet Bulletin\nER  -\n\
+        TY  - JOUR\nT1  - Field notes\nJF  - Slate\n      Inlet Bulletin\nER  -\n\
+        TY  - JOUR\nTI  - Field notes\nT2  - Slate Inlet Bulletin\nAB  - Separate follow-up.\nER  -\n\
+        TY  - JOUR\nTI  - Field notes\nAU  - Slate Inlet Bulletin\nER  -\n\
+        TY  - JOUR\nTI  - Field notes\nJO  - Inlet, Slate\nER  -\n\
+        TY  - JOUR\nTI  - Census\nJO  - Slate Inlet Bulletin\nER  -\n");
+    inputs.write(
+        "answers.txt",
+        b"choices.tsv\nfolio\nfolio.ris\n\nreview\n\
+        :find --venue | field notes\n\
+        :find --venue SLATE inlet | field notes\n\
+        :cancel\n",
+    );
+    let guide = Command::new(env!("CARGO_BIN_EXE_dedup"))
+        .current_dir(&inputs.0)
+        .arg("start")
+        .stdin(fs::File::open(inputs.0.join("answers.txt")).unwrap())
+        .output()
+        .unwrap();
+    assert!(guide.status.success(), "{:?}", guide.stderr);
+    let prompts = String::from_utf8(guide.stderr).unwrap();
+    assert!(prompts.contains("Enter :find --venue VENUE | TITLE with text on both sides"));
+    let output = String::from_utf8(guide.stdout).unwrap();
+    let hits: Vec<_> = output
+        .lines()
+        .filter(|line| line.starts_with("folio:"))
+        .map(|line| {
+            let columns: Vec<_> = line.split('\t').collect();
+            (columns[0], columns[3])
+        })
+        .collect();
+    assert_eq!(
+        hits,
+        [
+            ("folio:1", "JO=\"Slate Inlet Bulletin\""),
+            ("folio:2", "JF=\"Slate Inlet Bulletin\""),
+            ("folio:3", "T2=\"Slate Inlet Bulletin\"")
+        ]
+    );
+}

@@ -281,14 +281,18 @@ guided_start() (
     printf '%s\n' $'triage\ttitle_variant_locator\tcat:1,idx:2\tinspect_only' > expected-lead.tsv
     review --inspect-pair resolved.tsv cat:1 idx:2 > expected-pair.txt
     grep -Fq '[idx:2] outside-decision-sheet' expected-pair.txt
-    printf '%s\n' $'idx:2\toutside-decision-sheet\t"Marsh transects after spring flooding: seasonal observations"' \
-        'Found 1. Use :inspect KEY,KEY to compare two originals. Only existing sheet rows are editable.' > expected-find.txt
+    printf '%s\n' $'idx:2\toutside-decision-sheet\t"Marsh transects after spring flooding: seasonal observations"\tJO="Fable Ecology"' \
+        'Found 1. If you expected another occurrence, try :find WORD with one distinctive word from the title, without --author or --venue. Only existing sheet rows are editable.' > expected-find.txt
+    printf '%s\n' $'cat:1\tkeep\t"Marsh transects after spring flooding"' \
+        $'idx:1\tverified-duplicate-of=cat:1\t"Marsh transects after spring flooding"' \
+        $'idx:2\toutside-decision-sheet\t"Marsh transects after spring flooding: seasonal observations"' \
+        'Found 3. Use :inspect KEY,KEY to compare two originals. Only existing sheet rows are editable.' >> expected-find.txt
     "${checksum[@]}" -b catalog.ris index.ris resolved.tsv > leads-inputs.sha256
 
     sheet_answer=$(guide_path resolved.tsv)
     catalog_path=$(guide_path catalog.ris)
     index_answer=$(guide_path index.ris)
-    guided_start yes :leads ':find SEASONAL observations' ':inspect cat:1,idx:2' :leads "$(guide_path leads-export)" write > leads-session.txt 2> leads-prompts.txt
+    guided_start yes :leads ':find --venue Fable Ecology | SEASONAL observations' ':find transects' ':inspect cat:1,idx:2' :leads "$(guide_path leads-export)" write > leads-session.txt 2> leads-prompts.txt
     cat pending-leads.tsv expected-lead.tsv expected-find.txt expected-pair.txt expected-lead.tsv | cmp - leads-session.txt
     grep -Fq 'These pairs add no decision rows.' leads-prompts.txt
     grep -Fq 'The guide keeps no history of viewed pairs.' leads-prompts.txt

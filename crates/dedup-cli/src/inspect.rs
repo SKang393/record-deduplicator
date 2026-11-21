@@ -43,18 +43,28 @@ fn given_first(name: &str) -> Option<String> {
 pub(super) fn find(queue: &ReviewQueue<'_>, decisions: &[Decision], query: &str) -> io::Result<()> {
     let query = single_line(query).to_lowercase();
     let (prefix, rest) = query.split_once(' ').unwrap_or((&query, ""));
-    let (needle, required_title) = if prefix == "--author" {
-        let Some((author, title)) = rest
+    let by_venue = prefix == "--venue";
+    let (needle, required_title) = if by_venue || prefix == "--author" {
+        let Some((fragment, title)) = rest
             .split_once('|')
-            .map(|(a, t)| (a.trim(), t.trim()))
-            .filter(|(a, t)| !a.is_empty() && !t.is_empty())
+            .map(|(field, title)| (field.trim(), title.trim()))
+            .filter(|(field, title)| !field.is_empty() && !title.is_empty())
         else {
-            eprintln!("Enter :find --author NAME | TITLE with text on both sides of the bar.");
+            let field = if by_venue { "VENUE" } else { "NAME" };
+            eprintln!("Enter :find {prefix} {field} | TITLE with text on both sides of the bar.");
             return Ok(());
         };
-        (author, Some(title))
+        (fragment, Some(title))
     } else {
         (query.as_str(), None)
+    };
+    let field_tags: &[&str] = if by_venue {
+        eprintln!(
+            "Venue lookup uses JO, JF or T2. Use :find TITLE to include occurrences with missing or differently written venues."
+        );
+        &["JO", "JF", "T2"]
+    } else {
+        &["AU", "A1"]
     };
     let reversed_query = given_first(needle);
     let query_name = reversed_query.as_deref().unwrap_or(needle);
@@ -88,18 +98,19 @@ pub(super) fn find(queue: &ReviewQueue<'_>, decisions: &[Decision], query: &str)
             if required_title.is_some() && title_hit.is_none() {
                 continue;
             }
-            let author = record
+            let field_hit = record
                 .fields
                 .iter()
-                .filter(|f| matches!(f.tag, "AU" | "A1"))
+                .filter(|f| field_tags.contains(&f.tag))
                 .find_map(|f| {
                     let original = field_text(f);
                     let value = original.to_lowercase();
                     (value.contains(needle)
-                        || given_first(&value).as_deref().unwrap_or(&value) == query_name)
+                        || (!by_venue
+                            && given_first(&value).as_deref().unwrap_or(&value) == query_name))
                         .then_some((f.tag, original))
                 });
-            if author.is_none() && (required_title.is_some() || title_hit.is_none()) {
+            if field_hit.is_none() && (required_title.is_some() || title_hit.is_none()) {
                 continue;
             }
             let mut title = title_hit
@@ -116,7 +127,7 @@ pub(super) fn find(queue: &ReviewQueue<'_>, decisions: &[Decision], query: &str)
                 index + 1,
                 sheet_status(decision, queue)
             )?;
-            if let Some((tag, original)) = author {
+            if let Some((tag, original)) = field_hit {
                 write!(out, "\t{tag}={original:?}")?;
             }
             writeln!(out)?;
@@ -127,6 +138,11 @@ pub(super) fn find(queue: &ReviewQueue<'_>, decisions: &[Decision], query: &str)
         writeln!(
             out,
             "No occurrences matched. Try a shorter title or author fragment."
+        )?;
+    } else if count == 1 {
+        writeln!(
+            out,
+            "Found 1. If you expected another occurrence, try :find WORD with one distinctive word from the title, without --author or --venue. Only existing sheet rows are editable."
         )?;
     } else {
         writeln!(

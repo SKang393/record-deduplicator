@@ -78,8 +78,9 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    [link your assessment to the exported records](#record-a-reviewers-assessment-of-two-retained-occurrences).
    If you remember the citation but neither key, type `:find marsh transects`
    or `:find Reed`. To narrow a surname search, use
-   `:find --author Reed | marsh transects`. The guide searches every selected
-   export, including occurrences outside the suggested groups.
+   `:find --author Reed | marsh transects`. If a short title appears in several
+   journals, use `:find --venue Fable Ecology | marsh transects`. The guide
+   searches every selected export, including occurrences outside the suggested groups.
 5. When several groups are pending, the guide repeats the first
    group just before the inspection prompt. Type `:inspect KEY,KEY` to compare
    records from any pending row. You can paste two keys from the pending
@@ -496,11 +497,21 @@ lines are ignored. For a complete name, `:find Nessa de Orrel` also finds
 alternate spelling uses a single comma in the query or source and keeps
 all name parts. Initials are searched as entered.
 
+If you know the journal, use `:find --venue Fable Ecology | marsh transects`
+to require a venue fragment and a title fragment on the same occurrence.
+Each result shows the first matching `JO`, `JF` or `T2` field as supplied.
+Use `:find marsh transects` to include occurrences that omit the venue or
+use a different spelling or abbreviation.
+
 Use `:find --author de Orrel | paper lattices` to require both an author
 and a title fragment on the same occurrence. Each fragment must appear
 within one field. Results include every matching occurrence, its key,
 sheet status and title. An author hit also shows the matching `AU` or
 `A1` value in source order. Several people can share a surname or initials.
+
+If either filter returns only the occurrence you started from, search again
+with one distinctive word from the title, for example `:find transects`.
+This also helps when title punctuation differs between exports.
 Compare the two originals with `:inspect` before making a decision.
 Edit the saved sheet only when the occurrence already has a decision row.
 An `outside-decision-sheet` record stays in the export. Even when you
