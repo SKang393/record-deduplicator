@@ -383,11 +383,16 @@ grep -Fq 'Explicitly marked duplicates to remove: 1' prompts.txt
 grep -Fq 'Records retained: 2 (including 1 pending).' prompts.txt
 grep -Fq 'Export cancelled.' prompts.txt
 check_untouched
-if guided_start yes "$(guide_path "$handoff/Dossier occupé")" write > guided-pending.tsv 2> prompts.txt; then exit 1; fi
+occupied_path=$(guide_path "$handoff/Dossier occupé")
+guided_start yes "$occupied_path" :cancel > guided-pending.tsv 2> prompts.txt
 grep -Fq 'Destination already exists.' prompts.txt
+if grep -Fq 'Type write to create' prompts.txt; then exit 1; fi
 check_untouched
 
-guided_start yes "$dest_answer" write > guided-pending.tsv 2> prompts.txt
+guided_start yes "$occupied_path" "$dest_answer" write > guided-pending.tsv 2> prompts.txt
+grep -Fq 'Destination already exists.' prompts.txt
+grep -Fq "New export folder: $dest_path" prompts.txt
+printf '%s\n' 'Previous output' | cmp - "$handoff/Dossier occupé/reviewed.ris"
 reference_review --export-reviewed saved.tsv reference-export
 test "$(find "$dest" -print | wc -l)" -eq 4  # Directory and its three files.
 for file in reviewed.ris mapping.tsv reconciliation.tsv; do

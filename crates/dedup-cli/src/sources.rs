@@ -225,7 +225,6 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 else {
                     return Ok(());
                 };
-                super::reviewed::require_new_destination(&directory).map_err(|e| e.to_string())?;
                 let mut decisions = read_current_decisions()?;
                 if decisions != sheet.decisions {
                     eprintln!(

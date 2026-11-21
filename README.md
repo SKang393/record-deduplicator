@@ -94,7 +94,8 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    The guide shows both original records and returns to the prompt.
    Press Enter to close this session, or enter a new
    folder path to preview an export. Choose a folder name inside an existing
-   directory, which can be outside the project. The guide rereads the saved
+   directory, which can be outside the project. If that folder already exists,
+   enter a different path at the next prompt. The guide rereads the saved
    decisions when you request the preview. Check the sheet path,
    destination, explicit duplicate count, and how many pending records will
    be kept. If a marked copy and its keeper share a DOI or PMID and their

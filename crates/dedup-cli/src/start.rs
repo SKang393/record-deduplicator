@@ -192,7 +192,7 @@ pub(super) fn export_destination(
     input: &mut dyn BufRead,
     mut inspect: impl FnMut(&str, &str) -> Result<(), String>,
 ) -> Result<Option<PathBuf>, String> {
-    let Some(path) = ask_path_or_action(
+    while let Some(path) = ask_path_or_action(
         input,
         "To compare two keys from a pending row, type :inspect KEY,KEY. You can compare two pending records. To preview an export, enter a new folder path. Press Enter to close this session:",
         |answer| {
@@ -212,11 +212,18 @@ pub(super) fn export_destination(
             }
             Ok(true)
         },
-    )?
-    else {
-        return Ok(None);
-    };
-    Ok((!path.is_empty()).then(|| PathBuf::from(path)))
+    )? {
+        if path.is_empty() {
+            break;
+        }
+        let directory = PathBuf::from(path);
+        match super::reviewed::require_new_destination(&directory) {
+            Ok(()) => return Ok(Some(directory)),
+            Err(e) if e.kind() == ErrorKind::AlreadyExists => eprintln!("{e}"),
+            Err(e) => return Err(e.to_string()),
+        }
+    }
+    Ok(None)
 }
 
 pub(super) fn confirm_export(
