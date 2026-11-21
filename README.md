@@ -88,9 +88,8 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    from a row into `:inspect KEY,KEY` to read the two source records.
    The list includes previously viewed pairs. Viewing a pair saves no verdict.
    A removal requires a separately eligible decision in the sheet. To revisit
-   a pair after export, keep both keys with your review notes and
-   [trace each occurrence](#trace-an-exported-occurrence-to-its-originals)
-   against that export's mapping.
+   a pair after export, keep both keys and
+   [link your assessment to the exported records](#record-a-reviewers-assessment-of-two-retained-occurrences).
    If you remember the citation but neither key, type `:find marsh transects`
    or `:find Reed`. The guide searches titles and authors in every selected
    export, including occurrences outside the suggested groups.
@@ -554,7 +553,6 @@ Take the occurrence key from the third column of a `map` row in
 containing the original downloads. In the metadata walkthrough above, the
 downloads are in the current directory.
 
-<!-- package-walkthrough -->
 ```sh
 dedup trace reviewed/mapping.tsv idx:1 .
 dedup trace reviewed/mapping.tsv idx:2 .
@@ -575,6 +573,35 @@ printing any rows. Byte-identical files can have multiple matching paths,
 which it lists. Supply additional folders as separate arguments and quote
 paths with spaces. The read-only lookup prints paths and provenance. Use
 `--inspect-pair` when you also want to read the original RIS fields.
+
+#### Record a reviewer's assessment of two retained occurrences
+
+If you recognize an off-sheet copy during `:inspect`, keep the two keys
+and your reason in your local review notes. Record how you found the pair
+(manual search or a queue suggestion). After export, use the mapping you
+trust from that run to link the note to both originals. This Bash example
+uses the walkthrough's two retained keys. Substitute the keys you inspected
+and the folder containing your original downloads.
+
+<!-- package-walkthrough -->
+```sh
+mapping=reviewed/mapping.tsv
+left=cat:1
+right=idx:2
+pair_evidence=$(dedup verify-export "$mapping" reviewed/reviewed.ris &&
+  dedup trace "$mapping" "$left" . &&
+  dedup trace "$mapping" "$right" .) &&
+  printf '%s\n' "$pair_evidence"
+```
+
+The example prints the evidence only after all three checks succeed. In
+your note, keep the RIS and mapping hashes and each occurrence's key,
+source hash, byte range, mapping decision and output number. Record your
+assessment separately, for example, “Same report. The publisher's note
+identifies the paginated version of the online article.” Use “distinct
+reports” or “unresolved” when appropriate. If both occurrences have their
+own retained output number, both count toward the screening handoff. The
+note records your judgment without adding a sheet row or counting a removal.
 
 ### Trace a saved keep reason
 
