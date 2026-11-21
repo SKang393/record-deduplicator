@@ -353,7 +353,8 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                     )? {
                         break;
                     }
-                    let current = parse(&read_current_sheet()?)?.decisions;
+                    let approved_sheet = read_current_sheet()?;
+                    let current = parse(&approved_sheet)?.decisions;
                     if current != decisions {
                         eprintln!(
                             "Saved decisions changed after the preview. Review the updated preview and confirm again."
@@ -361,7 +362,20 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                         decisions = current;
                         continue;
                     }
-                    export.publish(&directory)?;
+                    let published = export.publish_if(&directory, || {
+                        let latest = read_current_sheet()?;
+                        if latest == approved_sheet {
+                            return Ok(true);
+                        }
+                        decisions = parse(&latest)?.decisions;
+                        Ok(false)
+                    })?;
+                    if !published {
+                        eprintln!(
+                            "The saved sheet changed while writing the temporary files. Check the saved choices and confirm again, even if the totals match."
+                        );
+                        continue;
+                    }
                     eprintln!(
                         "Saved {} with mapping.tsv and reconciliation.tsv.",
                         directory.join("reviewed.ris").display()

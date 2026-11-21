@@ -106,8 +106,13 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    and compare the keys with `:inspect`. Type `write` to save the three
    files, or press Enter to cancel. If a saved decision changes after the
    preview, the guide validates the edited sheet when you type `write`.
-   A valid change brings up a fresh preview in the same session.
-   Check it and type `write` again to export, or press Enter to cancel.
+   A valid decision change brings up a fresh preview. The guide also rereads
+   the sources and sheet after writing the temporary files, just before
+   publishing the folder. If the sheet bytes changed during writing, a valid
+   save brings up a fresh preview even when the counts match. Check the saved
+   choices and type `write` again to export, or press Enter to cancel.
+   A change to the source bytes stops the export. Keep the inputs stable until
+   the destination appears. These checks read the files without locking them.
    [Check the RIS and mapping together](#reconcile-a-reviewed-export-before-screening)
    before opening `reviewed.ris` in your reference manager. Use
    `mapping.tsv` for individual decisions and `reconciliation.tsv` for

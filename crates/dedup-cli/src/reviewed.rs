@@ -278,11 +278,26 @@ pub(super) fn require_new_destination(directory: &Path) -> io::Result<()> {
 
 impl PreparedExport {
     pub(super) fn publish(self, directory: &Path) -> Result<(), String> {
-        self.write_new_directory(directory)
-            .map_err(|e| format!("Cannot create reviewed export: {e}"))
+        self.publish_if(directory, || Ok(true)).map(|_| ())
     }
 
-    fn write_new_directory(self, directory: &Path) -> io::Result<()> {
+    pub(super) fn publish_if(
+        self,
+        directory: &Path,
+        still_current: impl FnOnce() -> Result<bool, String>,
+    ) -> Result<bool, String> {
+        let write_error = |e| format!("Cannot create reviewed export: {e}");
+        let staging = self.stage(directory).map_err(write_error)?;
+        if !still_current()? {
+            return Ok(false);
+        }
+        // Publish all files together. An existing or concurrently created destination wins.
+        renamore::rename_exclusive(staging.path(), directory).map_err(write_error)?;
+        let _ = staging.keep();
+        Ok(true)
+    }
+
+    fn stage(self, directory: &Path) -> io::Result<tempfile::TempDir> {
         require_new_destination(directory)?;
         let parent = directory
             .parent()
@@ -292,10 +307,7 @@ impl PreparedExport {
             .prefix(".dedup-export-")
             .tempdir_in(parent)?;
         self.write_files(staging.path())?;
-        // Publish all files together. An existing or concurrently created destination wins.
-        renamore::rename_exclusive(staging.path(), directory)?;
-        let _ = staging.keep();
-        Ok(())
+        Ok(staging)
     }
 
     fn write_files(self, staging: &Path) -> io::Result<()> {
@@ -328,6 +340,44 @@ impl PreparedExport {
 mod tests {
     use super::*;
     use std::fs;
+
+    #[test]
+    fn final_check_can_discard_a_complete_staged_export() {
+        let parent = tempfile::tempdir().unwrap();
+        let destination = parent.path().join("reviewed");
+        let export = PreparedExport {
+            ris: "TY  - JOUR\nER  -\n".into(),
+            asreview: None,
+            mapping: "mapping\n".into(),
+            reconciliation: "counts\n".into(),
+            retained: 1,
+            removed: 0,
+            pending: 0,
+        };
+        let published = export
+            .publish_if(&destination, || {
+                assert!(!destination.exists());
+                let staging = fs::read_dir(parent.path())
+                    .unwrap()
+                    .next()
+                    .unwrap()
+                    .unwrap()
+                    .path();
+                assert_eq!(
+                    fs::read(staging.join("reviewed.ris")).unwrap(),
+                    b"TY  - JOUR\nER  -\n"
+                );
+                assert_eq!(
+                    fs::read(staging.join("reconciliation.tsv")).unwrap(),
+                    b"counts\n"
+                );
+                assert_eq!(fs::read(staging.join("mapping.tsv")).unwrap(), b"mapping\n");
+                Ok(false)
+            })
+            .unwrap();
+        assert!(!published);
+        assert!(fs::read_dir(parent.path()).unwrap().next().is_none());
+    }
 
     #[test]
     fn failed_reconciliation_write_leaves_no_mapping_in_staging() {
