@@ -86,6 +86,18 @@ fn ask_path_or_action(
     Ok(None)
 }
 
+fn ask_source_path(input: &mut dyn BufRead) -> Result<Option<String>, String> {
+    while let Some(path) = ask_path(input, "Paste or type the path to this RIS export:")? {
+        if Path::new(&path).is_file() {
+            return Ok(Some(path));
+        }
+        eprintln!(
+            "Cannot locate a regular file there. Paste its full path from Explorer or Finder."
+        );
+    }
+    Ok(None)
+}
+
 pub(super) fn run() -> Result<(), String> {
     let mut input = io::stdin().lock();
     eprintln!("Start a local RIS review. Type :cancel at any prompt to stop.");
@@ -138,35 +150,81 @@ pub(super) fn run() -> Result<(), String> {
             eprintln!("That label is already in use. Choose another label.");
             continue;
         }
-        let path = loop {
-            let Some(path) = ask_path(&mut input, "Paste or type the path to this RIS export:")?
-            else {
-                return Ok(());
-            };
-            if Path::new(&path).is_file() {
-                break path;
-            }
-            eprintln!(
-                "Cannot locate a regular file there. Paste its full path from Explorer or Finder."
-            );
+        let Some(path) = ask_source_path(&mut input)? else {
+            return Ok(());
         };
         sources.push((label, path));
     }
 
-    eprintln!("{verb} sheet {sheet} with these exports:");
-    let mut args = Vec::<OsString>::new();
-    for (label, path) in sources {
-        eprintln!("  {label} = {path}");
-        args.extend(["--ris-source".into(), label.into(), path.into()]);
-    }
+    // Only suggest labels here. Reopening still verifies the entire sheet and each original.
+    let saved_labels: Vec<_> = if existing {
+        let text = super::decisions::read_sheet(sheet.as_ref())?;
+        super::decisions::saved_source_labels(&text)
+            .into_iter()
+            .filter(|label| ris::valid_source_label(label))
+            .map(str::to_owned)
+            .collect()
+    } else {
+        Vec::new()
+    };
     let confirmation = if existing {
         "Type yes to continue, or press Enter to cancel:"
     } else {
         "Type review to create the sheet and inspect pending groups now, or yes to create it and print the full queue. Press Enter to cancel:"
     };
-    let Some(answer) = ask(&mut input, confirmation)? else {
-        return Ok(());
+    let answer = loop {
+        eprintln!("{verb} sheet {sheet} with these exports:");
+        for (label, path) in &sources {
+            eprintln!("  {label} = {path}");
+        }
+        for label in &saved_labels {
+            if !sources.iter().any(|(name, _)| name == label) {
+                eprintln!("Missing saved source '{label}'. Type add {label} to supply its path.");
+            }
+        }
+        eprintln!(
+            "Type edit LABEL to change a listed path, or add LABEL to include another export."
+        );
+        let Some(answer) = ask(&mut input, confirmation)? else {
+            return Ok(());
+        };
+        let mut words = answer.split_whitespace();
+        let Some(command @ ("edit" | "add")) = words.next() else {
+            break answer;
+        };
+        let label = words.next().unwrap_or("");
+        if !ris::valid_source_label(label) || words.next().is_some() {
+            eprintln!(
+                "Enter {command} followed by one source label, for example {command} catalog."
+            );
+            continue;
+        }
+        let position = sources.iter().position(|(name, _)| name == label);
+        if command == "edit" && position.is_none() {
+            eprintln!("The list has no '{label}' source. Check the label you want to edit.");
+            continue;
+        }
+        if command == "add" && position.is_some() {
+            eprintln!("'{label}' is already listed. To change its path, type edit {label}.");
+            continue;
+        }
+        if command == "add" && sources.len() == ris::MAX_SOURCES {
+            eprintln!("The source list is full. To replace a path, use its existing label.");
+            continue;
+        }
+        let Some(path) = ask_source_path(&mut input)? else {
+            return Ok(());
+        };
+        if let Some(i) = position {
+            sources[i].1 = path;
+        } else {
+            sources.push((label.to_owned(), path));
+        }
     };
+    let mut args = Vec::<OsString>::new();
+    for (label, path) in sources {
+        args.extend(["--ris-source".into(), label.into(), path.into()]);
+    }
     if !existing && answer.eq_ignore_ascii_case("review") {
         return sources::run_action(
             Action::Pending(sheet.as_ref(), PendingMode::CreateAndReview(&mut input)),

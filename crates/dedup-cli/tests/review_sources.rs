@@ -1487,6 +1487,44 @@ fn optional_keep_reason_follows_the_selected_kept_report() {
 }
 
 #[test]
+fn guided_setup_can_edit_a_path_and_add_a_missing_source() {
+    let inputs = Inputs::new("edit-add");
+    inputs.write(
+        "east.ris",
+        b"TY  - JOUR\nTI  - Reed beds\nDO  - 10.0000/reeds\nER  -\n",
+    );
+    inputs.write(
+        "west.ris",
+        b"TY  - JOUR\nT1  - Reed beds\nDO  - 10.0000/reeds\nER  -\n",
+    );
+    let init = inputs.run(&[
+        "--init-decisions",
+        "choices.tsv",
+        "--ris-source",
+        "east",
+        "east.ris",
+        "--ris-source",
+        "west",
+        "west.ris",
+    ]);
+    assert!(init.status.success(), "{:?}", init.stderr);
+
+    inputs.write(
+        "answers.txt",
+        b"choices.tsv\neast\nwest.ris\n\nedit east\neast.ris\nadd west\nwest.ris\nyes\n\n",
+    );
+    let guide = Command::new(env!("CARGO_BIN_EXE_dedup"))
+        .current_dir(&inputs.0)
+        .arg("start")
+        .stdin(fs::File::open(inputs.0.join("answers.txt")).unwrap())
+        .output()
+        .unwrap();
+    assert!(guide.status.success(), "{:?}", guide.stderr);
+    assert!(String::from_utf8_lossy(&guide.stderr).contains("Missing saved source 'west'"));
+    assert!(String::from_utf8_lossy(&guide.stdout).contains("pending\tdoi\teast:1,west:1\t"));
+}
+
+#[test]
 fn guided_find_shows_named_authors_in_either_order_and_filters_by_title() {
     let inputs = Inputs::new("find-author");
     inputs.write("folio.ris", b"TY  - JOUR\nTI  - Paper lattices\nAU  - Pell, Ora\nAU  - de Orrel, Nessa\nER  -\n\
