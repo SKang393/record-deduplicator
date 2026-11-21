@@ -62,6 +62,10 @@ pub(super) enum Action<'a> {
     },
     Resume(&'a OsStr),
     Pending(&'a OsStr, Option<&'a mut dyn BufRead>),
+    EarlierChoices {
+        current: &'a OsStr,
+        earlier: &'a OsStr,
+    },
     InspectPair(&'a OsStr, &'a OsStr, &'a OsStr),
     Export(&'a OsStr, &'a Path),
 }
@@ -88,6 +92,11 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
             )
         }
         [flag, path, rest @ ..] if flag == "--resume-decisions" => (Action::Resume(path), rest),
+        [flag, current, from, earlier, rest @ ..]
+            if flag == "--pending-decisions" && from == "--earlier-sheet" =>
+        {
+            (Action::EarlierChoices { current, earlier }, rest)
+        }
         [flag, path, rest @ ..] if flag == "--pending-decisions" => {
             (Action::Pending(path, None), rest)
         }
@@ -179,6 +188,40 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
             None
         }
         Action::Resume(path) => Some(super::decisions::resume(path, &queue, &manifest)?),
+        Action::EarlierChoices { current, earlier } => {
+            let sheet = super::decisions::resume(current, &queue, &manifest)
+                .map_err(|e| format!("Current sheet: {e}"))?;
+            let earlier_text =
+                super::decisions::read_sheet(earlier).map_err(|e| format!("Earlier sheet: {e}"))?;
+            let labels = super::decisions::saved_source_labels(&earlier_text);
+            let (inputs, identities): (Vec<_>, Vec<_>) = queue
+                .sources
+                .iter()
+                .zip(&manifest)
+                .filter(|(source, _)| labels.contains(source.label))
+                .map(|(source, identity)| {
+                    ((source.label, source.source.original), identity.clone())
+                })
+                .unzip();
+            if inputs.is_empty() {
+                return Err("Cannot locate any earlier named inputs. Check the earlier sheet and select its original downloads along with the update.".into());
+            }
+            let earlier_queue = ris::review_sources(&inputs).map_err(queue_error)?;
+            let earlier_sheet =
+                super::decisions::parse_sheet(&earlier_text, &earlier_queue, &identities)
+                    .map_err(|e| format!("Earlier sheet: {e}"))?;
+            recheck_sources()?;
+            let mut out = io::BufWriter::new(io::stdout().lock());
+            return super::pending::earlier_choices(
+                &queue,
+                &sheet,
+                &earlier_queue,
+                &earlier_sheet,
+                &mut out,
+            )
+            .and_then(|()| out.flush())
+            .map_err(|_| "Cannot write earlier choices.".into());
+        }
         Action::InspectPair(path, left, right) => {
             let sheet = super::decisions::resume(path, &queue, &manifest)?;
             return super::inspect::pair(&queue, &sheet.decisions, left, right)

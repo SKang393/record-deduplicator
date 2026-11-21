@@ -1,5 +1,8 @@
 //! Read-only projection of the direct evidence groups in a reopened sheet.
-use std::io::{self, Write};
+use std::{
+    collections::BTreeMap,
+    io::{self, Write},
+};
 
 use dedup_core::{
     identifier_review::{Issue, OtherEvidence},
@@ -7,6 +10,60 @@ use dedup_core::{
 };
 
 use crate::decisions::{Decision, ResumedSheet};
+
+pub(super) fn earlier_choices(
+    queue: &ReviewQueue<'_>,
+    sheet: &ResumedSheet,
+    earlier_queue: &ReviewQueue<'_>,
+    earlier_sheet: &ResumedSheet,
+    out: &mut impl Write,
+) -> io::Result<()> {
+    // Both sheets have been checked against the same bytes for every earlier source.
+    let current: BTreeMap<_, _> = queue
+        .entries
+        .iter()
+        .zip(&sheet.decisions)
+        .map(|(entry, decision)| ((entry.label, entry.ordinal), decision))
+        .collect();
+    writeln!(
+        out,
+        "occurrence\tcurrent_decision\tearlier_decision\tearlier_keeper_current_decision"
+    )?;
+    let mut listed = 0;
+    for (entry, earlier) in earlier_queue.entries.iter().zip(&earlier_sheet.decisions) {
+        if current[&(entry.label, entry.ordinal)] != &Decision::Pending
+            || matches!(earlier, Decision::NotCandidate | Decision::Pending)
+        {
+            continue;
+        }
+        let earlier_choice = match earlier {
+            Decision::Keep(Some(_)) => "keep-with-reason".into(),
+            _ => earlier.label(earlier_queue),
+        };
+        let keeper_now = earlier
+            .target()
+            .map(|target| {
+                let keeper = &earlier_queue.entries[target];
+                current[&(keeper.label, keeper.ordinal)].label(queue)
+            })
+            .unwrap_or_default();
+        writeln!(
+            out,
+            "{}:{}\tpending\t{earlier_choice}\t{keeper_now}",
+            entry.label, entry.ordinal
+        )?;
+        listed += 1;
+    }
+    let pending = sheet
+        .decisions
+        .iter()
+        .filter(|d| **d == Decision::Pending)
+        .count();
+    eprintln!(
+        "Earlier explicit choices found for {listed} of {pending} currently pending occurrences. Review the current evidence before editing. Use --pending-decisions without --earlier-sheet for all pending groups."
+    );
+    Ok(())
+}
 
 pub(super) fn render(
     queue: &ReviewQueue<'_>,

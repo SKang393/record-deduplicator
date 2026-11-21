@@ -174,6 +174,31 @@ def exercise(directory, binary, baseline):
     print("Verified sheet: 5 editable, 6 mapped, 1 verified copy, all 5 distinct reports retained.")
     print("Invalid edits/input changes rejected before output. Undo restored all 6; padded TSV replay matched all export files.")
 
+    # A later search returns A again and a distinct follow-up with A's DOI.
+    followup = a.replace(b"Marsh transects\n", b"Marsh transects follow-up\n").replace(b"21-26", b"71-76")
+    update = directory / "april.ris"
+    update.write_bytes(a + followup)
+    added = ["--ris-source", "apr", update]
+    current = directory / "cumulative.tsv"
+    run("--init-metadata-decisions", current, *added)
+    fresh = current.read_bytes()
+    history = ["--pending-decisions", current, "--earlier-sheet", sheet, *added]
+    earlier_rows = run(*history).stdout.splitlines()
+    assert earlier_rows[1:] == [b"cat:1\tpending\tkeep\t", b"idx:1\tpending\tverified-duplicate-of=cat:1\tpending"]
+    assert current.read_bytes() == fresh and sheet.read_bytes() == padded
+    run("--export-reviewed", current, "cumulative-pending", *added)
+    assert output("cumulative-pending", "reviewed.ris") == a + followup + a + b + e + copy + c + d
+    current.write_bytes(fresh.replace(b"apr:1\tpending", b"apr:1\tkeep")
+                        .replace(b"cat:1\tpending", b"cat:1\tduplicate-of=apr:1"))
+    assert run(*history).stdout.splitlines()[1:] == [
+        b"idx:1\tpending\tverified-duplicate-of=cat:1\tduplicate-of=apr:1"]
+    catalog.write_bytes(original[0].replace(b"cat-a", b"cat-z"))
+    run("--init-metadata-decisions", "replacement.tsv", *added)
+    failed = run("--pending-decisions", "replacement.tsv", "--earlier-sheet", sheet, *added, ok=False)
+    assert b"Earlier sheet" in failed.stderr and b"Source 'cat' has a different SHA-256" in failed.stderr
+    catalog.write_bytes(original[0])
+    print("Earlier choices located by original source. Changed keeper shown, replacement refused, all pending records retained.")
+
     # Change one corroborating field at a time. These variants still have the
     # original title/first author/year/type hint and fresh source fingerprints.
     variants = [

@@ -210,18 +210,33 @@ pub(super) fn read_sheet(path: &OsStr) -> Result<String, String> {
     Ok(text)
 }
 
+fn sheet_lines(text: &str) -> impl Iterator<Item = &str> + Clone {
+    // Calc writes short rows out to the width of the sheet with empty cells.
+    text.strip_prefix('\u{feff}')
+        .unwrap_or(text)
+        .lines()
+        .map(|line| line.trim_end_matches('\t'))
+}
+
+// Select the earlier queue's inputs. parse_sheet still checks its entire manifest and decisions.
+pub(super) fn saved_source_labels(text: &str) -> BTreeSet<&str> {
+    sheet_lines(text)
+        .skip(1)
+        .take(dedup_core::ris::MAX_SOURCES)
+        .map_while(|row| {
+            row.strip_prefix("input\tris\t")?
+                .split_once('\t')
+                .map(|(label, _)| label)
+        })
+        .collect()
+}
+
 pub(super) fn parse_sheet(
     text: &str,
     queue: &ReviewQueue<'_>,
     manifest: &[String],
 ) -> Result<ResumedSheet, String> {
-    // Calc writes short rows out to the width of the sheet with empty cells.
-    let mut lines = text
-        .strip_prefix('\u{feff}')
-        .unwrap_or(text)
-        .lines()
-        .map(|line| line.trim_end_matches('\t'))
-        .peekable();
+    let mut lines = sheet_lines(text).peekable();
     let metadata = match lines.next() {
         Some(VERSION) => false,
         Some(METADATA_VERSION) => true,

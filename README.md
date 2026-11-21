@@ -697,19 +697,28 @@ april() { review "$@" --ris-source apr april.ris; }
 review --resume-decisions choices.tsv && april --init-metadata-decisions choices-april.tsv
 ```
 
-Every editable row starts pending. For each earlier choice you want to reuse,
-check that the old source's `input` row, including its label and SHA-256,
-matches in both sheets. Check the keeper's source too. If a fingerprint
-differs, locate the original download before reusing its decisions. Find each
-occurrence by `label:ordinal`. Sheet positions and output numbers can change. For
-an earlier `idx:1` copy of `cat:1`, run
-`april --inspect-pair choices-april.tsv idx:1 cat:1`. If the evidence still
-supports the choice, enter the keeper, the copy's decision and any rationale
-in the corresponding rows of the new sheet. A prior `keep-with-reason` also
-needs its note. If an earlier key is now outside the sheet, leave it there.
-Its occurrence stays in the export. Leave uncertain candidates pending,
-including earlier records first flagged by the new download. Each new copy
-needs its own decision.
+Every editable row starts pending. These commands list earlier choices for
+those rows and inspect one earlier copy and keeper in the current review.
+
+```sh
+april --pending-decisions choices-april.tsv --earlier-sheet choices.tsv
+april --inspect-pair choices-april.tsv idx:1 cat:1
+```
+
+The read-only list checks both sheets against the named downloads, including
+each earlier source's SHA-256. If a fingerprint differs, locate the original
+download. The list locates each occurrence by `label:ordinal` because output
+numbers can change between exports. For an earlier removal, the last
+column shows the former keeper's decision in the current sheet. The earlier
+choice describes what was saved, even if the current group has changed.
+Consult the earlier sheet for note text.
+
+Check the current group for new members, including distinct reports that
+share a DOI. If the comparison supports the earlier choice, enter the keeper,
+the copy's decision and any required rationale in the new sheet. Each new copy
+needs its own decision. Leave uncertain rows pending. An earlier occurrence
+now outside the sheet stays in the export. The ordinary pending view below
+also includes new rows and rows left unresolved in the earlier review.
 
 ```sh
 april --pending-decisions choices-april.tsv
