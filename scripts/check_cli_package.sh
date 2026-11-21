@@ -269,6 +269,35 @@ guided_start() (
     esac
 )
 
+# Reopen the README review with its verified copy decision and zero pending rows.
+(
+    sed $'s/^idx:1\tpending$/idx:1\tverified-duplicate-of=cat:1\tSame report on pages 21-26./' choices.tsv > resolved.tsv
+    review --export-reviewed resolved.tsv leads-reference
+    grep -Fxq $'summary\tall\t3\tretained=2;suppressed=1' leads-reference/mapping.tsv
+    grep -Fq $'map\tverified-duplicate-of=cat:1\tidx:1\t' leads-reference/mapping.tsv
+    grep -Fq $'map\tnot-candidate\tidx:2\t' leads-reference/mapping.tsv
+    review --pending-decisions resolved.tsv > pending-leads.tsv
+    grep -Fxq $'summary\tpending\t0\tgroups=0;flagged_groups=0' pending-leads.tsv
+    printf '%s\n' $'triage\ttitle_variant_locator\tcat:1,idx:2\tinspect_only' > expected-lead.tsv
+    review --inspect-pair resolved.tsv cat:1 idx:2 > expected-pair.txt
+    grep -Fq '[idx:2] outside-decision-sheet' expected-pair.txt
+    "${checksum[@]}" -b catalog.ris index.ris resolved.tsv > leads-inputs.sha256
+
+    sheet_answer=$(guide_path resolved.tsv)
+    catalog_path=$(guide_path catalog.ris)
+    index_answer=$(guide_path index.ris)
+    guided_start yes :leads ':inspect cat:1,idx:2' :leads "$(guide_path leads-export)" write > leads-session.txt 2> leads-prompts.txt
+    cat pending-leads.tsv expected-lead.tsv expected-pair.txt expected-lead.tsv | cmp - leads-session.txt
+    grep -Fq 'These pairs add no decision rows.' leads-prompts.txt
+    grep -Fq 'The guide keeps no history of viewed pairs.' leads-prompts.txt
+    grep -Fq 'Explicitly marked duplicates to remove: 1' leads-prompts.txt
+    for file in reviewed.ris mapping.tsv reconciliation.tsv; do
+        cmp "leads-reference/$file" "leads-export/$file"
+    done
+    "${checksum[@]}" -c leads-inputs.sha256
+    echo "PASS: $start_shell reopened with zero pending, listed the same lead before and after inspection, and exported the saved one-removal decision byte for byte."
+)
+
 find "$project" "$handoff" -print | LC_ALL=C sort > "$work/before.txt"
 if [[ $start_shell == pwsh ]]; then
     # Two quoted file paths pasted into one source prompt must not select either file.
