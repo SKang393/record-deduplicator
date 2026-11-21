@@ -220,23 +220,38 @@ fn interrupted_field_joined_to_a_bom_export_fails_before_sheet_or_export() {
 #[test]
 fn converted_ris_and_blank_sources_can_be_reviewed_together() {
     let inputs = Inputs::new("converted");
+    let legacy = b"@article{CanopyNotes, title={Canop\xe9e, light and shade}, author={Fen, Uma}, year={2022}, journal={Fictional Shore Botany}}\n";
+    inputs.write("original.bib", legacy);
     // A synthetic bibutils 7.2 conversion, with the file BOM and mixed line endings.
     let converted = "\u{feff}TY  - JOUR\r\nAU  - Fen, Uma\rPY  - 2022\nDA  - 2022//\nTI  - Canopée, light and shade\nJO  - Fictional Shore Botany\nID  - CanopyNotes\nER  - \n";
     inputs.write("converted.data", converted.as_bytes());
     inputs.write("empty.ris", b"");
     inputs.write("blank.ris", "\u{feff}\t \r\n\n".as_bytes());
-    let sources = [
-        "--ris-source",
-        "bib",
-        "converted.data",
-        "--ris-source",
-        "empty",
-        "empty.ris",
-        "--ris-source",
-        "blank",
-        "blank.ris",
-    ];
-    let init = inputs.run(&[&["--init-decisions", "choices.tsv"][..], &sources].concat());
+    let sources = |file| {
+        [
+            "--ris-source",
+            "bib",
+            file,
+            "--ris-source",
+            "empty",
+            "empty.ris",
+            "--ris-source",
+            "blank",
+            "blank.ris",
+        ]
+    };
+    let init_sheet =
+        |file| inputs.run(&[&["--init-decisions", "choices.tsv"][..], &sources(file)].concat());
+    let failed = init_sheet("original.bib");
+    let message = String::from_utf8_lossy(&failed.stderr);
+    assert!(message.starts_with("bib: Input is not UTF-8"));
+    assert!(message.contains("separate UTF-8 RIS export") && message.contains("exact UTF-8 RIS"));
+    assert!(message.contains("Bring a BibTeX export into a named RIS review"));
+    assert!(!message.contains("original.bib") && !message.contains("CanopyNotes"));
+    assert_eq!(failed.status.code(), Some(2));
+    assert_failed_before_report(failed);
+    assert!(!inputs.0.join("choices.tsv").exists());
+    let init = init_sheet("converted.data");
     assert!(init.status.success(), "{:?}", init.stderr);
     let text = String::from_utf8(init.stdout).unwrap();
     assert!(text.contains("summary\tall\t1\tretained=1;suppressed=0;"));
@@ -245,7 +260,12 @@ fn converted_ris_and_blank_sources_can_be_reviewed_together() {
             "input\tris\t{label}\tbytes={bytes};occurrences=0;"
         )));
     }
-    assert!(inputs.export("out", &sources).status.success());
+    assert!(
+        inputs
+            .export("out", &sources("converted.data"))
+            .status
+            .success()
+    );
     let expected = converted
         .trim_start_matches('\u{feff}')
         .replace("\r\n", "\n")
@@ -258,6 +278,7 @@ fn converted_ris_and_blank_sources_can_be_reviewed_together() {
         fs::read(inputs.0.join("converted.data")).unwrap(),
         converted.as_bytes()
     );
+    assert_eq!(fs::read(inputs.0.join("original.bib")).unwrap(), legacy);
 }
 
 #[test]

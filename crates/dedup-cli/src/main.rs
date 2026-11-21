@@ -130,7 +130,15 @@ fn read_input(
     if bytes.len() > remaining_bytes {
         return Err(input_error(InputError::ByteLimit));
     }
-    String::from_utf8(bytes).map_err(|_| "Input is not UTF-8; no report produced.")
+    String::from_utf8(bytes).map_err(|_| {
+        if native_ris {
+            "Input is not UTF-8. Keep the original. For a new review, request a separate UTF-8 RIS export. \
+             For a saved sheet, use the exact UTF-8 RIS used to create it. \
+             For BibTeX, see the README section \"Bring a BibTeX export into a named RIS review\"."
+        } else {
+            "Input is not UTF-8; no report produced."
+        }
+    })
 }
 
 fn recheck(path: &OsStr, original: &[u8]) -> Result<(), &'static str> {
