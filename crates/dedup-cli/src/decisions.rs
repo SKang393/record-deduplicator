@@ -82,7 +82,7 @@ pub(super) fn create(
     queue: &ReviewQueue<'_>,
     manifest: &[String],
     metadata: bool,
-) -> Result<(), String> {
+) -> Result<usize, String> {
     let version = if metadata { METADATA_VERSION } else { VERSION };
     let mut sheet = format!("{version}\n");
     for identity in manifest {
@@ -93,15 +93,18 @@ pub(super) fn create(
     } else {
         Vec::new()
     };
+    let mut pending_rows = 0;
     for (_, key) in candidates(queue, &metadata_groups(queue, &hints)) {
         writeln!(sheet, "{key}\tpending").unwrap();
+        pending_rows += 1;
     }
     writeln!(sheet, "{END}").unwrap();
     let mut file =
         File::create_new(path).map_err(|e| format!("Cannot create a new decision sheet: {e}"))?;
     file.write_all(sheet.as_bytes())
         .and_then(|()| file.sync_all())
-        .map_err(|e| format!("Cannot finish decision sheet: {e}"))
+        .map_err(|e| format!("Cannot finish decision sheet: {e}"))?;
+    Ok(pending_rows)
 }
 
 pub(super) struct ResumedSheet {

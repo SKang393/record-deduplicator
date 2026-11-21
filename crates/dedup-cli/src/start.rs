@@ -179,7 +179,7 @@ pub(super) fn run() -> Result<(), String> {
 pub(super) fn export_destination(input: &mut dyn BufRead) -> Result<Option<PathBuf>, String> {
     let Some(path) = ask_path(
         input,
-        "To preview an export, enter a new folder path. Press Enter to finish reviewing:",
+        "To preview an export, enter a new folder path. Press Enter to close this session:",
     )?
     else {
         return Ok(None);

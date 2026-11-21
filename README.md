@@ -68,15 +68,16 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    the file manager. Repeat for each export.
 3. Press Enter at the next label prompt. Check the sheet, labels and paths
    shown, then type `yes`. Type `:cancel` at any prompt to stop.
-4. For a new sheet, the terminal shows the candidate queue and every editable
-   row starts pending. Open the sheet in a plain-text editor or
+4. For a new sheet, the guide reports how many rows start pending. The queue's
+   `candidate_records` and `groups` count shared DOI or PMID matches only.
+   The sheet also includes editable metadata candidates. Open it in a plain-text editor or
    [edit it in LibreOffice Calc](#edit-the-decision-sheet-in-libreoffice-calc).
    A key such as `catalog:2` means the second RIS record in the export labeled `catalog`.
    To reopen, run the guide again with the same labels and original files.
    It checks their fingerprints and shows pending decisions and keeper context.
    Optional comparisons appear in the full queue. To see them again, use
    `--resume-decisions` with the saved sheet and the same named sources.
-5. After reviewing the pending rows, press Enter to finish, or enter a new
+5. Press Enter to close this session, or enter a new
    folder path to preview an export. Choose a folder name inside an existing
    directory, which can be outside the project. Check the sheet path,
    destination, explicit duplicate count, and how many pending records will

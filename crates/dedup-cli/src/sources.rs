@@ -163,14 +163,19 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 .push(named.label);
         }
     }
-    let guided = matches!(action, Action::Init { guided: true, .. });
+    let mut guided_pending_rows = None;
     let sheet = match action {
         Action::Review => None,
         Action::Coverage(plan) => {
             return plan.check(&queue.sources, &manifest, &labels_by_fingerprint);
         }
-        Action::Init { path, metadata, .. } => {
-            super::decisions::create(path, &queue, &manifest, metadata)?;
+        Action::Init {
+            path,
+            metadata,
+            guided,
+        } => {
+            let count = super::decisions::create(path, &queue, &manifest, metadata)?;
+            guided_pending_rows = guided.then_some(count);
             None
         }
         Action::Resume(path) => Some(super::decisions::resume(path, &queue, &manifest)?),
@@ -215,9 +220,21 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
         }
     };
     let mut out = io::BufWriter::new(io::stdout().lock());
-    render_queue(&queue, &manifest, sheet, guided, &mut out)
-        .and_then(|()| out.flush())
-        .map_err(|_| String::from("Cannot write report."))
+    render_queue(
+        &queue,
+        &manifest,
+        sheet,
+        guided_pending_rows.is_some(),
+        &mut out,
+    )
+    .and_then(|()| out.flush())
+    .map_err(|_| String::from("Cannot write report."))?;
+    if let Some(count) = guided_pending_rows {
+        eprintln!(
+            "Pending rows in your new decision sheet: {count}. The queue's candidate_records and groups count only shared DOI or PMID matches. Metadata comparisons can add editable rows."
+        );
+    }
+    Ok(())
 }
 
 fn render_queue(

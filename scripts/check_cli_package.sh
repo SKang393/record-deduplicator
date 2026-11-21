@@ -215,6 +215,7 @@ grep -Fq "cat = $catalog_path" prompts.txt
 grep -Fq "idx = $index_path" prompts.txt
 
 guided_start yes > guided.tsv 2> prompts.txt
+grep -Fq 'Pending rows in your new decision sheet: 3.' prompts.txt
 reference_review --init-metadata-decisions reference.tsv > reference-queue.tsv
 cmp reference.tsv "$sheet"
 cmp reference-queue.tsv guided.tsv
