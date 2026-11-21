@@ -506,6 +506,12 @@ and labels the extra field. When the two selected occurrences contain
 conflicting supported IDs, the summary names the identifier that blocks
 combining them in a reviewed export.
 
+During pair inspection, `RIS C2` shows the text supplied by each source.
+Scopus uses this tag for both PMID and PMCID. A bare number alongside
+`DB  - Scopus` leaves its identifier type uncertain. In RIS review, only
+a supported PubMed article URL supplies a PMID for matching.
+[Scopus RIS field mapping](https://www.elsevier.support/scopus/answer/what-ris-format-mapping-does-scopus-use-when-exporting-results-when-exchanging-citation-information)
+
 Both complete records follow, with their tagged fields and continuation lines
 in source order and control characters escaped for terminal display. If a record lacks a
 usable final page range or article number, the comparison identifies its source

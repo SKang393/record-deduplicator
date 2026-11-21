@@ -1,4 +1,4 @@
-use super::{Occurrence, title, year};
+use super::{Field, Occurrence, title, year};
 use crate::normalize::pagination::Pagination;
 use crate::ris::{ReportIdentifiers, Values};
 use std::collections::BTreeSet;
@@ -17,6 +17,24 @@ pub enum CitationValue {
 }
 
 impl CitationValue {
+    fn supplied_fields<'a>(fields: impl Iterator<Item = &'a Field<'a>>) -> Self {
+        let values: Vec<_> = fields
+            .map(|f| {
+                let more = if f.continued {
+                    " [continued in original]"
+                } else {
+                    ""
+                };
+                format!("{}={}{}", f.tag, f.first_line_value, more)
+            })
+            .collect();
+        if values.is_empty() {
+            Self::Absent
+        } else {
+            Self::AsSupplied(values)
+        }
+    }
+
     fn identifier(values: Values) -> Self {
         if values.conflict {
             Self::Conflicting
@@ -54,18 +72,8 @@ impl Occurrence<'_> {
             .fields
             .iter()
             .filter(|f| matches!(f.tag, "PY" | "Y1" | "DA"));
-        let supplied: Vec<_> = fields
-            .clone()
-            .map(|f| {
-                let more = if f.continued {
-                    " [continued in original]"
-                } else {
-                    ""
-                };
-                format!("{}={}{}", f.tag, f.first_line_value, more)
-            })
-            .collect();
-        if supplied.is_empty() {
+        let supplied = CitationValue::supplied_fields(fields.clone());
+        if supplied == CitationValue::Absent {
             return (CitationValue::Absent, CitationValue::Absent);
         }
         // Keep all supplied years. The tags alone cannot assign a print or online date.
@@ -80,11 +88,11 @@ impl Occurrence<'_> {
             }
             None => CitationValue::Unresolved,
         };
-        (years, CitationValue::AsSupplied(supplied))
+        (years, supplied)
     }
 
-    /// Display normalized fields and the source dates used for inspection.
-    pub fn citation_fields(&self) -> [(&'static str, CitationValue); 12] {
+    /// Display normalized citation fields alongside literal source evidence for inspection.
+    pub fn citation_fields(&self) -> [(&'static str, CitationValue); 13] {
         let field = |tags: &[&str], values| match values {
             Some(values) => CitationValue::Known(values),
             None if self.fields.iter().any(|f| tags.contains(&f.tag)) => CitationValue::Unresolved,
@@ -117,6 +125,10 @@ impl Occurrence<'_> {
             ("Final pages/article", single(&["SP", "EP"], pages)),
             ("DOI", CitationValue::identifier(ids.doi)),
             ("PMID", CitationValue::identifier(ids.pmid)),
+            (
+                "RIS C2 (source text only, unused for matching)",
+                CitationValue::supplied_fields(self.fields.iter().filter(|f| f.tag == "C2")),
+            ),
         ]
     }
 }
@@ -125,6 +137,28 @@ impl Occurrence<'_> {
 mod tests {
     use super::CitationValue::{Absent, AsSupplied, Known, Unresolved};
     use crate::ris::parse;
+
+    #[test]
+    fn c2_is_supplied_text_even_when_it_matches_a_pubmed_url() {
+        let source = parse(
+            "TY  - JOUR\nDB  - Scopus\nC2  - 980000001\nC2  - PMC980000001\n  note\nER  -\n\
+             TY  - JOUR\nC2  - 980000001\nUR  - https://pubmed.ncbi.nlm.nih.gov/980000001/\nER  -\n",
+        )
+        .unwrap();
+        assert!(source.review().groups.is_empty());
+        let fields = |i: usize| source.occurrences[i].citation_fields();
+        let c2 = "RIS C2 (source text only, unused for matching)";
+        assert!(fields(0).contains(&("PMID", Absent)));
+        assert!(fields(0).contains(&(
+            c2,
+            AsSupplied(vec![
+                "C2=980000001".into(),
+                "C2=PMC980000001 [continued in original]".into(),
+            ])
+        )));
+        assert!(fields(1).contains(&("PMID", Known(vec!["980000001".into()]))));
+        assert!(fields(1).contains(&(c2, AsSupplied(vec!["C2=980000001".into()]))));
+    }
 
     #[test]
     fn inspection_preserves_reported_date_tags() {
