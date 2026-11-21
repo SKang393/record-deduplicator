@@ -440,50 +440,6 @@ agree when supplied. Conflicting supported DOIs or PMIDs block the set.
 Leave unresolved copies and distinct reports pending or mark them keep.
 Existing identifier-only sheets still open with `--resume-decisions`.
 
-### Add a later search export
-
-A saved sheet resumes with exactly its original named inputs. For a cumulative
-review, keep the first sheet, downloads and export together. Start a new sheet
-with those same original downloads and give the later download its own label.
-Using the earlier `reviewed.ris` as input would lose the removed occurrences
-and their original source keys from the new review.
-
-For example, put the later download in `april.ris` alongside `catalog.ris`
-and `index.ris`. In Bash, validate the first sheet before creating the second.
-Use `--init-decisions` in place of `--init-metadata-decisions` if the first
-sheet used identifier-only decisions.
-
-```sh
-review() { dedup review-ids "$@" --ris-source cat catalog.ris --ris-source idx index.ris; }
-april() { review "$@" --ris-source apr april.ris; }
-review --resume-decisions choices.tsv && april --init-metadata-decisions choices-april.tsv
-```
-
-Every editable row starts pending. For each earlier choice you want to reuse,
-check that the old source's `input` row, including its label and SHA-256,
-matches in both sheets. Check the keeper's source too. If a fingerprint
-differs, locate the original download before reusing its decisions. Find each
-occurrence by `label:ordinal`. Sheet positions and output numbers can change. For
-an earlier `idx:1` copy of `cat:1`, run
-`april --inspect-pair choices-april.tsv idx:1 cat:1`. If the evidence still
-supports the choice, enter the keeper, the copy's decision and any rationale
-in the corresponding rows of the new sheet. A prior `keep-with-reason` also
-needs its note. If an earlier key is now outside the sheet, leave it there.
-Its occurrence stays in the export. Leave uncertain candidates pending,
-including earlier records first flagged by the new download. Each new copy
-needs its own decision.
-
-```sh
-april --pending-decisions choices-april.tsv
-april --export-reviewed choices-april.tsv reviewed-april
-dedup verify-export reviewed-april/mapping.tsv reviewed-april/reviewed.ris
-dedup trace reviewed-april/mapping.tsv idx:1 .
-```
-
-The new reconciliation counts occurrences across both rounds and includes
-pending rows among the retained records. Use this cumulative total once.
-Keep download coverage counts separate for each search snapshot.
-
 ### Return to pending decisions
 
 Reopen your saved sheet with the same named exports. This command uses the
@@ -678,6 +634,50 @@ The [synthetic Zotero handoff](testdata/fixtures/README.md#zotero-ris-handoff)
 includes a ready-to-import file and the fields observed in Zotero Desktop.
 Zotero's [file import guide](https://www.zotero.org/support/kb/importing_standardized_formats)
 lists the supported import formats.
+
+### Add a later search export
+
+A saved sheet resumes with exactly its original named inputs. For a cumulative
+review, keep the first sheet, downloads and export together. Start a new sheet
+with those same original downloads and give the later download its own label.
+Using the earlier `reviewed.ris` as input would lose the removed occurrences
+and their original source keys from the new review.
+
+For example, put the later download in `april.ris` alongside `catalog.ris`
+and `index.ris`. In Bash, validate the first sheet before creating the second.
+Use `--init-decisions` in place of `--init-metadata-decisions` if the first
+sheet used identifier-only decisions.
+
+```sh
+review() { dedup review-ids "$@" --ris-source cat catalog.ris --ris-source idx index.ris; }
+april() { review "$@" --ris-source apr april.ris; }
+review --resume-decisions choices.tsv && april --init-metadata-decisions choices-april.tsv
+```
+
+Every editable row starts pending. For each earlier choice you want to reuse,
+check that the old source's `input` row, including its label and SHA-256,
+matches in both sheets. Check the keeper's source too. If a fingerprint
+differs, locate the original download before reusing its decisions. Find each
+occurrence by `label:ordinal`. Sheet positions and output numbers can change. For
+an earlier `idx:1` copy of `cat:1`, run
+`april --inspect-pair choices-april.tsv idx:1 cat:1`. If the evidence still
+supports the choice, enter the keeper, the copy's decision and any rationale
+in the corresponding rows of the new sheet. A prior `keep-with-reason` also
+needs its note. If an earlier key is now outside the sheet, leave it there.
+Its occurrence stays in the export. Leave uncertain candidates pending,
+including earlier records first flagged by the new download. Each new copy
+needs its own decision.
+
+```sh
+april --pending-decisions choices-april.tsv
+april --export-reviewed choices-april.tsv reviewed-april
+dedup verify-export reviewed-april/mapping.tsv reviewed-april/reviewed.ris
+dedup trace reviewed-april/mapping.tsv idx:1 .
+```
+
+The new reconciliation counts occurrences across both rounds and includes
+pending rows among the retained records. Use this cumulative total once.
+Keep download coverage counts separate for each search snapshot.
 
 ### Review a single RIS export
 
