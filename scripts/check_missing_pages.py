@@ -162,7 +162,8 @@ def check_review(job, flags, canonical, before, after, inspections):
         notes = [line for line in view if line.startswith(tuple(key + " " for key in pair))]
         assert notes == expected, notes
         if before:
-            assert [line for line in view if line not in notes] == review(before, *args).decode().splitlines()
+            originals_view = view[next(i for i, line in enumerate(view) if line.startswith("[")):]
+            assert [line for line in originals_view if line not in notes] == review(before, *args).decode().splitlines()
     assert all(path.read_bytes() == data for path, data in originals.items())
     assert sheet.read_bytes() == template
 

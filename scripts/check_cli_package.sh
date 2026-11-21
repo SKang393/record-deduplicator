@@ -53,7 +53,10 @@ echo "PASS: packaged CLI verified one copy, retained the subtitled record and re
         'DO  - 10.0000/tide' 'ER  -' > index.ris
     review_input() { dedup review-ids "$@" --ris-source cat catalog.ris --ris-source idx index.ris; }
     review_input --init-decisions choices.tsv > queue.tsv
-    review_input --inspect-pair choices.tsv cat:1 idx:1 > inspection.txt
+    review_input --inspect-pair choices.tsv cat:1 idx:1 > "$work/comparison.txt"
+    grep -Fxq '  Final pages/article  absent | see original' "$work/comparison.txt"
+    # The frozen hash covers the original two source displays and pagination notes.
+    sed -n '/^\[cat:1\] /,$p' "$work/comparison.txt" > inspection.txt
     grep -Fxq 'cat:1 has no SP or EP field for a final page range or article number.' inspection.txt
     grep -Fxq 'idx:1 supplies pagination fields without a usable final page range or article number.' inspection.txt
     review_input --export-reviewed choices.tsv clean

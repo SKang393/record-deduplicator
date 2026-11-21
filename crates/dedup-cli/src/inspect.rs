@@ -4,9 +4,29 @@ use std::{
     io::{self, Write},
 };
 
-use dedup_core::ris::ReviewQueue;
+use dedup_core::ris::{CitationValue, ReviewQueue};
 
 use super::decisions::Decision;
+
+fn display_value(value: &CitationValue) -> String {
+    match value {
+        CitationValue::Absent => "absent".into(),
+        CitationValue::Unresolved => "see original".into(),
+        CitationValue::Conflicting => "conflicting values".into(),
+        CitationValue::Known(values) => {
+            let mut text = values
+                .iter()
+                .map(|v| format!("{v:?}"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            if let Some((end, _)) = text.char_indices().nth(72) {
+                text.truncate(end);
+                text.push('…');
+            }
+            text
+        }
+    }
+}
 
 pub(super) fn pair(
     queue: &ReviewQueue<'_>,
@@ -46,6 +66,33 @@ pub(super) fn pair(
     }
     let mut out = io::BufWriter::new(io::stdout().lock());
     let write_error = |_: io::Error| io::Error::other("Cannot write comparison.");
+    writeln!(
+        out,
+        "Citation fields (normalized, {} | {})",
+        left.to_string_lossy(),
+        right.to_string_lossy()
+    )
+    .map_err(write_error)?;
+    for ((name, a), (_, b)) in first
+        .1
+        .citation_fields()
+        .into_iter()
+        .zip(second.1.citation_fields())
+    {
+        let line = match (&a, &b) {
+            (CitationValue::Absent, CitationValue::Absent) => continue,
+            (CitationValue::Known(_), CitationValue::Known(_)) if a == b => {
+                format!("{name} (same)  {}", display_value(&a))
+            }
+            (CitationValue::Known(_), CitationValue::Known(_)) => format!(
+                "{name} (different)  {} | {}",
+                display_value(&a),
+                display_value(&b)
+            ),
+            _ => format!("{name}  {} | {}", display_value(&a), display_value(&b)),
+        };
+        writeln!(out, "  {line}").map_err(write_error)?;
+    }
     for (index, rec, raw) in [first, second] {
         let entry = &queue.entries[index];
         let status = match &decisions[index] {

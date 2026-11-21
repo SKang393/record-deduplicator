@@ -442,9 +442,18 @@ In the reopened guide, type `:inspect idx:1,cat:1` to compare the two records
 in the example above. When a group has three or more members, choose the two
 you want to read. Either key can come first. Inspection leaves the sheet as saved.
 
-From the command line, pass two keys from a group to `--inspect-pair` to read their tagged fields and
-continuation lines in source order. The display checks the sheet's fingerprints
-and escapes control characters for reading in a terminal. If a record lacks a
+From the command line, pass the same two keys to `--inspect-pair`. Both forms
+check the sheet's fingerprints and show selected citation fields in the key
+order you entered. For example, a results paper and its protocol can show the
+same DOI and different titles and pages. `same` and `different` compare the
+full normalized field values, even when a long value is shortened onscreen.
+`absent` means the source has no recognized field for that value. Fields absent
+on both sides are omitted. `see original` marks supplied fields that could not
+be summarized, and `conflicting values` marks contradictory IDs within one
+record.
+
+Both complete records follow, with their tagged fields and continuation lines
+in source order and control characters escaped for terminal display. If a record lacks a
 usable final page range or article number, the comparison identifies its source
 and ordinal and tells you whether it supplied any pagination fields (SP/EP).
 If the records give insufficient evidence, leave the decision pending. Edit

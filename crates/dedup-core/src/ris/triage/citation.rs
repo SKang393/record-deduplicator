@@ -1,0 +1,66 @@
+use super::{Occurrence, publication_year, title};
+use crate::normalize::pagination::Pagination;
+use crate::ris::{ReportIdentifiers, Values};
+
+/// What a selected occurrence supplies for the inspection display.
+#[derive(Debug, PartialEq, Eq)]
+pub enum CitationValue {
+    Absent,
+    Unresolved,
+    Conflicting,
+    Known(Vec<String>),
+}
+
+impl CitationValue {
+    fn identifier(mut values: Values) -> Self {
+        if values.conflict {
+            Self::Conflicting
+        } else if let Some(key) = values.take_key() {
+            Self::Known(vec![key])
+        } else if values.had_field {
+            Self::Unresolved
+        } else {
+            Self::Absent
+        }
+    }
+}
+
+impl Occurrence<'_> {
+    /// Display normalized fields independently, including for incomplete citations.
+    pub fn citation_fields(&self) -> [(&'static str, CitationValue); 11] {
+        let field = |tags: &[&str], values| match values {
+            Some(values) => CitationValue::Known(values),
+            None if self.fields.iter().any(|f| tags.contains(&f.tag)) => CitationValue::Unresolved,
+            None => CitationValue::Absent,
+        };
+        let single = |tags: &[&str], value: Option<String>| field(tags, value.map(|v| vec![v]));
+        let scalar = |tag: &str| single(&[tag], self.scalar(tag).flatten().map(str::to_owned));
+        let pages = match self.final_pagination() {
+            Some(Pagination::Pages {
+                start,
+                end: Some(end),
+                ..
+            }) => Some(format!("{start}-{end}")),
+            Some(Pagination::ArticleNumber(n)) => Some(format!("article {n}")),
+            _ => None,
+        };
+        let mut ids = ReportIdentifiers::default();
+        ids.observe(self);
+        [
+            ("Title", single(&["TI", "T1"], title(self))),
+            ("Authors", field(&["AU", "A1"], self.authors())),
+            (
+                "Year",
+                single(&["PY", "Y1"], publication_year(self).map(|y| y.to_string())),
+            ),
+            ("RIS type", scalar("TY")),
+            ("Work type", scalar("M3")),
+            ("Venue", single(&["JO", "JF", "T2"], self.journal())),
+            ("Volume", scalar("VL")),
+            ("Issue", scalar("IS")),
+            ("Final pages/article", single(&["SP", "EP"], pages)),
+            ("DOI", CitationValue::identifier(ids.doi)),
+            ("PMID", CitationValue::identifier(ids.pmid)),
+        ]
+    }
+}

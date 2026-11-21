@@ -6,6 +6,8 @@ use crate::normalize::pagination::{Pagination, parse_pagination};
 
 mod variants;
 pub use variants::LocatorPairs;
+mod citation;
+pub use citation::CitationValue;
 
 pub const MAX_HINT_MEMBERS: usize = 16;
 
@@ -166,13 +168,17 @@ impl Occurrence<'_> {
         .then_some(pages)
     }
 
-    fn publication_locator(&self) -> Option<PublicationLocator> {
-        let journal = agreed(
+    fn journal(&self) -> Option<String> {
+        agreed(
             self.fields
                 .iter()
                 .filter(|f| matches!(f.tag, "JO" | "JF" | "T2"))
                 .map(text),
-        )?;
+        )
+    }
+
+    fn publication_locator(&self) -> Option<PublicationLocator> {
+        let journal = self.journal()?;
         let volume = self.scalar("VL")??;
         if !volume.bytes().any(|b| b.is_ascii_digit()) {
             return None;

@@ -62,12 +62,17 @@ def exercise(directory, binary, baseline):
     eligible = [line.split(b"\t")[0] for line in template.splitlines() if line.endswith(b"\tpending")]
     assert eligible == [b"cat:1", b"cat:2", b"cat:3", b"idx:1", b"idx:3"]
     pair = run("--inspect-pair", sheet, "cat:3", "cat:1").stdout.splitlines()
+    assert pair[0] == b"Citation fields (normalized, cat:3 | cat:1)"
+    assert b'  DOI (same)  "10.0000/marsh-a"' in pair
+    assert b'  Final pages/article (different)  "40-42" | "21-26"' in pair
     assert [line for line in pair if line.startswith(b"[")] == [
         f"[cat:3] pending (bytes {len(a+b)}..{len(a+b+e)})".encode(),
         f"[cat:1] pending (bytes 0..{len(a)})".encode(),
     ]
     assert [line for line in pair if line.startswith(b"  SP  -")] == [b"  SP  - 40-42", b"  SP  - 21-26"]
     assert [line for line in pair if line.startswith(b"  AN  -")] == [b"  AN  - cat-e", b"  AN  - cat-a"]
+    conflict = run("--inspect-pair", sheet, "idx:1", "idx:3").stdout.splitlines()
+    assert b"  DOI  absent | conflicting values" in conflict
     for bad in ("cat:1", "cat:0", "cat:4", "idx:bad", "absent:1"):
         run("--inspect-pair", sheet, "cat:1", bad, ok=False)
     assert sheet.read_bytes() == template
@@ -101,6 +106,10 @@ def exercise(directory, binary, baseline):
 
     sheet.write_bytes(approved)
     pair = run("--inspect-pair", sheet, "cat:1", "idx:1").stdout.decode().splitlines()
+    assert '  Authors (same)  "reed, e.", "moss, t."' in pair
+    assert '  Venue (same)  "fable ecology"' in pair
+    assert '  Final pages/article (same)  "21-26"' in pair
+    assert '  DOI  "10.0000/marsh-a" | absent' in pair
     copy_bytes = len(copy.replace(b"\n", b"\r\n"))
     assert f"[cat:1] keep (bytes 0..{len(a)})" in pair
     assert f"[idx:1] verified-duplicate-of=cat:1 (bytes 0..{copy_bytes})" in pair
