@@ -353,6 +353,7 @@ an index record with an extra subtitle at the same journal location. After
 adding the extracted or source-built CLI to your path as shown above, run
 the blocks in the same Bash session (Git Bash on Windows).
 
+<!-- package-walkthrough -->
 ```sh
 cd "$(mktemp -d)"
 cat > catalog.ris <<'RIS'
@@ -389,6 +390,7 @@ Each heading gives the occurrence's sheet status and original byte range.
 Leave `idx:2` in the export. Record the keep target and rationale for the
 verified index copy by editing the two existing rows as follows.
 
+<!-- package-walkthrough -->
 ```sh
 awk -F '\t' '
   $1 == "cat:1" {print "cat:1\tkeep"; next}
@@ -419,6 +421,7 @@ Windows, run `cygpath -aw reviewed/reviewed.ris`. On macOS or Linux, run
 To undo only the copy decision, restore its row to `pending` and drop the
 rationale column. Export to a fresh directory and inspect the new mapping.
 
+<!-- package-walkthrough -->
 ```sh
 awk -F '\t' '$1 == "idx:1" {print "idx:1\tpending"; next} {print}' choices.tsv > edit.tmp && mv edit.tmp choices.tsv
 review --export-reviewed choices.tsv restored
@@ -445,6 +448,7 @@ Existing identifier-only sheets still open with `--resume-decisions`.
 Reopen your saved sheet with the same named exports. This command uses the
 sheet saved by the undo example above.
 
+<!-- package-walkthrough -->
 ```sh
 dedup review-ids --pending-decisions choices.tsv --ris-source cat catalog.ris --ris-source idx index.ris
 ```
@@ -506,6 +510,7 @@ Take the occurrence key from the third column of a `map` row in
 containing the original downloads. In the metadata walkthrough above, the
 downloads are in the current directory.
 
+<!-- package-walkthrough -->
 ```sh
 dedup trace reviewed/mapping.tsv idx:1 .
 dedup trace reviewed/mapping.tsv idx:2 .

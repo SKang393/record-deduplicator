@@ -29,12 +29,18 @@ else
 fi
 dedup --version
 awk '
-    /^### Verify a copy found through metadata$/ { walkthrough = 1 }
-    /^### Trace a saved keep reason$/ { exit }
-    walkthrough && /^```sh$/ { block = 1; count++; next }
+    /^<!-- package-walkthrough -->$/ {
+        if (block || (getline) != 1 || $0 != "```sh") {
+            print "Expected a marked shell block in README.md at line " NR > "/dev/stderr"; exit 1
+        }
+        block = 1; count++; next
+    }
     /^```$/ { block = 0 }
     block { print }
-    END { if (count != 5) { print "Expected 5 walkthrough command blocks, found " count > "/dev/stderr"; exit 1 } }
+    END {
+        if (block) { print "Unclosed walkthrough command block" > "/dev/stderr"; exit 1 }
+        if (count != 5) { print "Expected 5 walkthrough command blocks, found " count > "/dev/stderr"; exit 1 }
+    }
 ' README.md > "$work/first-run.sh"
 export TMPDIR="$work"
 source "$work/first-run.sh" > "$work/output.tsv"
