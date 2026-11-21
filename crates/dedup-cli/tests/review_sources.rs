@@ -539,6 +539,63 @@ fn reviewed_export_reconciles_every_occurrence_and_replays_byte_for_byte() {
 }
 
 #[test]
+fn selected_pair_compares_complete_abstracts_and_leaves_ambiguous_fields_uncompared() {
+    let inputs = Inputs::new("inspect-abstract");
+    let abstracts = [
+        "AB  - We surveyed the inlet.\n      Initial census.",
+        "N2  - We surveyed\n      the inlet. Initial census.",
+        "N2  - We surveyed the inlet.\n      Return census.",
+        "AB  - We surveyed the inlet.",
+        "KW  - Inlet",
+        "AB  -",
+        "AB  - We surveyed the inlet.\nN2  - Another abstract.",
+    ];
+    let ris: String = abstracts
+        .iter()
+        .map(|ab| format!("TY  - CONF\nTI  - Inlet study\nDO  - 10.0000/inlet\n{ab}\nER  -\n"))
+        .collect();
+    inputs.write("posters.ris", ris.replace('\n', "\r\n").as_bytes());
+    let sources = ["--ris-source", "p", "posters.ris"];
+    assert!(
+        inputs
+            .run(&[&["--init-decisions", "choices.tsv"][..], &sources].concat())
+            .status
+            .success()
+    );
+    for (right, expected) in [
+        ("p:2", "same wording (spacing ignored)"),
+        (
+            "p:3",
+            "first difference at word 5  \"Initial\" | \"Return\"",
+        ),
+        (
+            "p:4",
+            "first difference at word 5  \"Initial\" | (end of abstract)",
+        ),
+        ("p:5", "present | absent"),
+        ("p:6", "present | empty"),
+        ("p:7", "present | multiple fields (see original)"),
+    ] {
+        let comparison = inputs.run(
+            &[
+                &["--inspect-pair", "choices.tsv", "p:1", right][..],
+                &sources,
+            ]
+            .concat(),
+        );
+        assert!(comparison.status.success(), "{:?}", comparison.stderr);
+        let text = String::from_utf8(comparison.stdout).unwrap();
+        let summary = text.split_once("[p:1]").unwrap().0;
+        assert!(
+            summary
+                .lines()
+                .any(|line| line == format!("  Abstract text (AB/N2)  {expected}")),
+            "{summary}"
+        );
+    }
+}
+
+#[test]
 fn asreview_companion_preserves_the_selected_occurrences_and_field_values() {
     use sha2::{Digest, Sha256};
     let inputs = Inputs::new("asreview-handoff");

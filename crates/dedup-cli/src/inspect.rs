@@ -7,7 +7,7 @@ use std::{
 
 use dedup_core::{
     identifier_review::Identifier,
-    ris::{CitationValue, Field, ReportIdentifiers, ReviewQueue},
+    ris::{CitationValue, Field, Occurrence, ReportIdentifiers, ReviewQueue},
 };
 
 use super::decisions::Decision;
@@ -176,6 +176,71 @@ fn display_value(value: &CitationValue) -> String {
     text
 }
 
+// Use the full field span so a difference on a continuation line stays visible.
+fn abstract_text<'a>(record: &Occurrence<'_>, raw: &'a str) -> Result<&'a str, &'static str> {
+    let mut fields = record
+        .fields
+        .iter()
+        .filter(|f| matches!(f.tag, "AB" | "N2"));
+    let field = fields.next().ok_or("absent")?;
+    if fields.next().is_some() {
+        return Err("multiple fields (see original)");
+    }
+    let relative = field.bytes.start - record.bytes.start..field.bytes.end - record.bytes.start;
+    let (_, value) = raw[relative].split_once('-').expect("parsed field header");
+    let value = value.trim();
+    if value.is_empty() {
+        return Err("empty");
+    }
+    Ok(value)
+}
+
+fn display_word(word: Option<&str>) -> String {
+    match word {
+        None => "(end of abstract)".into(),
+        Some(word) => match word.char_indices().nth(40) {
+            Some((end, _)) => format!("{:?}…", &word[..end]),
+            None => format!("{word:?}"),
+        },
+    }
+}
+
+fn compare_abstracts(
+    out: &mut impl Write,
+    left: Result<&str, &str>,
+    right: Result<&str, &str>,
+) -> io::Result<()> {
+    if left == Err("absent") && right == Err("absent") {
+        return Ok(());
+    }
+    let label = "  Abstract text (AB/N2)";
+    let (Ok(left_text), Ok(right_text)) = (left, right) else {
+        return writeln!(
+            out,
+            "{label}  {} | {}",
+            left.err().unwrap_or("present"),
+            right.err().unwrap_or("present")
+        );
+    };
+    let mut left_words = left_text.split_whitespace();
+    let mut right_words = right_text.split_whitespace();
+    let mut position = 1;
+    loop {
+        match (left_words.next(), right_words.next()) {
+            (None, None) => return writeln!(out, "{label}  same wording (spacing ignored)"),
+            (left_word, right_word) if left_word != right_word => {
+                return writeln!(
+                    out,
+                    "{label}  first difference at word {position}  {} | {}",
+                    display_word(left_word),
+                    display_word(right_word)
+                );
+            }
+            _ => position += 1,
+        }
+    }
+}
+
 pub(super) fn pair(
     queue: &ReviewQueue<'_>,
     decisions: &[Decision],
@@ -241,6 +306,12 @@ pub(super) fn pair(
         };
         writeln!(out, "  {line}").map_err(write_error)?;
     }
+    compare_abstracts(
+        &mut out,
+        abstract_text(first.1, first.2),
+        abstract_text(second.1, second.2),
+    )
+    .map_err(write_error)?;
     let mut ids = ReportIdentifiers::default();
     ids.observe(first.1);
     ids.observe(second.1);

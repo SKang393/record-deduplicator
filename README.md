@@ -540,6 +540,15 @@ and labels the extra field. When the two selected occurrences contain
 conflicting supported IDs, the summary names the identifier that blocks
 combining them in a reviewed export.
 
+When each occurrence has one nonempty abstract (`AB` or `N2`), inspection
+compares its words in order, including continuation lines. It ignores spacing
+and line wrapping and preserves case and punctuation. The summary shows the
+first differing word from each side (up to 40 characters), or where one
+abstract ends. A missing, empty or repeated field is labeled separately.
+Different reports can reuse wording, and two copies can have editorial
+differences. Use the full records below the summary to decide what each
+occurrence reports.
+
 During pair inspection, `RIS C2` shows the text supplied by each source.
 Scopus uses this tag for both PMID and PMCID. A bare number alongside
 `DB  - Scopus` leaves its identifier type uncertain. In RIS review, only
