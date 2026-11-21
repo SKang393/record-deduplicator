@@ -68,13 +68,18 @@ def check(binary, job):
                     guide.stdin.write(b":inspect cat:1,idx:2\n")
                     read_prompt(log, guide, b"Press Enter to close this session:")
                     sheet.write_bytes(edited)
-                    output, _ = guide.communicate(b":inspect cat:1,idx:2\n", timeout=10)
-                    assert guide.returncode == 2 and b"Decisions changed." in log.read()
-                    assert output.count(b"Citation fields (normalized,") == 2
+                    output, _ = guide.communicate(b":inspect cat:1,idx:2\n:pending\n\n", timeout=10)
+                    assert guide.returncode == 0 and b"Reloaded the saved decision sheet." in log.read()
+                    assert output.count(b"Citation fields (normalized,") == 3
                     assert b"Citation fields (normalized, cat:1 | idx:1)" in output
                     assert b"[idx:2] pending (bytes " in output
+                    assert b"[idx:2] duplicate-of=cat:1 (bytes " in output
+                    current_list = subprocess.check_output(
+                        [binary, "review-ids", "--pending-decisions", sheet, *sources], cwd=job
+                    )
+                    assert output.endswith(current_list)
                     assert sheet.read_bytes() == edited
-                    print("PASS: the restored sheet showed idx:2 pending. The observed same-size decision edit refused inspection.")
+                    print("PASS: inspection and :pending reflected the same-size saved edit in the open session.")
                     continue
                 sheet.write_bytes(one_removed)
                 guide.stdin.write(outcome.encode() + b"\n")

@@ -199,6 +199,7 @@ pub(super) fn run() -> Result<(), String> {
 }
 
 pub(super) enum Inspection<'a> {
+    Pending,
     ListLeads,
     Find(&'a str),
     Pair(&'a str, &'a str),
@@ -210,8 +211,12 @@ pub(super) fn export_destination(
 ) -> Result<Option<PathBuf>, String> {
     while let Some(path) = ask_path_or_action(
         input,
-        "To compare two keys, type :inspect KEY,KEY. Look up records with :find TEXT, :find --author NAME | TITLE or :find --venue VENUE | TITLE. Type :leads to list inspection-only pairs. To preview an export, enter a new folder path. Press Enter to close this session:",
+        "To compare two keys, type :inspect KEY,KEY. Look up records with :find TEXT, :find --author NAME | TITLE or :find --venue VENUE | TITLE. Type :pending for the current pending groups or :leads for inspection-only pairs. To preview an export, enter a new folder path. Press Enter to close this session:",
         |answer| {
+            if answer == ":pending" {
+                inspect(Inspection::Pending)?;
+                return Ok(true);
+            }
             if answer == ":leads" {
                 inspect(Inspection::ListLeads)?;
                 return Ok(true);

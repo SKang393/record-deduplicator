@@ -62,7 +62,12 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    Use `keep` to retain a report. If you choose `keep-with-reason`, the
    decision sheet and exported `mapping.tsv` store your note in plain text.
    The reviewed RIS and ordinary trace omit the note.
-   To reopen, run the guide again with the same labels and original files.
+   You can leave the guide open while you edit the sheet. After saving,
+   type `:pending` to see the current groups and keepers, or inspect a pair
+   directly. The guide checks the original files and validates the edited sheet
+   before showing the results.
+   To reopen a closed session, run the guide again with the same labels and
+   original files.
    It checks their fingerprints and shows pending decisions and keeper context.
    If you moved or renamed a download, enter its new path under its original
    label. If its SHA-256 differs, the guide names the label and shows the
@@ -560,7 +565,9 @@ in source order and control characters escaped for terminal display. If a record
 usable final page range or article number, the comparison identifies its source
 and ordinal and tells you whether it supplied any pagination fields (SP/EP).
 If the records give insufficient evidence, leave the decision pending. Edit
-`choices.tsv` when you reach a decision, then rerun `--pending-decisions`.
+`choices.tsv` when you reach a decision, then type `:pending` in the open
+guide or rerun `--pending-decisions` from the command line. The export
+preview checks the proposed removals together for conflicting identifiers.
 Use `--resume-decisions` for the full queue, including input issues.
 
 ### Trace an exported occurrence to its originals

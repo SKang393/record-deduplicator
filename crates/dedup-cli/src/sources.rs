@@ -270,7 +270,7 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 PendingMode::CreateAndReview(input) => {
                     let count = super::decisions::create(path, &queue, &manifest, true)?;
                     eprintln!(
-                        "Created {} with {count} pending rows. Press Enter at the inspection prompt to stop and edit this sheet.",
+                        "Created {} with {count} pending rows. You can edit the sheet while this guide is open. Type :pending after saving to list the current groups.",
                         Path::new(path).display()
                     );
                     Some(input)
@@ -278,17 +278,20 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
             };
             let parse = |text: &str| super::decisions::parse_sheet(text, &queue, &manifest);
             let mut validated_text = super::decisions::read_sheet(path)?;
-            let sheet = parse(&validated_text)?;
-            let first_group = {
+            let mut sheet = parse(&validated_text)?;
+            let guided = guide.is_some();
+            let show_pending = |sheet: &ResumedSheet| -> Result<(), String> {
                 let mut out = io::BufWriter::new(io::stdout().lock());
-                super::pending::render(&queue, &manifest, &sheet, &mut out)
+                let first_group = super::pending::render(&queue, &manifest, sheet, &mut out)
                     .and_then(|first| out.flush().map(|()| first))
-                    .map_err(|_| "Cannot write report.")?
-            };
-            if let Some(input) = guide {
-                if let Some(row) = first_group {
+                    .map_err(|_| "Cannot write report.")?;
+                if let Some(row) = first_group.filter(|_| guided) {
                     eprintln!("First unresolved group from the pending list:\n  {row}");
                 }
+                Ok(())
+            };
+            show_pending(&sheet)?;
+            if let Some(input) = guide {
                 let read_current_sheet = || {
                     recheck_sources()?;
                     super::decisions::read_sheet(path)
@@ -296,13 +299,12 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 let Some(directory) = super::start::export_destination(input, |request| {
                     let current = read_current_sheet()?;
                     if current != validated_text {
-                        if parse(&current)?.decisions != sheet.decisions {
-                            return Err("Decisions changed. Reopen the sheet to see the current pending groups.".into());
-                        }
-                        // A formatting-only save can represent the same validated decisions.
+                        sheet = parse(&current)?;
                         validated_text = current;
+                        eprintln!("Reloaded the saved decision sheet.");
                     }
                     match request {
+                        Inspection::Pending => show_pending(&sheet),
                         Inspection::Find(query) => {
                             super::inspect::find(&queue, &sheet.decisions, query)
                                 .map_err(|e| e.to_string())
@@ -337,9 +339,7 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 };
                 let mut decisions = parse(&read_current_sheet()?)?.decisions;
                 if decisions != sheet.decisions {
-                    eprintln!(
-                        "Saved decisions changed since the pending list. Previewing the current sheet."
-                    );
+                    eprintln!("Saved decisions changed. Previewing the current sheet.");
                 }
                 loop {
                     let export = super::reviewed::prepare(&queue, &manifest, &decisions, false)?;
