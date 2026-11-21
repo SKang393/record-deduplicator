@@ -21,7 +21,7 @@ const END: &str = "end";
 pub(super) enum Decision {
     NotCandidate,
     Pending,
-    Keep,
+    Keep(Option<String>),
     DuplicateOf(usize),
     VerifiedMetadata { target: usize, rationale: String },
 }
@@ -38,7 +38,7 @@ impl Decision {
         match self {
             Self::NotCandidate => "not-candidate".into(),
             Self::Pending => "pending".into(),
-            Self::Keep => "keep".into(),
+            Self::Keep(_) => "keep".into(),
             Self::DuplicateOf(index) => {
                 let target = &queue.entries[*index];
                 format!("duplicate-of={}:{}", target.label, target.ordinal).into()
@@ -49,6 +49,20 @@ impl Decision {
             }
         }
     }
+
+    pub(super) fn mapping_rationale(&self) -> Option<(&'static str, &str)> {
+        match self {
+            Self::Keep(Some(reason)) => Some(("keep", reason)),
+            Self::VerifiedMetadata { rationale, .. } => Some(("metadata", rationale)),
+            _ => None,
+        }
+    }
+}
+
+pub(super) fn valid_rationale(text: &str) -> bool {
+    !text.trim().is_empty()
+        && text.len() <= 512
+        && !text.contains(|ch: char| ch.is_control() || matches!(ch, '\u{2028}' | '\u{2029}'))
 }
 
 fn metadata_groups(queue: &ReviewQueue<'_>, hints: &[MetadataHint]) -> Vec<Option<usize>> {
@@ -180,7 +194,10 @@ pub(super) fn resume(
             .and_then(|line| line.split_once('\t'))
             .filter(|(saved_key, _)| *saved_key == key)
             .ok_or_else(|| format!("Decision sheet is missing the expected row for {key}."))?;
-        choices.insert(saved_key, (index, choice));
+        let (action, reason) = choice
+            .split_once('\t')
+            .map_or((choice, None), |(action, reason)| (action, Some(reason)));
+        choices.insert(saved_key, (index, action, reason));
     }
     if lines.next() != Some(END) || lines.next().is_some() {
         return Err("Decision sheet has unexpected rows or a missing end marker.".into());
@@ -199,33 +216,28 @@ pub(super) fn resume(
         }
     }
     let mut decisions = vec![Decision::NotCandidate; queue.entries.len()];
-    for (&key, &(index, choice)) in &choices {
+    for (&key, &(index, action, reason)) in &choices {
         let keep_target = |other: &str| match choices.get(other) {
-            Some(&(target, "keep")) => Ok(target),
+            Some(&(target, "keep", None) | &(target, "keep-with-reason", Some(_))) => Ok(target),
             _ => Err(format!(
                 "The duplicate target for {key} must have a keep decision."
             )),
         };
-        decisions[index] = match choice {
-            "keep" => Decision::Keep,
-            "pending" => Decision::Pending,
-            _ if metadata && choice.starts_with("verified-duplicate-of=") => {
-                let (other, rationale) = choice["verified-duplicate-of=".len()..]
-                    .split_once('\t')
-                    .filter(|(_, s)| !s.trim().is_empty() && s.len() <= 512
-                        && !s.contains(|ch: char| ch.is_control() || matches!(ch, '\u{2028}' | '\u{2029}')))
-                    .ok_or_else(|| format!("Expected a tab and a single-line rationale (1 to 512 UTF-8 bytes) for {key}."))?;
-                let target = keep_target(other)?;
-                Decision::VerifiedMetadata {
-                    target,
-                    rationale: rationale.to_owned(),
-                }
+        let rationale = || {
+            reason.filter(|text| valid_rationale(text)).map(str::to_owned)
+                .ok_or_else(|| format!("Expected a tab and a single-line rationale (1 to 512 UTF-8 bytes) for {key}."))
+        };
+        decisions[index] = match (action, reason) {
+            ("keep", None) => Decision::Keep(None),
+            ("keep-with-reason", _) => Decision::Keep(Some(rationale()?)),
+            ("pending", None) => Decision::Pending,
+            _ if metadata && action.starts_with("verified-duplicate-of=") => {
+                let rationale = rationale()?;
+                let target = keep_target(&action["verified-duplicate-of=".len()..])?;
+                Decision::VerifiedMetadata { target, rationale }
             }
-            _ => {
-                let other = choice.strip_prefix("duplicate-of=").ok_or_else(|| format!(
-                    "Unknown decision for {key}. Expected pending, keep or duplicate-of=<occurrence>."
-                ))?;
-                let target = keep_target(other)?;
+            (action, None) if action.starts_with("duplicate-of=") => {
+                let target = keep_target(&action["duplicate-of=".len()..])?;
                 if !groups[index]
                     .iter()
                     .flatten()
@@ -236,6 +248,13 @@ pub(super) fn resume(
                     ));
                 }
                 Decision::DuplicateOf(target)
+            }
+            _ => {
+                return Err(format!(
+                    "Unknown decision for {key}. Check for extra fields. Use pending, keep, \
+                     keep-with-reason with a rationale, or duplicate-of=<occurrence>. \
+                     Metadata sheets also accept verified-duplicate-of=<occurrence> with a rationale."
+                ));
             }
         };
     }

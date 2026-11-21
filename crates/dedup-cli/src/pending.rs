@@ -42,7 +42,7 @@ pub(super) fn render(
             }
             match sheet.decisions[row - 1] {
                 Decision::Pending => pending.push(key),
-                Decision::Keep => keep.push(key),
+                Decision::Keep(_) => keep.push(key),
                 Decision::DuplicateOf(_) | Decision::VerifiedMetadata { .. } => assigned.push(key),
                 Decision::NotCandidate => {}
             }

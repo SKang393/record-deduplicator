@@ -130,9 +130,10 @@ directory and run `export PATH="$PWD:$PATH"`.
 2. Edit only the decision cells on occurrence rows. For a verified copy in
    a metadata-enabled sheet, enter `keep` in column B on the keeper's row.
    On the copy's row, enter, for example, `verified-duplicate-of=0007:1`
-   in B and a single line explaining the evidence in C. Leave uncertain
-   cases pending. Preserve the row order, occurrence keys, input rows and
-   final `end` row.
+   in B and a single line explaining the evidence in C. To record why a report
+   stays separate, enter `keep-with-reason` in B and the reason in C. A plain
+   `keep` takes an empty C. Leave uncertain cases pending. Preserve the row
+   order, occurrence keys, input rows and final `end` row.
 3. Save back to the same `.tsv` using **Text CSV** with **Edit filter
    settings**. Select **Unicode (UTF-8)**, the **Tab** field delimiter and
    an empty text delimiter. Leave **Quote all text cells** off and keep the
@@ -506,6 +507,27 @@ The decision and output number come from that export's mapping, so you can
 trace it even after editing the sheet or renaming a download. Trace verifies
 these rows against the mapping you supply. Authenticating the mapping itself
 requires independent evidence of its origin and integrity.
+
+To document why you retained a distinct report, enter `keep-with-reason`
+and a single-line reason (1–512 UTF-8 bytes) on its editable decision row.
+This tab-separated row records a reason for keeping a protocol separately.
+
+```text
+reg:1	keep-with-reason	Protocol describes planned methods. The results report gives outcomes.
+```
+
+The note is saved in the decision sheet and copied to a `rationale` row in
+the local export's `mapping.tsv`. Sharing either file shares the note.
+The reviewed RIS contains only the retained source records. To see the reason
+from that export, request it for the kept occurrence.
+
+```sh
+dedup trace --show-keep-reason reviewed/mapping.tsv reg:1 originals
+```
+
+This adds a `keep_reason` column to the verified trace. A plain `keep`
+has an empty reason. To withdraw the note from future exports, restore
+`keep`, clear the reason cell, and export to a new directory.
 
 The command checks regular files directly inside each folder you supply.
 It verifies the source fingerprint, record ordinal and byte range before

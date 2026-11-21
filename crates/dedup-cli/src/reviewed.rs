@@ -41,16 +41,12 @@ pub(super) fn prepare(
         }
         output_ordinals.push(retained);
     }
-    let version = if decisions
-        .iter()
-        .any(|d| matches!(d, Decision::VerifiedMetadata { .. }))
-    {
-        2
+    let schema = if decisions.iter().any(|d| d.mapping_rationale().is_some()) {
+        super::mapping::RATIONALE_SCHEMA
     } else {
-        1
+        "schema\texport\t1\treviewed-ris"
     };
-    let mut mapping =
-        format!("type\tsignal\trows\tdetail\nschema\texport\t{version}\treviewed-ris\n");
+    let mut mapping = format!("type\tsignal\trows\tdetail\n{schema}\n");
     for identity in manifest {
         writeln!(mapping, "{identity}").unwrap();
     }
@@ -117,10 +113,10 @@ pub(super) fn prepare(
             output_ordinals[representative]
         )
         .unwrap();
-        if let Decision::VerifiedMetadata { rationale, .. } = decision {
+        if let Some((kind, rationale)) = decision.mapping_rationale() {
             writeln!(
                 mapping,
-                "rationale\tmetadata\t{}:{}\t{rationale}",
+                "rationale\t{kind}\t{}:{}\t{rationale}",
                 entry.label, entry.ordinal
             )
             .unwrap();
@@ -160,7 +156,7 @@ impl Counts {
         let count = match decision {
             Decision::DuplicateOf(_) => &mut self.removed_id,
             Decision::VerifiedMetadata { .. } => &mut self.removed_metadata,
-            Decision::Keep => &mut self.keep,
+            Decision::Keep(_) => &mut self.keep,
             Decision::Pending if disposition == Disposition::ReviewCandidate => {
                 &mut self.pending_id
             }

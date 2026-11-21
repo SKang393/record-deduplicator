@@ -9,9 +9,13 @@ use std::{
 use dedup_core::{identifier_review::MAX_INPUT_BYTES, ris};
 use sha2::{Digest, Sha256};
 
-use super::mapping::INVALID;
+use super::{decisions::valid_rationale, mapping::INVALID};
 
-fn row<'a>(mapping: &'a str, kind: &str, key: &str) -> Result<(&'a str, &'a str), String> {
+fn optional_row<'a>(
+    mapping: &'a str,
+    kind: &str,
+    key: &str,
+) -> Result<Option<(&'a str, &'a str)>, String> {
     let mut matches = mapping.lines().filter_map(|line| {
         let mut fields = line.splitn(4, '\t');
         if fields.next()? != kind {
@@ -21,15 +25,18 @@ fn row<'a>(mapping: &'a str, kind: &str, key: &str) -> Result<(&'a str, &'a str)
         if fields.next()? != key {
             return None;
         }
-        Some((signal, fields.next()?))
+        Some(fields.next().map(|detail| (signal, detail)).ok_or(INVALID))
     });
-    let found = matches
-        .next()
-        .ok_or_else(|| format!("No {kind} row for {key} in mapping.tsv."))?;
+    let found = matches.next().transpose()?;
     if matches.next().is_some() {
         return Err(format!("Multiple {kind} rows for {key} in mapping.tsv."));
     }
     Ok(found)
+}
+
+fn row<'a>(mapping: &'a str, kind: &str, key: &str) -> Result<(&'a str, &'a str), String> {
+    optional_row(mapping, kind, key)?
+        .ok_or_else(|| format!("No {kind} row for {key} in mapping.tsv."))
 }
 
 struct Location<'a> {
@@ -135,9 +142,31 @@ fn resolve(folder: &Path, locations: &mut [Location<'_>]) -> Result<(), String> 
     Ok(())
 }
 
-pub(super) fn run(mapping: &Path, key: &OsStr, originals: &[OsString]) -> Result<(), String> {
+pub(super) fn run(
+    mapping: &Path,
+    key: &OsStr,
+    originals: &[OsString],
+    show_keep_reason: bool,
+) -> Result<(), String> {
     let text = super::mapping::read(mapping)?;
     let selected = Location::lookup(&text, key.to_str().ok_or("Expected a label and ordinal.")?)?;
+    let keep_reason = if show_keep_reason {
+        if selected.decision != "keep" {
+            return Err("Select an explicitly kept occurrence to show its keep reason.".into());
+        }
+        match optional_row(&text, "rationale", selected.key)? {
+            Some(("keep", reason))
+                if valid_rationale(reason)
+                    && text.lines().nth(1) == Some(super::mapping::RATIONALE_SCHEMA) =>
+            {
+                Some(reason)
+            }
+            Some(_) => return Err(INVALID.into()),
+            None => Some(""),
+        }
+    } else {
+        None
+    };
     let mut locations = vec![selected];
     let decision = locations[0].decision;
     if let Some(key) = decision
@@ -170,12 +199,17 @@ pub(super) fn run(mapping: &Path, key: &OsStr, originals: &[OsString]) -> Result
     let write_error = |_: io::Error| "Cannot write trace.";
     writeln!(
         report,
-        "occurrence\tdecision\toutput\toriginal_bytes\tsource_sha256\tmatching_path"
+        "occurrence\tdecision\toutput\toriginal_bytes\tsource_sha256\tmatching_path{}",
+        if show_keep_reason {
+            "\tkeep_reason"
+        } else {
+            ""
+        }
     )
     .map_err(write_error)?;
     for location in locations {
         for path in location.files {
-            writeln!(
+            write!(
                 report,
                 "{}\t{}\t{}\t{}\t{}\t{:?}",
                 location.key,
@@ -186,6 +220,10 @@ pub(super) fn run(mapping: &Path, key: &OsStr, originals: &[OsString]) -> Result
                 path
             )
             .map_err(write_error)?;
+            if let Some(reason) = keep_reason {
+                write!(report, "\t{reason}").map_err(write_error)?;
+            }
+            writeln!(report).map_err(write_error)?;
         }
     }
     report.flush().map_err(|_| "Cannot write trace.".into())

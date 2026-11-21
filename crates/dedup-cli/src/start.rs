@@ -234,6 +234,12 @@ pub(super) fn confirm_export(
         "Records retained: {} (including {} pending).",
         export.retained, export.pending
     );
+    if decisions
+        .iter()
+        .any(|d| matches!(d, Decision::Keep(Some(_))))
+    {
+        eprintln!("The local mapping.tsv will include your saved keep reasons.");
+    }
     show_title_advisories(queue, decisions);
     let Some(answer) = ask(
         input,
@@ -263,7 +269,7 @@ fn show_title_advisories(queue: &ris::ReviewQueue<'_>, decisions: &[Decision]) {
         .flat_map(|s| &s.source.occurrences)
         .zip(decisions)
         .map(|(record, decision)| match decision {
-            Decision::Keep | Decision::DuplicateOf(_) => record.protocol_or_results_wording(),
+            Decision::Keep(_) | Decision::DuplicateOf(_) => record.protocol_or_results_wording(),
             _ => None,
         })
         .collect();

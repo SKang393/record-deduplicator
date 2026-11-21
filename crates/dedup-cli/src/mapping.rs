@@ -8,6 +8,7 @@ use dedup_core::{identifier_review::MAX_RECORDS, ris};
 use sha2::{Digest, Sha256};
 
 pub(super) const INVALID: &str = "Invalid reviewed export mapping.";
+pub(super) const RATIONALE_SCHEMA: &str = "schema\texport\t2\treviewed-ris";
 
 // Each exported occurrence fits within 1 KiB including a possible rationale row.
 const MAX_MAPPING_BYTES: usize = (MAX_RECORDS + ris::MAX_SOURCES + 4) * 1024;
@@ -24,7 +25,7 @@ pub(super) fn read(mapping: &Path) -> Result<String, String> {
         || header.next() != Some("type\tsignal\trows\tdetail")
         || !matches!(
             header.next(),
-            Some("schema\texport\t1\treviewed-ris" | "schema\texport\t2\treviewed-ris")
+            Some("schema\texport\t1\treviewed-ris" | RATIONALE_SCHEMA)
         )
     {
         return Err(INVALID.into());

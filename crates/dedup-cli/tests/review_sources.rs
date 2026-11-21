@@ -1168,3 +1168,107 @@ fn verify_export_detects_a_swapped_equal_count_and_length_ris() {
         assert_failed_before_report(result);
     }
 }
+
+#[test]
+fn optional_keep_reason_follows_the_selected_kept_report() {
+    let inputs = Inputs::new("keep-reason");
+    let results = "TY  - JOUR\nTI  - Ceramic flexure: results\nDO  - 10.0000/flex\nER  -\n";
+    let protocol = results.replace("results", "protocol");
+    let ris = format!("{results}{results}{protocol}{results}");
+    inputs.write("originals/records.ris", ris.as_bytes());
+    let sources = ["--ris-source", "s", "originals/records.ris"];
+    let run = |flag| inputs.run(&[&[flag, "choices.tsv"][..], &sources].concat());
+    assert!(run("--init-metadata-decisions").status.success());
+    let sheet = inputs.0.join("choices.tsv");
+    let plain = fs::read_to_string(&sheet)
+        .unwrap()
+        .replace("s:1\tpending", "s:1\tkeep")
+        .replace("s:2\tpending", "s:2\tduplicate-of=s:1")
+        .replace("s:3\tpending", "s:3\tkeep");
+    inputs.write("choices.tsv", plain.as_bytes());
+    assert!(inputs.export("plain", &sources).status.success());
+
+    let reason = "Distinct protocol — planned measurements only.";
+    let annotated = plain
+        .replace("s:1\tkeep", "s:1\tkeep-with-reason\tComplete results.")
+        .replace("s:3\tkeep", &format!("s:3\tkeep-with-reason\t{reason}"));
+    inputs.write("choices.tsv", annotated.as_bytes());
+    for flag in ["--resume-decisions", "--pending-decisions"] {
+        let result = run(flag);
+        assert!(result.status.success());
+        assert!(!String::from_utf8_lossy(&result.stdout).contains(reason));
+    }
+    assert!(inputs.export("noted", &sources).status.success());
+    assert_eq!(fs::read_to_string(&sheet).unwrap(), annotated);
+    let read = |path| fs::read_to_string(inputs.0.join(path)).unwrap();
+    assert_eq!(
+        read("noted/reviewed.ris"),
+        format!("{results}{protocol}{results}")
+    );
+    assert_eq!(read("plain/reviewed.ris"), read("noted/reviewed.ris"));
+    assert_eq!(
+        read("plain/reconciliation.tsv"),
+        read("noted/reconciliation.tsv")
+    );
+    let mapping = read("noted/mapping.tsv");
+    let audit = format!("rationale\tkeep\ts:3\t{reason}\n");
+    assert_eq!(mapping.matches(&audit).count(), 1);
+    assert!(mapping.contains("map\tpending\ts:4\t"));
+    assert_eq!(read("originals/records.ris"), ris);
+
+    let trace = |show, mapping: &str, key: &str| {
+        let mut cmd = Command::new(env!("CARGO_BIN_EXE_dedup"));
+        cmd.current_dir(&inputs.0).arg("trace");
+        if show {
+            cmd.arg("--show-keep-reason");
+        }
+        cmd.args([mapping, key, "originals"]).output().unwrap()
+    };
+    inputs.write("choices.tsv", plain.as_bytes()); // Later edits do not change a completed export.
+    let regular = trace(false, "noted/mapping.tsv", "s:3");
+    assert!(regular.status.success());
+    assert_eq!(
+        regular.stdout,
+        trace(false, "plain/mapping.tsv", "s:3").stdout
+    );
+    let selected = trace(true, "noted/mapping.tsv", "s:3");
+    assert!(selected.status.success());
+    let report = String::from_utf8(selected.stdout).unwrap();
+    assert!(report.lines().next().unwrap().ends_with("\tkeep_reason"));
+    assert!(report.ends_with(&format!("\t{reason}\n")));
+    assert!(!report.contains("Complete results."));
+    let absent = trace(true, "plain/mapping.tsv", "s:3");
+    assert!(absent.status.success() && absent.stdout.ends_with(b"\t\n"));
+    assert_failed_before_report(trace(true, "noted/mapping.tsv", "s:2"));
+    assert_failed_before_report(trace(true, "noted/mapping.tsv", "s:4"));
+
+    for bad in [
+        mapping.replace(&audit, &audit.repeat(2)),
+        mapping.replace(&audit, "rationale\tmetadata\ts:3\twrong type\n"),
+        mapping.replace(&audit, "rationale\tkeep\ts:3\textra\tcolumn\n"),
+    ] {
+        inputs.write("bad.tsv", bad.as_bytes());
+        assert_failed_before_report(trace(true, "bad.tsv", "s:3"));
+    }
+    for (key, bad) in [
+        ("s:3\tkeep", "s:3\tkeep\tstray"),
+        ("s:3\tkeep", "s:3\tkeep-with-reason\t "),
+        ("s:3\tkeep", "s:3\tkeep-with-reason\tfirst\tsecond"),
+        ("s:3\tkeep", "s:3\tkeep-with-reason\tline\u{2028}break"),
+        (
+            "s:3\tkeep",
+            &format!("s:3\tkeep-with-reason\t{}", "é".repeat(257)),
+        ),
+        ("s:4\tpending", "s:4\tpending\treason"),
+        ("s:2\tduplicate-of=s:1", "s:2\tduplicate-of=s:1\treason"),
+    ] {
+        inputs.write("choices.tsv", plain.replace(key, bad).as_bytes());
+        assert_failed_before_report(inputs.export("invalid", &sources));
+        assert!(!inputs.0.join("invalid").exists());
+    }
+    inputs.write(
+        "originals/records.ris",
+        ris.replace("results", "changed").as_bytes(),
+    );
+    assert_failed_before_report(trace(true, "noted/mapping.tsv", "s:3"));
+}
