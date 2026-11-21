@@ -39,6 +39,22 @@ fn row<'a>(mapping: &'a str, kind: &str, key: &str) -> Result<(&'a str, &'a str)
         .ok_or_else(|| format!("No {kind} row for {key} in mapping.tsv."))
 }
 
+fn is_retained(decision: &str) -> bool {
+    matches!(decision, "keep" | "pending" | "not-candidate")
+}
+
+// The exporter writes the retained occurrences in map-row order.
+fn retained_key_at(mapping: &str, output: usize) -> Option<&str> {
+    mapping
+        .lines()
+        .filter_map(|line| {
+            let (decision, row) = line.strip_prefix("map\t")?.split_once('\t')?;
+            let (key, _) = row.split_once('\t')?;
+            is_retained(decision).then_some(key)
+        })
+        .nth(output - 1)
+}
+
 struct Location<'a> {
     key: &'a str,
     ordinal: usize,
@@ -62,6 +78,11 @@ impl<'a> Location<'a> {
         let (decision, detail) = row(mapping, "map", key)?;
         let (span, output) = detail.split_once(";output=").ok_or(INVALID)?;
         let output = output.parse().ok().filter(|&n| n > 0).ok_or(INVALID)?;
+        if is_retained(decision) && retained_key_at(mapping, output) != Some(key) {
+            return Err(format!(
+                "Output {output} for {key} disagrees with the retained order in mapping.tsv. Use the original mapping from this export."
+            ));
+        }
         let (format, identity) = row(mapping, "input", label)?;
         let file_size = identity
             .strip_prefix("bytes=")
@@ -178,7 +199,7 @@ pub(super) fn run(
             return Err("Removed occurrence and keeper disagree in mapping.tsv.".into());
         }
         locations.push(keeper);
-    } else if !matches!(decision, "keep" | "pending" | "not-candidate") {
+    } else if !is_retained(decision) {
         return Err(INVALID.into());
     }
 

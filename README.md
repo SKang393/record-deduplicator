@@ -600,9 +600,11 @@ both at output record 1. The second shows the retained `idx:2` at output
 record 2. Each row gives the matching file path, its whole-file SHA-256,
 and the original half-open byte range (start included, end excluded).
 The decision and output number come from that export's mapping, so you can
-trace it even after editing the sheet or renaming a download. Trace verifies
-these rows against the mapping you supply. Authenticating the mapping itself
-requires independent evidence of its origin and integrity.
+trace it even after editing the sheet or renaming a download. Trace checks
+that the retained occurrence is at the stated position among the mapping's
+retained rows. For a removed copy it checks the position of its named keeper.
+Use the original mapping in its exported row order. Authenticating the
+mapping itself requires independent evidence of its origin and integrity.
 
 The command checks regular files directly inside each folder you supply.
 It verifies the source fingerprint, record ordinal and byte range before

@@ -1453,6 +1453,17 @@ fn optional_keep_reason_follows_the_selected_kept_report() {
         regular.stdout,
         trace(false, "plain/mapping.tsv", "s:3").stdout
     );
+    // The copy still agrees with its keeper after both output positions are transposed.
+    let transposed = mapping
+        .replace(";output=1\n", ";output=swap\n")
+        .replace(";output=2\n", ";output=1\n")
+        .replace(";output=swap\n", ";output=2\n");
+    inputs.write("transposed.tsv", transposed.as_bytes());
+    for key in ["s:2", "s:3"] {
+        let result = trace(false, "transposed.tsv", key);
+        assert!(String::from_utf8_lossy(&result.stderr).contains("retained order"));
+        assert_failed_before_report(result);
+    }
     let selected = trace(true, "noted/mapping.tsv", "s:3");
     assert!(selected.status.success());
     let report = String::from_utf8(selected.stdout).unwrap();
