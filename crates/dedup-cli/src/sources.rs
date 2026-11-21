@@ -190,7 +190,9 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 .publish(directory);
         }
         Action::Pending(path, guide) => {
-            let sheet = super::decisions::resume(path, &queue, &manifest)?;
+            let parse = |text: &str| super::decisions::parse_sheet(text, &queue, &manifest);
+            let mut validated_text = super::decisions::read_sheet(path)?;
+            let sheet = parse(&validated_text)?;
             let first_group = {
                 let mut out = io::BufWriter::new(io::stdout().lock());
                 super::pending::render(&queue, &manifest, &sheet, &mut out)
@@ -201,13 +203,18 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 if let Some(row) = first_group {
                     eprintln!("First unresolved group from the pending list:\n  {row}");
                 }
-                let read_current_decisions = || {
+                let read_current_sheet = || {
                     recheck_sources()?;
-                    super::decisions::resume(path, &queue, &manifest).map(|sheet| sheet.decisions)
+                    super::decisions::read_sheet(path)
                 };
                 let Some(directory) = super::start::export_destination(input, |request| {
-                    if read_current_decisions()? != sheet.decisions {
-                        return Err("Decisions changed. Reopen the sheet to see the current pending groups.".into());
+                    let current = read_current_sheet()?;
+                    if current != validated_text {
+                        if parse(&current)?.decisions != sheet.decisions {
+                            return Err("Decisions changed. Reopen the sheet to see the current pending groups.".into());
+                        }
+                        // A formatting-only save can represent the same validated decisions.
+                        validated_text = current;
                     }
                     let super::start::Inspection::Pair(left, right) = request else {
                         let pairs = queue.locator_pairs();
@@ -236,7 +243,7 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 else {
                     return Ok(());
                 };
-                let mut decisions = read_current_decisions()?;
+                let mut decisions = parse(&read_current_sheet()?)?.decisions;
                 if decisions != sheet.decisions {
                     eprintln!(
                         "Saved decisions changed since the pending list. Previewing the current sheet."
@@ -254,7 +261,7 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                     )? {
                         break;
                     }
-                    let current = read_current_decisions()?;
+                    let current = parse(&read_current_sheet()?)?.decisions;
                     if current != decisions {
                         eprintln!(
                             "Saved decisions changed after the preview. Review the updated preview and confirm again."

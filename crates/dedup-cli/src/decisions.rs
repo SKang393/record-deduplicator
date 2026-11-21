@@ -148,6 +148,10 @@ pub(super) fn resume(
     queue: &ReviewQueue<'_>,
     manifest: &[String],
 ) -> Result<ResumedSheet, String> {
+    parse_sheet(&read_sheet(path)?, queue, manifest)
+}
+
+pub(super) fn read_sheet(path: &OsStr) -> Result<String, String> {
     if !fs::metadata(path).is_ok_and(|m| m.is_file()) {
         return Err("Expected a regular decision sheet file.".into());
     }
@@ -160,10 +164,18 @@ pub(super) fn resume(
     if text.len() > MAX_INPUT_BYTES {
         return Err("Decision sheet exceeds 16 MiB.".into());
     }
+    Ok(text)
+}
+
+pub(super) fn parse_sheet(
+    text: &str,
+    queue: &ReviewQueue<'_>,
+    manifest: &[String],
+) -> Result<ResumedSheet, String> {
     // Calc writes short rows out to the width of the sheet with empty cells.
     let mut lines = text
         .strip_prefix('\u{feff}')
-        .unwrap_or(&text)
+        .unwrap_or(text)
         .lines()
         .map(|line| line.trim_end_matches('\t'));
     let metadata = match lines.next() {
