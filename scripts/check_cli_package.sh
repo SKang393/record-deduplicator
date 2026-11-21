@@ -27,7 +27,7 @@ awk '
     walkthrough && /^```sh$/ { block = 1; count++; next }
     /^```$/ { block = 0 }
     block { print }
-    END { if (count != 4) exit 1 }
+    END { if (count != 5) exit 1 }
 ' README.md > "$work/first-run.sh"
 export TMPDIR="$work"
 source "$work/first-run.sh" > "$work/output.tsv"
@@ -306,3 +306,43 @@ if [[ $start_shell == zsh ]]; then
 fi
 cmp saved.tsv "$sheet"
 echo "PASS: $start_shell guided start with spaced Unicode paths; cancellation preserved project bytes and entries; created 3 pending; reopened the partially reviewed sheet; changed source refused."
+
+# Trace the existing three-occurrence reference export after archiving its downloads.
+mkdir -p downloads/keepers
+mv guide-index.ris "downloads/Index batch.ris"
+mv catalog.ris "downloads/keepers/Main batch.ris"
+sed 's/JOUR/BOOK/' "downloads/keepers/Main batch.ris" > "downloads/Main batch.ris"
+mapping=reference-export/mapping.tsv
+dedup trace "$mapping" idx:1 downloads downloads/keepers > "$work/traces.tsv"
+dedup trace "$mapping" idx:2 downloads >> "$work/traces.tsv"
+# Compare the entire display, including filenames, with the synthetic baseline.
+cat > "$work/expected-traces.tsv" <<'ROWS'
+occurrence	decision	output	original_bytes	source_sha256	matching_path
+idx:1	verified-duplicate-of=cat:1	1	bytes=0..127	90c395d4d5099f5925c108d2a699e009b703bcbffa12e279499d2d33e269b429	"downloads/Index batch.ris"
+cat:1	keep	1	bytes=0..149	b18a5f6080b1d99e7d7800d10967368e957bea2cd14a8b71b859e903599d24ad	"downloads/keepers/Main batch.ris"
+occurrence	decision	output	original_bytes	source_sha256	matching_path
+idx:2	pending	2	bytes=127..254	90c395d4d5099f5925c108d2a699e009b703bcbffa12e279499d2d33e269b429	"downloads/Index batch.ris"
+ROWS
+# The synthetic names contain no literal backslashes. Rust quotes Windows separators.
+sed 's|\\\\|/|g' "$work/traces.tsv" | cmp - "$work/expected-traces.tsv"
+
+reject_trace() {
+    local problem=$1
+    shift
+    if dedup trace "$@" > "$work/trace.tsv" 2> "$work/trace.err"; then exit 1; else test "$?" -eq 2; fi
+    test ! -s "$work/trace.tsv"
+    grep -Fq "$problem" "$work/trace.err"
+}
+# With only the parent selected the real keeper is out of scope. The substitute has equal size.
+reject_trace 'No original file matches cat:1' "$mapping" idx:1 downloads
+sed 's/bytes=0\.\.127;output=1/bytes=0..126;output=1/' "$mapping" > changed-span.tsv
+reject_trace 'Original occurrence idx:1 disagrees' changed-span.tsv idx:1 downloads downloads/keepers
+
+# Byte hashes from the same guided fixture exported at e92ade288ad7, before trace existed.
+"${checksum[@]}" -c <<'SUMS'
+b0cedb50c703d63d28832635724ebd4e8d5e0db177a509af305487a263e0d68a *reference-export/reviewed.ris
+4364562f7dd989c5e5c7c64df1d5b2d890e4bb7da4643f8f7f28d20e8e160e6e *reference-export/mapping.tsv
+c12cb656ce49f76d67b58a056fed25ecc225a46f18e31284c5b7abf4abdca2c4 *reference-export/reconciliation.tsv
+SUMS
+echo "PASS: trace found the verified copy and keeper at output 1 and the pending report at output 2 in renamed files."
+echo "PASS: same-size substitute with keeper outside the selected folders and altered span both exited 2 with empty stdout; all three export hashes matched."
