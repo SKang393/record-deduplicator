@@ -238,7 +238,7 @@ pub(super) fn confirm_export(
     eprintln!("New export folder: {}", directory.display());
     eprintln!("Explicitly marked duplicates to remove: {}", export.removed);
     eprintln!(
-        "Records retained: {} (including {} pending).",
+        "Records to export for screening: {} (including {} pending duplicate review). A report may appear more than once.",
         export.retained, export.pending
     );
     if decisions

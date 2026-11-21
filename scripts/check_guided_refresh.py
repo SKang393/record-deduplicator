@@ -53,7 +53,7 @@ def check(binary, job):
                 guide.stdin.write(outcome.encode() + b"\n")
                 preview = read_prompt(log, guide, question)
                 assert b"Explicitly marked duplicates to remove: 1" in preview, preview
-                assert b"Records retained: 2 (including 1 pending)." in preview, preview
+                assert b"Records to export for screening: 2 (including 1 pending duplicate review)." in preview, preview
                 edited = pending if outcome != "invalid" else pending.replace(b"idx:1\tpending", b"idx:1\toops")
                 sheet.write_bytes(edited)
                 guide.stdin.write(b"write\n")
@@ -61,12 +61,12 @@ def check(binary, job):
                     guide.communicate(timeout=10)
                     error = log.read()
                     assert guide.returncode == 2 and b"Unknown decision for idx:1" in error, error
-                    assert question not in error and b"Records retained:" not in error, error
+                    assert question not in error and b"Records to export for screening:" not in error, error
                 else:
                     refreshed = read_prompt(log, guide, question)
                     assert b"Saved decisions changed after the preview" in refreshed, refreshed
                     assert b"Explicitly marked duplicates to remove: 0" in refreshed, refreshed
-                    assert b"Records retained: 3 (including 2 pending)." in refreshed, refreshed
+                    assert b"Records to export for screening: 3 (including 2 pending duplicate review)." in refreshed, refreshed
                     assert not (job / outcome).exists()
                     guide.communicate(b"write\n" if outcome == "write" else b"\n", timeout=10)
                     assert guide.returncode == 0, log.read()

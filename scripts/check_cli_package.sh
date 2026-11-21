@@ -303,7 +303,7 @@ grep -Fxq '  SP  - 41-46' pair.txt
 pending_dest="$handoff/Pending comparison"
 guided_start yes ':inspect cat:1,idx:2' "$(guide_path "$pending_dest")" write > inspected.txt 2> prompts.txt
 cat initial-pending.tsv pair.txt | cmp - inspected.txt
-grep -Fq 'Records retained: 3 (including 3 pending).' prompts.txt
+grep -Fq 'Records to export for screening: 3 (including 3 pending duplicate review).' prompts.txt
 grep -Fxq $'summary\tall\t3\tretained=3;suppressed=0' "$pending_dest/mapping.tsv"
 reference_review --export-reviewed reference.tsv pending-export
 for file in reviewed.ris mapping.tsv reconciliation.tsv; do
@@ -382,7 +382,7 @@ grep -Fq 'Destination already exists.' prompts.txt
 grep -Fq "Decision sheet: $sheet_path" prompts.txt
 grep -Fq "New export folder: $dest_path" prompts.txt
 grep -Fq 'Explicitly marked duplicates to remove: 1' prompts.txt
-grep -Fq 'Records retained: 2 (including 1 pending).' prompts.txt
+grep -Fq 'Records to export for screening: 2 (including 1 pending duplicate review). A report may appear more than once.' prompts.txt
 grep -Fq 'Export cancelled.' prompts.txt
 check_untouched
 guided_start yes "$occupied_path" :cancel > guided-pending.tsv 2> prompts.txt
