@@ -16,7 +16,7 @@ fn display_value(value: &CitationValue) -> String {
         CitationValue::Absent => return "absent".into(),
         CitationValue::Unresolved => return "see original".into(),
         CitationValue::Conflicting => return "conflicting values".into(),
-        CitationValue::Known(values) => values.as_slice(),
+        CitationValue::Known(values) | CitationValue::AsSupplied(values) => values.as_slice(),
         CitationValue::IdentifierWithUnsupportedField(key) => std::slice::from_ref(key),
     };
     let mut text = values

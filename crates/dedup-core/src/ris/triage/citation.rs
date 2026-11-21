@@ -1,6 +1,7 @@
-use super::{Occurrence, publication_year, title};
+use super::{Occurrence, title, year};
 use crate::normalize::pagination::Pagination;
 use crate::ris::{ReportIdentifiers, Values};
+use std::collections::BTreeSet;
 
 /// What a selected occurrence supplies for the inspection display.
 #[derive(Debug, PartialEq, Eq)]
@@ -11,6 +12,8 @@ pub enum CitationValue {
     /// One supported key alongside an unsupported field of the same identifier kind.
     IdentifierWithUnsupportedField(String),
     Known(Vec<String>),
+    /// Source evidence to display side by side without an equality verdict.
+    AsSupplied(Vec<String>),
 }
 
 impl CitationValue {
@@ -46,8 +49,42 @@ impl Occurrence<'_> {
             .then(|| (stem.to_owned(), word))
     }
 
-    /// Display normalized fields independently, including for incomplete citations.
-    pub fn citation_fields(&self) -> [(&'static str, CitationValue); 11] {
+    fn inspection_dates(&self) -> (CitationValue, CitationValue) {
+        let fields = self
+            .fields
+            .iter()
+            .filter(|f| matches!(f.tag, "PY" | "Y1" | "DA"));
+        let supplied: Vec<_> = fields
+            .clone()
+            .map(|f| {
+                let more = if f.continued {
+                    " [continued in original]"
+                } else {
+                    ""
+                };
+                format!("{}={}{}", f.tag, f.first_line_value, more)
+            })
+            .collect();
+        if supplied.is_empty() {
+            return (CitationValue::Absent, CitationValue::Absent);
+        }
+        // Keep all supplied years. The tags alone cannot assign a print or online date.
+        let years = match fields.map(year).collect::<Option<BTreeSet<_>>>() {
+            Some(years) => {
+                let values: Vec<_> = years.into_iter().map(|y| y.to_string()).collect();
+                if values.len() == 1 {
+                    CitationValue::Known(values)
+                } else {
+                    CitationValue::AsSupplied(values)
+                }
+            }
+            None => CitationValue::Unresolved,
+        };
+        (years, CitationValue::AsSupplied(supplied))
+    }
+
+    /// Display normalized fields and the source dates used for inspection.
+    pub fn citation_fields(&self) -> [(&'static str, CitationValue); 12] {
         let field = |tags: &[&str], values| match values {
             Some(values) => CitationValue::Known(values),
             None if self.fields.iter().any(|f| tags.contains(&f.tag)) => CitationValue::Unresolved,
@@ -66,13 +103,12 @@ impl Occurrence<'_> {
         };
         let mut ids = ReportIdentifiers::default();
         ids.observe(self);
+        let (years, dates) = self.inspection_dates();
         [
             ("Title", single(&["TI", "T1"], title(self))),
             ("Authors", field(&["AU", "A1"], self.authors())),
-            (
-                "Year",
-                single(&["PY", "Y1"], publication_year(self).map(|y| y.to_string())),
-            ),
+            ("Year", years),
+            ("RIS date fields", dates),
             ("RIS type", scalar("TY")),
             ("Work type", scalar("M3")),
             ("Venue", single(&["JO", "JF", "T2"], self.journal())),
@@ -82,5 +118,45 @@ impl Occurrence<'_> {
             ("DOI", CitationValue::identifier(ids.doi)),
             ("PMID", CitationValue::identifier(ids.pmid)),
         ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::CitationValue::{Absent, AsSupplied, Known, Unresolved};
+    use crate::ris::parse;
+
+    #[test]
+    fn inspection_preserves_publication_date_evidence() {
+        let record = |fields: &str| {
+            let text = format!("TY  - JOUR\n{fields}ER  -\n");
+            parse(&text).unwrap().occurrences[0].inspection_dates()
+        };
+        assert_eq!(
+            record("DA  - 2021/12/19/\n"),
+            (
+                Known(vec!["2021".into()]),
+                AsSupplied(vec!["DA=2021/12/19/".into()])
+            )
+        );
+        assert_eq!(
+            record("PY  - 2022\nDA  - 2021/12/19/\nY1  - 2022/02/\nY2  - 2025/05/10/\n"),
+            (
+                AsSupplied(vec!["2021".into(), "2022".into()]),
+                AsSupplied(vec![
+                    "PY=2022".into(),
+                    "DA=2021/12/19/".into(),
+                    "Y1=2022/02/".into()
+                ]),
+            )
+        );
+        assert_eq!(record("Y2  - 2025/05/10/\n"), (Absent, Absent));
+        assert_eq!(
+            record("DA  - winter issue\n  date pending\n"),
+            (
+                Unresolved,
+                AsSupplied(vec!["DA=winter issue [continued in original]".into()])
+            )
+        );
     }
 }

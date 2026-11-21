@@ -473,6 +473,14 @@ check the sheet's fingerprints and show selected citation fields in the key
 order you entered. For example, a results paper and its protocol can show the
 same DOI and different titles and pages. `same` and `different` compare the
 full normalized field values, even when a long value is shortened onscreen.
+`Year` compares `PY`, `Y1` and `DA` when each record supplies one
+unambiguous year. If a record supplies several years in supported date
+forms, inspection lists them side by side without choosing one. The next row shows
+the supplied values with their tags in source order. If an online posting
+and a print issue fall in different years, use any explicit source notes
+below the summary to identify the stage of each date.
+The comparison leaves `Y2` out of the publication years. Metadata matching
+still uses `PY` and `Y1`.
 `absent` means the source has no recognized field for that value. Fields absent
 on both sides are omitted. `see original` marks supplied fields that could not
 be summarized, and `conflicting values` marks contradictory IDs within one
