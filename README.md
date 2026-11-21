@@ -125,6 +125,9 @@ and only `index:1` has those fields, marking it `keep` and setting `catalog:1`
 to `duplicate-of=index:1` carries them into `reviewed.ris`. Keeping the sparse
 catalog copy leaves the index-only fields in the original index download.
 Keep a distinct follow-up separate even if it shares that DOI.
+Some exports use `N2` for the abstract. Also compare `TY` and `M3` for
+publication type and `ID` or `AN` for the source's reference or accession
+number. For ASReview, see the [mixed RIS handoff](#import-mixed-ris-titles-and-abstracts-into-asreview).
 
 Leave uncertain rows pending. For a worked example of pair inspection, an
 explicit decision and export, follow the [two-export walkthrough](#verify-a-copy-found-through-metadata).
@@ -637,6 +640,35 @@ for one report. The total `retained` count is the number of records sent
 forward in `reviewed.ris`. It can include unresolved copies of a report
 and separate reports from the same study. Use the screening log for records
 actually screened, reports assessed, exclusions and studies included.
+
+### Import mixed RIS titles and abstracts into ASReview
+
+In a fictional two-record import, ASReview 3.0.8 with rispy 0.9.0 read
+both records but stored an empty title and abstract for one. That record
+used `T1` and `N2` while the other used `TI` and `AB`. To prepare a separate
+RIS for this importer, use your saved decisions and the same named sources.
+
+```sh
+dedup review-ids --export-reviewed choices.tsv for-screening --asreview-ris \
+  --ris-source cat catalog.ris --ris-source idx index.ris
+dedup verify-export for-screening/mapping.tsv for-screening/reviewed.ris
+(cd for-screening && sha256sum -c asreview.sha256)
+```
+
+On macOS, use `shasum -a 256 -c asreview.sha256` for the checksum step.
+Import `for-screening/asreview.ris`. It contains the same retained
+occurrences in the same order as `reviewed.ris`. Within each occurrence,
+the companion spells `T1` as `TI` and `N2` as `AB` and supplies a space
+after the field hyphen where the reader requires one. It takes every field
+value from that occurrence alone. Multiple title fields or multiple abstract
+fields in a retained occurrence stop this optional export before publication.
+An ordinary export preserves those alternatives.
+
+In the reopened ASReview project, the keeper and the pending follow-up had
+separate record IDs and both stored their full title and abstract. Use
+the saved RIS for source-specific `ID`, `AN`, `TY` and `M3` values. ASReview
+assigns its own record IDs. The mapping fingerprints `reviewed.ris` and the
+separate checksum file identifies both RIS files.
 
 ### Import the reviewed RIS into Zotero
 

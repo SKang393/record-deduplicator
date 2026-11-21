@@ -9,7 +9,7 @@ use std::{
 
 use dedup_core::{
     identifier_review::Identifier,
-    ris::{Disposition, ReportIdentifiers, ReviewQueue},
+    ris::{Disposition, Occurrence, ReportIdentifiers, ReviewQueue},
 };
 use sha2::{Digest, Sha256};
 
@@ -17,6 +17,7 @@ use super::decisions::Decision;
 
 pub(super) struct PreparedExport {
     ris: String,
+    asreview: Option<String>,
     mapping: String,
     reconciliation: String,
     pub retained: usize,
@@ -24,10 +25,58 @@ pub(super) struct PreparedExport {
     pub pending: usize,
 }
 
+fn append_record(output: &mut String, raw: &str) {
+    let raw = raw.strip_prefix('\u{feff}').unwrap_or(raw);
+    output.push_str(&raw.replace("\r\n", "\n").replace('\r', "\n"));
+    if !output.ends_with('\n') {
+        output.push('\n');
+    }
+}
+
+// ASReview selects title and abstract columns across the dataset. Use one
+// spelling per field in its companion RIS while preserving each record's values.
+fn asreview_record(raw: &str, rec: &Occurrence<'_>) -> Result<String, &'static str> {
+    let mut result = String::with_capacity(raw.len());
+    let mut copied = 0;
+    let mut title_seen = false;
+    let mut abstract_seen = false;
+    for field in &rec.fields {
+        let tag = match field.tag {
+            "TI" | "T1" if title_seen => return Err("title (TI/T1)"),
+            "AB" | "N2" if abstract_seen => return Err("abstract (AB/N2)"),
+            "TI" | "T1" => {
+                title_seen = true;
+                "TI"
+            }
+            "AB" | "N2" => {
+                abstract_seen = true;
+                "AB"
+            }
+            other => other,
+        };
+        let mut start = field.bytes.start - rec.bytes.start;
+        if start == 0 && raw.starts_with('\u{feff}') {
+            start += '\u{feff}'.len_utf8();
+        }
+        let after_dash = start + 5; // parsed two-byte tag and "  -"
+        let separator = raw.as_bytes().get(after_dash);
+        if field.tag == tag && (tag == "ER" || separator == Some(&b' ')) {
+            continue;
+        }
+        result.push_str(&raw[copied..start]);
+        result.push_str(tag);
+        result.push_str("  - ");
+        copied = after_dash + usize::from(matches!(separator, Some(b' ' | b'\t')));
+    }
+    result.push_str(&raw[copied..]);
+    Ok(result)
+}
+
 pub(super) fn prepare(
     queue: &ReviewQueue<'_>,
     manifest: &[String],
     decisions: &[Decision],
+    include_asreview: bool,
 ) -> Result<PreparedExport, String> {
     // A removed occurrence may name a keep target later in the queue.
     let mut retained = 0;
@@ -59,6 +108,7 @@ pub(super) fn prepare(
     .unwrap();
 
     let mut ris = String::new();
+    let mut asreview = include_asreview.then(String::new);
     let records = queue.sources.iter().flat_map(|named| {
         named
             .source
@@ -79,10 +129,13 @@ pub(super) fn prepare(
             Some(target) => target,
             None => {
                 let raw = &original[rec.bytes.clone()];
-                let raw = raw.strip_prefix('\u{feff}').unwrap_or(raw);
-                ris.push_str(&raw.replace("\r\n", "\n").replace('\r', "\n"));
-                if !ris.ends_with('\n') {
-                    ris.push('\n');
+                append_record(&mut ris, raw);
+                if let Some(copy) = &mut asreview {
+                    let record = asreview_record(raw, rec).map_err(|field| format!(
+                        "Cannot prepare asreview.ris. Retained occurrence {}:{} has multiple {field} fields. Use the ordinary reviewed export to preserve all values.",
+                        entry.label, entry.ordinal
+                    ))?;
+                    append_record(copy, &record);
                 }
                 index
             }
@@ -132,6 +185,7 @@ pub(super) fn prepare(
     let (reconciliation, counts) = reconciliation(queue, decisions);
     Ok(PreparedExport {
         ris,
+        asreview,
         mapping,
         reconciliation,
         retained,
@@ -239,11 +293,21 @@ impl PreparedExport {
         let staging = tempfile::Builder::new()
             .prefix(".dedup-export-")
             .tempdir_in(parent)?;
-        for (name, contents) in [
+        let mut files = Vec::new();
+        if let Some(copy) = self.asreview {
+            let receipt = format!(
+                "{:x} *reviewed.ris\n{:x} *asreview.ris\n",
+                Sha256::digest(self.ris.as_bytes()),
+                Sha256::digest(copy.as_bytes())
+            );
+            files.extend([("asreview.ris", copy), ("asreview.sha256", receipt)]);
+        }
+        files.extend([
             ("reviewed.ris", self.ris),
             ("mapping.tsv", self.mapping),
             ("reconciliation.tsv", self.reconciliation),
-        ] {
+        ]);
+        for (name, contents) in files {
             let mut file = File::create_new(staging.path().join(name))?;
             file.write_all(contents.as_bytes())?;
             file.sync_all()?;

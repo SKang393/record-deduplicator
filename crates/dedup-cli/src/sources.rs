@@ -67,7 +67,11 @@ pub(super) enum Action<'a> {
         earlier: &'a OsStr,
     },
     InspectPair(&'a OsStr, &'a OsStr, &'a OsStr),
-    Export(&'a OsStr, &'a Path),
+    Export {
+        sheet: &'a OsStr,
+        directory: &'a Path,
+        include_asreview: bool,
+    },
 }
 
 pub(super) fn run(args: &[OsString]) -> Result<(), String> {
@@ -104,7 +108,18 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
             (Action::InspectPair(path, left, right), rest)
         }
         [flag, path, dir, rest @ ..] if flag == "--export-reviewed" => {
-            (Action::Export(path, dir.as_ref()), rest)
+            let (include_asreview, sources) = match rest {
+                [option, sources @ ..] if option == "--asreview-ris" => (true, sources),
+                sources => (false, sources),
+            };
+            (
+                Action::Export {
+                    sheet: path,
+                    directory: dir.as_ref(),
+                    include_asreview,
+                },
+                sources,
+            )
         }
         _ => (Action::Review, args),
     };
@@ -227,10 +242,19 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
             return super::inspect::pair(&queue, &sheet.decisions, left, right)
                 .map_err(|e| e.to_string());
         }
-        Action::Export(path, directory) => {
-            let sheet = super::decisions::resume(path, &queue, &manifest)?;
-            return super::reviewed::prepare(&queue, &manifest, &sheet.decisions)?
-                .publish(directory);
+        Action::Export {
+            sheet,
+            directory,
+            include_asreview,
+        } => {
+            let sheet = super::decisions::resume(sheet, &queue, &manifest)?;
+            return super::reviewed::prepare(
+                &queue,
+                &manifest,
+                &sheet.decisions,
+                include_asreview,
+            )?
+            .publish(directory);
         }
         Action::Pending(path, guide) => {
             let parse = |text: &str| super::decisions::parse_sheet(text, &queue, &manifest);
@@ -293,7 +317,7 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                     );
                 }
                 loop {
-                    let export = super::reviewed::prepare(&queue, &manifest, &decisions)?;
+                    let export = super::reviewed::prepare(&queue, &manifest, &decisions, false)?;
                     if !super::start::confirm_export(
                         input,
                         path.as_ref(),

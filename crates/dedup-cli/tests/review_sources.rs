@@ -539,6 +539,116 @@ fn reviewed_export_reconciles_every_occurrence_and_replays_byte_for_byte() {
 }
 
 #[test]
+fn asreview_companion_preserves_the_selected_occurrences_and_field_values() {
+    use sha2::{Digest, Sha256};
+    let inputs = Inputs::new("asreview-handoff");
+    let catalog = "TY  - JOUR\nTI  - Clock enamel\nM3  - Research Article\nAN  - C-0007\nDO  - 10.0000/enamel\nER  -\n";
+    let follow = "TY  - CONF\nTI  - Second winter\nAB  - Follow-up survey.\nAN  - C-0009\nDO  - 10.0000/enamel\nER  -\n";
+    let register = "TY  -\tJOUR\nT1  - Clock enamel\nN2  -\tPremière visite.\n      The tag text N2  - stays here.\nN1  -\nID  - R-0012\nDO  - 10.0000/enamel\nER  -\n";
+    inputs.write(
+        "cat.ris",
+        format!("{catalog}{follow}")
+            .replace('\n', "\r\n")
+            .as_bytes(),
+    );
+    inputs.write(
+        "reg.ris",
+        format!("\u{feff}{register}")
+            .trim_end()
+            .replace('\n', "\r")
+            .as_bytes(),
+    );
+    let sources = [
+        "--ris-source",
+        "cat",
+        "cat.ris",
+        "--ris-source",
+        "reg",
+        "reg.ris",
+    ];
+    let option = [&["--asreview-ris"][..], &sources].concat();
+    let init = inputs.run(&[&["--init-decisions", "choices.tsv"][..], &sources].concat());
+    assert!(init.status.success());
+    let choices = fs::read_to_string(inputs.0.join("choices.tsv"))
+        .unwrap()
+        .replace("reg:1\tpending", "reg:1\tkeep")
+        .replace("cat:1\tpending", "cat:1\tduplicate-of=reg:1");
+    inputs.write("choices.tsv", choices.as_bytes());
+    assert!(inputs.export("ordinary", &sources).status.success());
+    assert!(inputs.export("screen", &option).status.success());
+    let read =
+        |folder: &str, name: &str| fs::read_to_string(inputs.0.join(folder).join(name)).unwrap();
+    for name in ["reviewed.ris", "mapping.tsv", "reconciliation.tsv"] {
+        assert_eq!(read("ordinary", name), read("screen", name));
+    }
+    let original = format!("{follow}{register}");
+    let expected = original
+        .replace("\nT1  -", "\nTI  -")
+        .replace("\nN2  -\t", "\nAB  - ")
+        .replace("TY  -\t", "TY  - ")
+        .replace("N1  -\n", "N1  - \n");
+    assert_eq!(read("screen", "reviewed.ris"), original);
+    assert_eq!(read("screen", "asreview.ris"), expected);
+    assert_eq!(
+        read("screen", "asreview.sha256"),
+        format!(
+            "{:x} *reviewed.ris\n{:x} *asreview.ris\n",
+            Sha256::digest(original.as_bytes()),
+            Sha256::digest(expected.as_bytes())
+        )
+    );
+    assert!(read("screen", "mapping.tsv").contains("map\tpending\tcat:2\t"));
+    assert_eq!(fs::read_dir(inputs.0.join("ordinary")).unwrap().count(), 3);
+}
+
+#[test]
+fn asreview_companion_refuses_ambiguous_retained_fields_before_publication() {
+    let inputs = Inputs::new("asreview-ambiguous");
+    let source = ["--ris-source", "cat", "cat.ris"];
+    for (i, fields) in [
+        "TI  - First\nT1  - Second",
+        "N2  - Part one\nN2  - Part two",
+    ]
+    .iter()
+    .enumerate()
+    {
+        let record = format!("TY  - JOUR\n{fields}\nER  -\n");
+        inputs.write("cat.ris", record.as_bytes());
+        let sheet = format!("choices-{i}.tsv");
+        assert!(
+            inputs
+                .run(&[&["--init-decisions", &sheet][..], &source].concat())
+                .status
+                .success()
+        );
+        let failed = inputs.run(
+            &[
+                &["--export-reviewed", &sheet, "screen", "--asreview-ris"][..],
+                &source,
+            ]
+            .concat(),
+        );
+        assert!(
+            String::from_utf8_lossy(&failed.stderr)
+                .contains("Retained occurrence cat:1 has multiple")
+        );
+        assert_failed_before_report(failed);
+        assert!(!inputs.0.join("screen").exists());
+        let folder = format!("ordinary-{i}");
+        assert!(
+            inputs
+                .run(&[&["--export-reviewed", &sheet, &folder][..], &source].concat())
+                .status
+                .success()
+        );
+        assert_eq!(
+            fs::read(inputs.0.join(folder).join("reviewed.ris")).unwrap(),
+            record.as_bytes()
+        );
+    }
+}
+
+#[test]
 fn reviewed_export_rejects_invalid_inputs_and_preserves_existing_destinations() {
     let inputs = Inputs::new("export-errors");
     let record = "TY  - JOUR\nTI  - Tin\nDO  - 10.0000/tin\nER  -\n";
