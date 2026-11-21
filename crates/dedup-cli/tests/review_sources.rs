@@ -1496,6 +1496,52 @@ fn optional_keep_reason_follows_the_selected_kept_report() {
 }
 
 #[test]
+fn guided_preview_names_removal_with_opposing_work_type_wording() {
+    let inputs = Inputs::new("work-type-wording");
+    let ris = ["RESULTS article", "Study protocol", "Journal article"]
+        .map(|kind| {
+            format!(
+                "TY  - JOUR\nTI  - Lattice survey\nDO  - 10.0000/lattice\nM3  - {kind}\nER  -\n"
+            )
+        })
+        .concat();
+    inputs.write("records.ris", ris.as_bytes());
+    let init = inputs.run(&[
+        "--init-decisions",
+        "choices.tsv",
+        "--ris-source",
+        "s",
+        "records.ris",
+    ]);
+    assert!(init.status.success(), "{:?}", init.stderr);
+    let sheet = fs::read_to_string(inputs.0.join("choices.tsv"))
+        .unwrap()
+        .replace("s:1\tpending", "s:1\tkeep")
+        .replace("s:2\tpending", "s:2\tduplicate-of=s:1")
+        .replace("s:3\tpending", "s:3\tduplicate-of=s:1");
+    inputs.write("choices.tsv", sheet.as_bytes());
+    inputs.write(
+        "answers.txt",
+        b"choices.tsv\ns\nrecords.ris\n\nyes\nreviewed\n\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_dedup"))
+        .arg("start")
+        .current_dir(&inputs.0)
+        .stdin(fs::File::open(inputs.0.join("answers.txt")).unwrap())
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{:?}", output.stderr);
+    let prompts = String::from_utf8(output.stderr).unwrap();
+    let (preview, _) = prompts.split_once("Type write").unwrap();
+    assert!(
+        preview
+            .contains("s:2 (remove) has 'protocol' wording and s:1 (keep) has 'results' wording")
+    );
+    assert!(!preview.contains("s:3 (remove)"));
+    assert!(!inputs.0.join("reviewed").exists());
+}
+
+#[test]
 fn guided_review_flags_whole_file_matches_and_keeps_each_occurrence() {
     let inputs = Inputs::new("repeated-download");
     let first = "TY  - JOUR\nTI  - Inlet survey\nAN  - A1\nER  -\n";

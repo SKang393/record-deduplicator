@@ -101,7 +101,9 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    destination, explicit duplicate count, and how many pending records will
    be kept. If a marked copy and its keeper share a DOI or PMID and their
    titles differ only in the final words “protocol” and “results”, the guide
-   lists their keys before confirmation. Those words can describe separate
+   lists their keys before confirmation. It also flags explicit opposing RIS
+   work types (`M3` of “protocol” or “study protocol” versus “results” or
+   “results article”, ignoring case). Those words can describe separate
    reports or label parts of one report. If unsure, cancel, reopen the sheet
    and compare the keys with `:inspect`. Type `write` to save the three
    files, or press Enter to cancel. If a saved decision changes after the

@@ -347,7 +347,7 @@ pub(super) fn confirm_export(
              The reviewed RIS and ordinary trace omit them."
         );
     }
-    show_title_advisories(queue, decisions);
+    show_removal_advisories(queue, decisions);
     let Some(answer) = ask(
         input,
         "Type write to create this export, or press Enter to cancel:",
@@ -362,22 +362,25 @@ pub(super) fn confirm_export(
     Ok(false)
 }
 
-fn show_title_advisories(queue: &ris::ReviewQueue<'_>, decisions: &[Decision]) {
+fn show_removal_advisories(queue: &ris::ReviewQueue<'_>, decisions: &[Decision]) {
     if !decisions
         .iter()
         .any(|d| matches!(d, Decision::DuplicateOf(_)))
     {
         return;
     }
-    // Rows are in queue order. Read each title at most once even for a shared keeper.
-    let endings: Vec<_> = queue
+    // Rows are in queue order. Read each record at most once even for a shared keeper.
+    let wording: Vec<_> = queue
         .sources
         .iter()
         .flat_map(|s| &s.source.occurrences)
         .zip(decisions)
         .map(|(record, decision)| match decision {
-            Decision::Keep(_) | Decision::DuplicateOf(_) => record.protocol_or_results_wording(),
-            _ => None,
+            Decision::Keep(_) | Decision::DuplicateOf(_) => (
+                record.protocol_or_results_wording(),
+                record.protocol_or_results_work_type(),
+            ),
+            _ => (None, None),
         })
         .collect();
     let mut shown = false;
@@ -386,24 +389,30 @@ fn show_title_advisories(queue: &ris::ReviewQueue<'_>, decisions: &[Decision]) {
         let Decision::DuplicateOf(target) = decision else {
             continue;
         };
-        let (Some((removed_stem, removed_word)), Some((kept_stem, kept_word))) =
-            (&endings[index], &endings[*target])
-        else {
-            continue;
-        };
-        if removed_stem == kept_stem && removed_word != kept_word {
-            let removed = &queue.entries[index];
-            let kept = &queue.entries[*target];
-            eprintln!(
-                "Title wording differs for this shared-identifier removal. {}:{} (remove) ends in '{removed_word}' and {}:{} (keep) ends in '{kept_word}'.",
+        let (removed_title, removed_type) = &wording[index];
+        let (kept_title, kept_type) = &wording[*target];
+        let removed = &queue.entries[index];
+        let kept = &queue.entries[*target];
+        match (removed_title, kept_title, removed_type, kept_type) {
+            (Some((stem, word)), Some((other_stem, other_word)), _, _)
+                if stem == other_stem && word != other_word =>
+            {
+                eprintln!(
+                    "Title wording differs for this shared-identifier removal. {}:{} (remove) ends in '{word}' and {}:{} (keep) ends in '{other_word}'.",
+                    removed.label, removed.ordinal, kept.label, kept.ordinal
+                );
+            }
+            (_, _, Some(word), Some(other_word)) if word != other_word => eprintln!(
+                "Check the M3 work types for this shared-identifier removal. {}:{} (remove) has '{word}' wording and {}:{} (keep) has '{other_word}' wording.",
                 removed.label, removed.ordinal, kept.label, kept.ordinal
-            );
-            shown = true;
+            ),
+            _ => continue,
         }
+        shown = true;
     }
     if shown {
         eprintln!(
-            "These words may describe separate reports or be literal labels in the same report. If unsure, cancel and reopen the sheet to compare the keys with :inspect."
+            "These words may describe separate reports or be literal labels in the same report. If unsure, cancel and reopen the sheet to compare the keys with :inspect. Use keep for both distinct reports, or leave an uncertain removal pending."
         );
     }
 }

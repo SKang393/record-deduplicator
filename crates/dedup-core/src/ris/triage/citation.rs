@@ -67,6 +67,20 @@ impl Occurrence<'_> {
             .then(|| (stem.to_owned(), word))
     }
 
+    /// Explicit English protocol/results wording in an unambiguous M3 field.
+    pub fn protocol_or_results_work_type(&self) -> Option<&'static str> {
+        let value = self.scalar("M3")??;
+        if value.eq_ignore_ascii_case("protocol") || value.eq_ignore_ascii_case("study protocol") {
+            Some("protocol")
+        } else if value.eq_ignore_ascii_case("results")
+            || value.eq_ignore_ascii_case("results article")
+        {
+            Some("results")
+        } else {
+            None
+        }
+    }
+
     fn inspection_dates(&self) -> (CitationValue, CitationValue) {
         let fields = self
             .fields
