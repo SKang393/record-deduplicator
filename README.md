@@ -216,6 +216,55 @@ no BOM or line break at the join, a `TY` header can read as field text and
 two records can map to one occurrence.
 Run `dedup review-ids --ris <file>` for a read-only diagnostic report.
 
+### Check downloaded batches against a search snapshot
+
+Run `--check-coverage` once per database search as it stood at export time.
+Copy the expected total or inclusive batch ranges from that search log.
+List the files actually received with `--ris-source`. Give a later search
+update its own invocation, even if it uses the same database and batch labels.
+The check reads the original RIS and prints pre-deduplication occurrence
+counts and file fingerprints to standard output.
+
+For a synthetic walkthrough, run these Bash commands with `dedup` on your path.
+The two batches deliberately include one report twice.
+
+```sh
+cd "$(mktemp -d)"
+record() { printf 'TY  - JOUR\nTI  - %s\nER  -\n' "$1"; }
+{ record Estuary; record Inlet; } > first.ris
+{ record Inlet; record Delta; } > second.ris
+record Inlet > short.ris
+record Soundings > update.ris
+
+survey() { dedup review-ids --check-coverage coast-day1 --expected-total 4 "$@"; }
+planned() { survey --batch-range first 1-2 --batch-range second 3-4 "$@"; }
+planned --ris-source first first.ris --ris-source second second.ris
+dedup review-ids --check-coverage coast-update --expected-total 1 --ris-source first update.ris
+```
+
+The first check reports four parsed occurrences and `matched_expectations`.
+The update independently reports one. Try the following three checks individually.
+Each exits with code 2 and prints the discrepancies.
+
+```sh
+planned --ris-source first first.ris
+planned --ris-source first first.ris --ris-source second short.ris
+survey --batch-range first 1-2 --batch-range second 2-3 --ris-source first first.ris --ris-source second second.ris
+```
+
+| Change | What the check reports |
+|---|---|
+| Omit the whole second file | `missing_batch` for positions 3–4 and two parsed out of four |
+| Supply a shorter, well-formed second file | `batch_count_mismatch` for `second`, one parsed out of two |
+| Declare overlapping ranges | `range_overlap` at position 2 and `range_gap` at position 4, even though four records parsed |
+
+Use `--expected-total` alone when the log has only a total. With
+`--batch-range` alone, the check covers the window from the first declared
+position to the last. Supply both to check the entire numbered interval.
+A count match cannot establish record identity. An equally sized batch of
+different records can pass. PRISMA-S lists records retrieved per source and
+deduplication methods as separate reporting items. [PRISMA-S, items 15 and 16](https://doi.org/10.1186/s13643-020-01542-z)
+
 ### Bring a BibTeX export into a named RIS review
 
 Suppose one database supplied `catalog.ris` and another supplied a UTF-8

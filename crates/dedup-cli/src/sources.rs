@@ -54,6 +54,7 @@ fn named_paths(args: &[OsString]) -> Result<BTreeMap<&str, &OsStr>, &'static str
 
 pub(super) enum Action<'a> {
     Review,
+    Coverage(super::coverage::Plan<'a>),
     Init {
         path: &'a OsStr,
         metadata: bool,
@@ -67,6 +68,13 @@ pub(super) enum Action<'a> {
 
 pub(super) fn run(args: &[OsString]) -> Result<(), String> {
     let (action, args) = match args {
+        [flag, rest @ ..] if flag == "--check-coverage" => {
+            let (plan, sources) = super::coverage::Plan::parse(rest)?;
+            if sources.is_empty() {
+                return plan.check(&[], &[]);
+            }
+            (Action::Coverage(plan), sources)
+        }
         [flag, path, rest @ ..]
             if flag == "--init-decisions" || flag == "--init-metadata-decisions" =>
         {
@@ -151,6 +159,7 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
     let guided = matches!(action, Action::Init { guided: true, .. });
     let sheet = match action {
         Action::Review => None,
+        Action::Coverage(plan) => return plan.check(&queue.sources, &manifest),
         Action::Init { path, metadata, .. } => {
             super::decisions::create(path, &queue, &manifest, metadata)?;
             None

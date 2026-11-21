@@ -787,3 +787,154 @@ fn pending_view_shows_direct_context_in_conflict_order_without_changing_decision
     assert!(String::from_utf8_lossy(&stale.stderr).contains("inputs differ"));
     assert_failed_before_report(stale);
 }
+
+#[test]
+fn coverage_checks_one_snapshot_against_independent_counts_and_ranges() {
+    let inputs = Inputs::new("coverage");
+    let record = |title| format!("TY  - JOUR\nTI  - {title}\nER  -\n");
+    let files = [
+        ("first.ris", record("Estuary") + &record("Inlet")),
+        ("second.ris", record("Inlet") + &record("Delta")),
+        ("short.ris", record("Inlet")),
+        ("update.ris", record("Soundings")),
+    ];
+    for (name, text) in &files {
+        inputs.write(name, text.as_bytes());
+    }
+
+    let total = ["--expected-total", "4"];
+    let ranges = [
+        "--batch-range",
+        "first",
+        "1-2",
+        "--batch-range",
+        "second",
+        "3-4",
+    ];
+    let first = ["--ris-source", "first", "first.ris"];
+    let both = [&first[..], &["--ris-source", "second", "second.ris"]].concat();
+    let check = |snapshot: &str, args: &[&str], expected: &str, issues: &[&str]| {
+        let output = inputs.run(&[&["--check-coverage", snapshot][..], args].concat());
+        let report = String::from_utf8(output.stdout).unwrap();
+        let matched = issues.is_empty();
+        assert_eq!(
+            output.status.code(),
+            Some(if matched { 0 } else { 2 }),
+            "{report}"
+        );
+        assert_eq!(
+            report.lines().next(),
+            Some(format!("snapshot\t{snapshot}\t{expected}").as_str())
+        );
+        let actual: Vec<_> = report
+            .lines()
+            .filter_map(|line| line.strip_prefix("issue\t"))
+            .collect();
+        assert_eq!(actual, issues, "{report}");
+        let result = if matched {
+            "matched_expectations"
+        } else {
+            "discrepancies"
+        };
+        assert!(report.ends_with(&format!("result\t{snapshot}\t{result}\n")));
+        println!("{report}");
+    };
+    check(
+        "coast-day1",
+        &[&total[..], &ranges, &both].concat(),
+        "parsed=4\texpected_total=4",
+        &[],
+    );
+    check(
+        "coast-update",
+        &[
+            "--expected-total",
+            "1",
+            "--ris-source",
+            "first",
+            "update.ris",
+        ],
+        "parsed=1\texpected_total=1",
+        &[],
+    );
+    check(
+        "coast-day1",
+        &[&total[..], &ranges, &first].concat(),
+        "parsed=2\texpected_total=4",
+        &[
+            "total_count_mismatch\texpected=4\tparsed=2",
+            "missing_batch\tsecond\tpositions=3-4",
+        ],
+    );
+    check(
+        "coast-day1",
+        &[
+            &total[..],
+            &ranges,
+            &first,
+            &["--ris-source", "second", "short.ris"],
+        ]
+        .concat(),
+        "parsed=3\texpected_total=4",
+        &[
+            "total_count_mismatch\texpected=4\tparsed=3",
+            "batch_count_mismatch\tsecond\texpected=2\tparsed=1",
+        ],
+    );
+    check(
+        "coast-day1",
+        &[
+            &total[..],
+            &[
+                "--batch-range",
+                "first",
+                "1-2",
+                "--batch-range",
+                "second",
+                "2-3",
+            ],
+            &both,
+        ]
+        .concat(),
+        "parsed=4\texpected_total=4",
+        &[
+            "range_overlap\tsecond\tpositions=2-2",
+            "range_gap\tpositions=4-4",
+        ],
+    );
+
+    // With ranges only, validate the declared window. No inference about its ends.
+    check(
+        "window",
+        &[&["--batch-range", "first", "11-12"][..], &first].concat(),
+        "parsed=2\texpected_total=unspecified",
+        &[],
+    );
+    check(
+        "absent",
+        &["--batch-range", "first", "11-12"],
+        "parsed=0\texpected_total=unspecified",
+        &["missing_batch\tfirst\tpositions=11-12"],
+    );
+    // Multiple snapshots or an invalid plan must never yield a pooled report.
+    for invalid in [
+        &[
+            "--expected-total",
+            "1",
+            "--check-coverage",
+            "other",
+            "--expected-total",
+            "1",
+        ][..],
+        &["--batch-range", "first", "0-1"],
+        &["--batch-range", "first", "3-2"],
+    ] {
+        assert_failed_before_report(
+            inputs.run(&[&["--check-coverage", "one"][..], invalid, &first].concat()),
+        );
+    }
+    assert_eq!(fs::read_dir(&inputs.0).unwrap().count(), files.len());
+    for (name, text) in files {
+        assert_eq!(fs::read(inputs.0.join(name)).unwrap(), text.as_bytes());
+    }
+}
