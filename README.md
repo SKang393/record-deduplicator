@@ -469,6 +469,12 @@ target must belong to one metadata hint of at most 16 records and agree on
 title, authors, year, RIS type, journal, volume and final page range or
 article number (`SP`/`EP`). Work type (`M3`) and issue (`IS`) must also
 agree when supplied. Conflicting supported DOIs or PMIDs block the set.
+Before writing a verified metadata removal, the guide flags explicit first
+and second edition numbers in the RIS `ET` fields. For example, “1st field ed.”
+and “Second field edition, revised” prompt a comparison. The labels must
+both say “edition”, “ed” or “ed.” with the same optional one-word qualifier.
+Missing or unnumbered labels such as “revised edition” still need the
+reviewer's judgment. Use `:inspect` to read the original edition statements.
 Leave unresolved copies and distinct reports pending or mark them keep.
 Existing identifier-only sheets still open with `--resume-decisions`.
 

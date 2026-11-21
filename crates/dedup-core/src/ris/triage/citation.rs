@@ -81,6 +81,37 @@ impl Occurrence<'_> {
         }
     }
 
+    /// Number and optional qualifier from an explicit first/second ET label.
+    /// Used only to describe the supplied wording before a reviewed export.
+    pub fn first_or_second_edition(&self) -> Option<(u8, &str)> {
+        let value = self.scalar("ET")??;
+        let label = match value.split_once(',') {
+            Some((label, suffix)) if suffix.trim().eq_ignore_ascii_case("revised") => label,
+            Some(_) => return None,
+            None => value,
+        };
+        let mut words = label.split_ascii_whitespace();
+        let unit = words.next_back()?;
+        if !unit.eq_ignore_ascii_case("edition")
+            && !unit.eq_ignore_ascii_case("ed")
+            && !unit.eq_ignore_ascii_case("ed.")
+        {
+            return None;
+        }
+        let ordinal = words.next()?;
+        let number = if ordinal.eq_ignore_ascii_case("first") || ordinal.eq_ignore_ascii_case("1st")
+        {
+            1
+        } else if ordinal.eq_ignore_ascii_case("second") || ordinal.eq_ignore_ascii_case("2nd") {
+            2
+        } else {
+            return None;
+        };
+        let qualifier = words.next().unwrap_or("");
+        (words.next().is_none() && qualifier.bytes().all(|b| b.is_ascii_alphabetic()))
+            .then_some((number, qualifier))
+    }
+
     fn inspection_dates(&self) -> (CitationValue, CitationValue) {
         let fields = self
             .fields

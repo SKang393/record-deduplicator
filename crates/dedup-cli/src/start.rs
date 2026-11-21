@@ -348,6 +348,7 @@ pub(super) fn confirm_export(
         );
     }
     show_removal_advisories(queue, decisions);
+    show_edition_advisories(queue, decisions);
     let Some(answer) = ask(
         input,
         "Type write to create this export, or press Enter to cancel:",
@@ -360,6 +361,51 @@ pub(super) fn confirm_export(
     }
     eprintln!("Export cancelled.");
     Ok(false)
+}
+
+fn show_edition_advisories(queue: &ris::ReviewQueue<'_>, decisions: &[Decision]) {
+    if !decisions
+        .iter()
+        .any(|d| matches!(d, Decision::VerifiedMetadata { .. }))
+    {
+        return;
+    }
+    let editions: Vec<_> = queue
+        .sources
+        .iter()
+        .flat_map(|s| &s.source.occurrences)
+        .zip(decisions)
+        .map(|(record, decision)| match decision {
+            Decision::Keep(_) | Decision::VerifiedMetadata { .. } => {
+                record.first_or_second_edition()
+            }
+            _ => None,
+        })
+        .collect();
+    let mut shown = false;
+    for (index, decision) in decisions.iter().enumerate() {
+        let Decision::VerifiedMetadata { target, .. } = decision else {
+            continue;
+        };
+        let (Some((from, qualifier)), Some((to, other))) = (editions[index], editions[*target])
+        else {
+            continue;
+        };
+        if from != to && qualifier.eq_ignore_ascii_case(other) {
+            let removed = &queue.entries[index];
+            let kept = &queue.entries[*target];
+            eprintln!(
+                "Different ET edition numbers in this proposed metadata removal. {}:{} (remove) says edition {from} and {}:{} (keep) says edition {to}.",
+                removed.label, removed.ordinal, kept.label, kept.ordinal
+            );
+            shown = true;
+        }
+    }
+    if shown {
+        eprintln!(
+            "The edition labels may describe separate reports. If unsure, cancel and compare the keys with :inspect before deciding."
+        );
+    }
 }
 
 fn show_removal_advisories(queue: &ris::ReviewQueue<'_>, decisions: &[Decision]) {

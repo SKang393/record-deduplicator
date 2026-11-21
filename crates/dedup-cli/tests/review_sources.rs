@@ -1507,6 +1507,57 @@ fn optional_keep_reason_follows_the_selected_kept_report() {
 }
 
 #[test]
+fn guided_metadata_preview_distinguishes_edition_numbers_from_formatting() {
+    let inputs = Inputs::new("edition-wording");
+    let mut ris = String::new();
+    for edition in [
+        "First field edition",
+        "1st field ed.",
+        "2nd field edition, revised",
+        "",
+    ] {
+        ris.push_str("TY  - JOUR\nTI  - Dune chart\nAU  - Holt, Y.\nPY  - 2020\nJO  - Dune atlas\nVL  - 2\nSP  - 15-17\n");
+        if !edition.is_empty() {
+            ris.push_str(&format!("ET  - {edition}\n"));
+        }
+        ris.push_str("ER  -\n");
+    }
+    inputs.write("chart.ris", ris.as_bytes());
+    let init = inputs.run(&[
+        "--init-metadata-decisions",
+        "choices.tsv",
+        "--ris-source",
+        "s",
+        "chart.ris",
+    ]);
+    assert!(init.status.success(), "{:?}", init.stderr);
+    let sheet = fs::read_to_string(inputs.0.join("choices.tsv"))
+        .unwrap()
+        .replace("s:1\tpending", "s:1\tkeep")
+        .replace(
+            "\tpending\n",
+            "\tverified-duplicate-of=s:1\tCompared the charts.\n",
+        );
+    inputs.write("choices.tsv", sheet.as_bytes());
+    inputs.write(
+        "answers.txt",
+        b"choices.tsv\ns\nchart.ris\n\nyes\nreviewed\n\n",
+    );
+    let result = Command::new(env!("CARGO_BIN_EXE_dedup"))
+        .arg("start")
+        .current_dir(&inputs.0)
+        .stdin(fs::File::open(inputs.0.join("answers.txt")).unwrap())
+        .output()
+        .unwrap();
+    assert!(result.status.success(), "{:?}", result.stderr);
+    let prompts = String::from_utf8(result.stderr).unwrap();
+    let (preview, _) = prompts.split_once("Type write").unwrap();
+    assert_eq!(preview.matches("Different ET edition numbers").count(), 1);
+    assert!(preview.contains("s:3 (remove) says edition 2 and s:1 (keep) says edition 1"));
+    assert!(!inputs.0.join("reviewed").exists());
+}
+
+#[test]
 fn guided_preview_names_removal_with_opposing_work_type_wording() {
     let inputs = Inputs::new("work-type-wording");
     let ris = ["RESULTS article", "Study protocol", "Journal article"]
