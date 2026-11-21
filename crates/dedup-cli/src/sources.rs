@@ -71,7 +71,7 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
         [flag, rest @ ..] if flag == "--check-coverage" => {
             let (plan, sources) = super::coverage::Plan::parse(rest)?;
             if sources.is_empty() {
-                return plan.check(&[], &[]);
+                return plan.check(&[], &[], &BTreeMap::new());
             }
             (Action::Coverage(plan), sources)
         }
@@ -125,6 +125,7 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
     };
     recheck_sources()?;
     let mut manifest = Vec::with_capacity(queue.sources.len());
+    let mut labels_by_fingerprint = BTreeMap::new();
     for named in &queue.sources {
         let records = &named.source.occurrences;
         if let Some((index, rec)) = records.iter().enumerate().find(|(_, rec)| !rec.usable()) {
@@ -155,11 +156,19 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
             original.len(),
             records.len()
         ));
+        if matches!(action, Action::Coverage(_)) {
+            labels_by_fingerprint
+                .entry(hash.into())
+                .or_insert_with(Vec::new)
+                .push(named.label);
+        }
     }
     let guided = matches!(action, Action::Init { guided: true, .. });
     let sheet = match action {
         Action::Review => None,
-        Action::Coverage(plan) => return plan.check(&queue.sources, &manifest),
+        Action::Coverage(plan) => {
+            return plan.check(&queue.sources, &manifest, &labels_by_fingerprint);
+        }
         Action::Init { path, metadata, .. } => {
             super::decisions::create(path, &queue, &manifest, metadata)?;
             None

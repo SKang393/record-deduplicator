@@ -938,3 +938,82 @@ fn coverage_checks_one_snapshot_against_independent_counts_and_ranges() {
         assert_eq!(fs::read(inputs.0.join(name)).unwrap(), text.as_bytes());
     }
 }
+
+#[test]
+fn coverage_flags_repeated_file_bytes_within_a_snapshot() {
+    let inputs = Inputs::new("repeated-batch");
+    let record = "TY  - JOUR\nTI  - Harbor survey\nER  -\n";
+    inputs.write("batch.ris", record.as_bytes());
+    inputs.write("renamed.ris", record.as_bytes());
+    let crlf = record.replace('\n', "\r\n");
+    inputs.write("crlf.ris", crlf.as_bytes());
+
+    // Reverse the arguments so the flag must still identify the labels in canonical order.
+    let check = |path: &str, total: &str| {
+        inputs.run(&[
+            "--check-coverage",
+            "harbor",
+            "--expected-total",
+            total,
+            "--batch-range",
+            "a",
+            "1-1",
+            "--batch-range",
+            "b",
+            "2-2",
+            "--ris-source",
+            "b",
+            path,
+            "--ris-source",
+            "a",
+            "batch.ris",
+        ])
+    };
+    for path in ["batch.ris", "renamed.ris"] {
+        let output = check(path, "2");
+        assert_eq!(output.status.code(), Some(2));
+        let report = String::from_utf8(output.stdout).unwrap();
+        assert!(report.starts_with("snapshot\tharbor\tparsed=2\texpected_total=2\n"));
+        assert!(!report.lines().any(|row| row.starts_with("issue\t")));
+        assert!(report.ends_with(concat!(
+            "counts_and_ranges\tharbor\tmatched_expectations\n",
+            "source_flag\trepeated_source_bytes\ta,b\n",
+            "result\tharbor\tdiscrepancies\n"
+        )));
+    }
+    let combined = check("renamed.ris", "3");
+    assert_eq!(combined.status.code(), Some(2));
+    let report = String::from_utf8(combined.stdout).unwrap();
+    assert!(report.contains("issue\ttotal_count_mismatch\texpected=3\tparsed=2\n"));
+    assert!(report.contains(
+        "counts_and_ranges\tharbor\tdiscrepancies\nsource_flag\trepeated_source_bytes\ta,b\n"
+    ));
+
+    // Equivalent fields with different bytes and identical bytes in a separate run.
+    let update = inputs.run(&[
+        "--check-coverage",
+        "harbor-update",
+        "--expected-total",
+        "1",
+        "--ris-source",
+        "a",
+        "renamed.ris",
+    ]);
+    for (snapshot, output) in [
+        ("harbor", check("crlf.ris", "2")),
+        ("harbor-update", update),
+    ] {
+        assert!(output.status.success());
+        let report = String::from_utf8(output.stdout).unwrap();
+        assert!(!report.contains("source_flag\t"));
+        assert!(report.ends_with(&format!("result\t{snapshot}\tmatched_expectations\n")));
+    }
+    assert_eq!(fs::read_dir(&inputs.0).unwrap().count(), 3);
+    for (path, data) in [
+        ("batch.ris", record),
+        ("renamed.ris", record),
+        ("crlf.ris", crlf.as_str()),
+    ] {
+        assert_eq!(fs::read(inputs.0.join(path)).unwrap(), data.as_bytes());
+    }
+}

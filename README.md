@@ -245,15 +245,17 @@ dedup review-ids --check-coverage coast-update --expected-total 1 --ris-source f
 
 The first check reports four parsed occurrences and `matched_expectations`.
 The update independently reports one. Both commands exit with code 0.
-When counts or ranges disagree, exit code 2 accompanies a coverage report
-on standard output. Invalid arguments or unreadable or malformed RIS also
-produce exit code 2, with a diagnostic on standard error and no coverage
-report. Try the following three discrepancy checks individually.
+When counts or ranges disagree, or batch labels share a file fingerprint,
+exit code 2 accompanies a coverage report on standard output. Invalid
+arguments or unreadable or malformed RIS also produce exit code 2, with a
+diagnostic on standard error and no coverage report. Try the following checks
+individually.
 
 ```sh
 planned --ris-source first first.ris
 planned --ris-source first first.ris --ris-source second short.ris
 survey --batch-range first 1-2 --batch-range second 2-3 --ris-source first first.ris --ris-source second second.ris
+planned --ris-source first first.ris --ris-source second first.ris
 ```
 
 | Change | What the check reports |
@@ -261,13 +263,17 @@ survey --batch-range first 1-2 --batch-range second 2-3 --ris-source first first
 | Omit the whole second file | `missing_batch` for positions 3–4 and two parsed out of four |
 | Supply a shorter, well-formed second file | `batch_count_mismatch` for `second`, one parsed out of two |
 | Declare overlapping ranges | `range_overlap` at position 2 and `range_gap` at position 4, even though four records parsed |
+| Supply the first download for both ranges | `counts_and_ranges` still matches. `source_flag` reports `repeated_source_bytes` for labels `first,second`. |
 
 Use `--expected-total` alone when the log has only a total. With
 `--batch-range` alone, the check covers the window from the first declared
 position to the last. Supply both to check the entire numbered interval.
-A count match cannot establish record identity. An equally sized batch of
-different records can pass. PRISMA-S lists records retrieved per source and
-deduplication methods as separate reporting items. [PRISMA-S, items 15 and 16](https://doi.org/10.1186/s13643-020-01542-z)
+A repeated-bytes flag means the named inputs share a whole-file SHA-256 in
+this snapshot, including when a copy was renamed. Check the batch assignments
+against the search log. A change in line endings changes the fingerprint,
+and an equally sized batch of different records can pass. Counts and file
+fingerprints alone cannot establish record identity. PRISMA-S lists records
+retrieved per source and deduplication methods as separate reporting items. [PRISMA-S, items 15 and 16](https://doi.org/10.1186/s13643-020-01542-z)
 
 ### Bring a BibTeX export into a named RIS review
 

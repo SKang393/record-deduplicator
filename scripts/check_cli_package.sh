@@ -87,9 +87,9 @@ SUMS
     grep -Fxq $'snapshot\ttide\tparsed=2\texpected_total=2' "$report"
     grep -Fxq $'issue\trange_overlap\tidx\tpositions=1-1' "$report"
     grep -Fxq $'issue\trange_gap\tpositions=2-2' "$report"
-    # An equally sized replacement satisfies the counts. The check cannot verify identity.
-    coverage_case 0 "${plan[@]}" "${catalog[@]}" --ris-source idx catalog.ris
-    grep -Fxq $'result\ttide\tmatched_expectations' "$report"
+    coverage_case 2 "${plan[@]}" "${catalog[@]}" --ris-source idx catalog.ris
+    grep -Fxq $'counts_and_ranges\ttide\tmatched_expectations' "$report"
+    grep -Fxq $'source_flag\trepeated_source_bytes\tcat,idx' "$report"
     coverage_case 0 tide-update --expected-total 1 --ris-source cat index.ris
     grep -Fxq $'snapshot\ttide-update\tparsed=1\texpected_total=1' "$report"
     coverage_case 2 "${plan[@]}" --check-coverage tide-update --expected-total 1 "${both[@]}"

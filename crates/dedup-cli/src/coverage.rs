@@ -72,6 +72,7 @@ impl<'a> Plan<'a> {
         &self,
         sources: &[NamedSource<'_>],
         manifest: &[String],
+        labels_by_fingerprint: &BTreeMap<[u8; 32], Vec<&str>>,
     ) -> Result<(), String> {
         let mut counts: BTreeMap<_, _> = sources
             .iter()
@@ -138,8 +139,23 @@ impl<'a> Plan<'a> {
                 issues.push(format!("unassigned_source\t{name}"));
             }
         }
-        let matched = issues.is_empty();
+        let structure_matches = issues.is_empty();
         report.extend(issues.into_iter().map(|issue| format!("issue\t{issue}")));
+        let flags: Vec<_> = labels_by_fingerprint
+            .values()
+            .filter(|labels| labels.len() > 1)
+            .map(|labels| format!("source_flag\trepeated_source_bytes\t{}", labels.join(",")))
+            .collect();
+        let matched = structure_matches && flags.is_empty();
+        if !flags.is_empty() {
+            let structure = if structure_matches {
+                "matched_expectations"
+            } else {
+                "discrepancies"
+            };
+            report.push(format!("counts_and_ranges\t{}\t{structure}", self.snapshot));
+            report.extend(flags);
+        }
         let status = if matched {
             "matched_expectations"
         } else {
