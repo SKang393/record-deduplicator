@@ -42,6 +42,7 @@ pub struct QueueEntry<'a> {
     pub label: &'a str,
     pub ordinal: usize,
     pub disposition: Disposition,
+    pub(super) has_usable_identifier: bool,
 }
 
 #[derive(Debug)]
@@ -77,9 +78,11 @@ pub fn review_sources<'a>(inputs: &[(&'a str, &'a str)]) -> Result<ReviewQueue<'
         let source = parse_source(input, &mut counts).map_err(QueueError::Input)?;
         source.append_rows(&mut rows, &mut issues);
         for (index, occurrence) in source.occurrences.iter().enumerate() {
+            let row = &rows[entries.len()];
             entries.push(QueueEntry {
                 label,
                 ordinal: index + 1,
+                has_usable_identifier: row.doi.is_some() || row.pmid.is_some(),
                 disposition: if occurrence.usable() {
                     Disposition::Retained
                 } else {

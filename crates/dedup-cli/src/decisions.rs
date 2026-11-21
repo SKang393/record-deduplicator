@@ -1,0 +1,398 @@
+//! Editable review snapshots for named RIS inputs.
+use std::{
+    borrow::Cow,
+    collections::{BTreeMap, BTreeSet},
+    ffi::OsStr,
+    fmt::Write as _,
+    fs::{self, File},
+    io::{Read, Write},
+};
+
+use dedup_core::{
+    identifier_review::{Identifier, MAX_INPUT_BYTES},
+    ris::{Disposition, MetadataHint, ReportIdentifiers, ReviewQueue},
+};
+
+const VERSION: &str = "dedup-ris-decisions\t1";
+const METADATA_VERSION: &str = "dedup-ris-decisions\t2";
+const END: &str = "end";
+
+#[derive(Clone, PartialEq, Eq)]
+pub(super) enum Decision {
+    NotCandidate,
+    Pending,
+    Keep(Option<String>),
+    DuplicateOf(usize),
+    VerifiedMetadata { target: usize, rationale: String },
+}
+
+impl Decision {
+    pub(super) fn target(&self) -> Option<usize> {
+        match self {
+            Self::DuplicateOf(target) | Self::VerifiedMetadata { target, .. } => Some(*target),
+            _ => None,
+        }
+    }
+
+    pub(super) fn label(&self, queue: &ReviewQueue<'_>) -> Cow<'static, str> {
+        match self {
+            Self::NotCandidate => "not-candidate".into(),
+            Self::Pending => "pending".into(),
+            Self::Keep(_) => "keep".into(),
+            Self::DuplicateOf(index) => {
+                let target = &queue.entries[*index];
+                format!("duplicate-of={}:{}", target.label, target.ordinal).into()
+            }
+            Self::VerifiedMetadata { target, .. } => {
+                let target = &queue.entries[*target];
+                format!("verified-duplicate-of={}:{}", target.label, target.ordinal).into()
+            }
+        }
+    }
+
+    pub(super) fn mapping_rationale(&self) -> Option<(&'static str, &str)> {
+        match self {
+            Self::Keep(Some(reason)) => Some(("keep", reason)),
+            Self::VerifiedMetadata { rationale, .. } => Some(("metadata", rationale)),
+            _ => None,
+        }
+    }
+}
+
+pub(super) fn valid_rationale(text: &str) -> bool {
+    !text.trim().is_empty()
+        && text.len() <= 512
+        && !text.contains(|ch: char| ch.is_control() || matches!(ch, '\u{2028}' | '\u{2029}'))
+}
+
+fn metadata_groups(queue: &ReviewQueue<'_>, hints: &[MetadataHint]) -> Vec<Option<usize>> {
+    let mut groups = vec![None; queue.entries.len()];
+    for hint in hints {
+        if let MetadataHint::Inspect(rows) = hint {
+            for &row in rows {
+                groups[row - 1] = Some(rows[0]);
+            }
+        }
+    }
+    groups
+}
+
+fn candidates<'a>(
+    queue: &'a ReviewQueue<'_>,
+    groups: &'a [Option<usize>],
+) -> impl Iterator<Item = (usize, String)> + 'a {
+    queue
+        .entries
+        .iter()
+        .enumerate()
+        .filter(|(i, entry)| {
+            entry.disposition == Disposition::ReviewCandidate || groups[*i].is_some()
+        })
+        .map(|(index, entry)| (index, format!("{}:{}", entry.label, entry.ordinal)))
+}
+
+pub(super) fn create(
+    path: &OsStr,
+    queue: &ReviewQueue<'_>,
+    manifest: &[String],
+    metadata: bool,
+) -> Result<usize, String> {
+    let version = if metadata { METADATA_VERSION } else { VERSION };
+    let mut sheet = format!("{version}\n");
+    for identity in manifest {
+        writeln!(sheet, "{identity}").unwrap();
+    }
+    let hints = if metadata {
+        queue.metadata_hints()
+    } else {
+        Vec::new()
+    };
+    let mut pending_rows = 0;
+    for (_, key) in candidates(queue, &metadata_groups(queue, &hints)) {
+        writeln!(sheet, "{key}\tpending").unwrap();
+        pending_rows += 1;
+    }
+    writeln!(sheet, "{END}").unwrap();
+    let mut file =
+        File::create_new(path).map_err(|e| format!("Cannot create a new decision sheet: {e}"))?;
+    file.write_all(sheet.as_bytes())
+        .and_then(|()| file.sync_all())
+        .map_err(|e| format!("Cannot finish decision sheet: {e}"))?;
+    Ok(pending_rows)
+}
+
+pub(super) struct ResumedSheet {
+    pub decisions: Vec<Decision>,
+    /// Only opt-in sheets can use metadata hint membership for decisions.
+    pub metadata_hints: Option<Vec<MetadataHint>>,
+}
+
+// Diagnose a rejected row only when both rows describe the same named source.
+fn changed_fingerprint<'a>(saved: &'a str, selected: &str) -> Option<(&'a str, &'a str)> {
+    let (saved_key, saved_detail) = saved.rsplit_once('\t')?;
+    let (selected_key, selected_detail) = selected.rsplit_once('\t')?;
+    if saved_key != selected_key {
+        return None;
+    }
+    let label = saved_key.strip_prefix("input\tris\t")?;
+    let (_, saved_hash) = saved_detail.rsplit_once(";sha256=")?;
+    let (_, selected_hash) = selected_detail.rsplit_once(";sha256=")?;
+    (saved_hash.len() == 64
+        && saved_hash.bytes().all(|b| b.is_ascii_hexdigit())
+        && !saved_hash.eq_ignore_ascii_case(selected_hash))
+    .then_some((label, saved_hash))
+}
+
+fn source_selection_error<'a>(
+    saved_inputs: impl Iterator<Item = &'a str>,
+    queue: &ReviewQueue<'_>,
+) -> String {
+    const MISMATCH: &str = "Decision sheet inputs differ. Check all RIS labels and source bytes.";
+    let mut saved = BTreeSet::new();
+    for row in saved_inputs {
+        let Some((label, _)) = row
+            .strip_prefix("input\tris\t")
+            .and_then(|s| s.split_once('\t'))
+        else {
+            return MISMATCH.into();
+        };
+        if saved.len() == dedup_core::ris::MAX_SOURCES
+            || !dedup_core::ris::valid_source_label(label)
+            || !saved.insert(label)
+        {
+            return MISMATCH.into();
+        }
+    }
+    let selected = queue.sources.iter().map(|s| s.label).collect();
+    if saved.is_empty() || saved == selected {
+        return MISMATCH.into();
+    }
+    let mut message = String::from("Decision sheet inputs differ.");
+    for label in saved.difference(&selected) {
+        write!(
+            message,
+            " Saved source '{label}' is missing from the selection."
+        )
+        .unwrap();
+    }
+    for label in selected.difference(&saved) {
+        write!(
+            message,
+            " Selected source '{label}' is absent from the sheet."
+        )
+        .unwrap();
+    }
+    message.push_str(" Reopen with the sheet's original named inputs. To include a later search, create a new sheet with the original downloads and the update.");
+    message
+}
+
+pub(super) fn resume(
+    path: &OsStr,
+    queue: &ReviewQueue<'_>,
+    manifest: &[String],
+) -> Result<ResumedSheet, String> {
+    parse_sheet(&read_sheet(path)?, queue, manifest)
+}
+
+pub(super) fn read_sheet(path: &OsStr) -> Result<String, String> {
+    if !fs::metadata(path).is_ok_and(|m| m.is_file()) {
+        return Err("Expected a regular decision sheet file.".into());
+    }
+    let mut text = String::new();
+    File::open(path)
+        .map_err(|e| format!("Cannot open decision sheet: {e}"))?
+        .take(MAX_INPUT_BYTES as u64 + 1)
+        .read_to_string(&mut text)
+        .map_err(|e| format!("Cannot read UTF-8 decision sheet: {e}"))?;
+    if text.len() > MAX_INPUT_BYTES {
+        return Err("Decision sheet exceeds 16 MiB.".into());
+    }
+    Ok(text)
+}
+
+fn sheet_lines(text: &str) -> impl Iterator<Item = &str> + Clone {
+    // Calc writes short rows out to the width of the sheet with empty cells.
+    text.strip_prefix('\u{feff}')
+        .unwrap_or(text)
+        .lines()
+        .map(|line| line.trim_end_matches('\t'))
+}
+
+// Select the earlier queue's inputs. parse_sheet still checks its entire manifest and decisions.
+pub(super) fn saved_source_labels(text: &str) -> BTreeSet<&str> {
+    sheet_lines(text)
+        .skip(1)
+        .take(dedup_core::ris::MAX_SOURCES)
+        .map_while(|row| {
+            row.strip_prefix("input\tris\t")?
+                .split_once('\t')
+                .map(|(label, _)| label)
+        })
+        .collect()
+}
+
+pub(super) fn parse_sheet(
+    text: &str,
+    queue: &ReviewQueue<'_>,
+    manifest: &[String],
+) -> Result<ResumedSheet, String> {
+    let mut lines = sheet_lines(text).peekable();
+    let metadata = match lines.next() {
+        Some(VERSION) => false,
+        Some(METADATA_VERSION) => true,
+        _ => return Err("Unsupported decision sheet header or version.".into()),
+    };
+    let saved_inputs = lines
+        .clone()
+        .take_while(|line| line.starts_with("input\tris\t"));
+    for identity in manifest {
+        let saved = lines.next();
+        if saved != Some(identity.as_str()) {
+            if let Some((label, hash)) = saved.and_then(|row| changed_fingerprint(row, identity)) {
+                return Err(format!(
+                    "Decision sheet inputs differ. Source '{label}' has a different SHA-256 from the saved value {hash}. \
+                     Reopen this sheet with the same labels and the original file for '{label}' at its current path."
+                ));
+            }
+            return Err(source_selection_error(saved_inputs, queue));
+        }
+    }
+    if lines
+        .peek()
+        .is_some_and(|line| line.starts_with("input\tris\t"))
+    {
+        return Err(source_selection_error(saved_inputs, queue));
+    }
+    let metadata_hints = metadata.then(|| queue.metadata_hints());
+    let hints = metadata_groups(queue, metadata_hints.as_deref().unwrap_or_default());
+    let mut choices = BTreeMap::new();
+    for (index, key) in candidates(queue, &hints) {
+        let (saved_key, choice) = lines
+            .next()
+            .and_then(|line| line.split_once('\t'))
+            .filter(|(saved_key, _)| *saved_key == key)
+            .ok_or_else(|| format!("Decision sheet is missing the expected row for {key}."))?;
+        let (action, reason) = choice
+            .split_once('\t')
+            .map_or((choice, None), |(action, reason)| (action, Some(reason)));
+        choices.insert(saved_key, (index, action, reason));
+    }
+    if lines.next() != Some(END) || lines.next().is_some() {
+        return Err("Decision sheet has unexpected rows or a missing end marker.".into());
+    }
+
+    // A record can belong to one DOI group and one PMID group. Check direct
+    // membership without expanding large groups into all possible pairs.
+    let mut groups = vec![[None; 2]; queue.entries.len()];
+    for (id, group) in queue.review.groups.iter().enumerate() {
+        let slot = match group.shared {
+            Identifier::Doi => 0,
+            Identifier::Pmid => 1,
+        };
+        for row in &group.rows {
+            groups[row - 1][slot] = Some(id);
+        }
+    }
+    let mut decisions = vec![Decision::NotCandidate; queue.entries.len()];
+    for (&key, &(index, action, reason)) in &choices {
+        let keep_target = |other: &str| match choices.get(other) {
+            Some(&(target, "keep", None) | &(target, "keep-with-reason", Some(_))) => Ok(target),
+            _ => Err(format!(
+                "The duplicate target for {key} must have a keep decision."
+            )),
+        };
+        let rationale = || {
+            reason.filter(|text| valid_rationale(text)).map(str::to_owned)
+                .ok_or_else(|| format!("Expected a tab and a single-line rationale (1 to 512 UTF-8 bytes) for {key}."))
+        };
+        decisions[index] = match (action, reason) {
+            ("keep", None) => Decision::Keep(None),
+            ("keep-with-reason", _) => Decision::Keep(Some(rationale()?)),
+            ("pending", None) => Decision::Pending,
+            _ if metadata && action.starts_with("verified-duplicate-of=") => {
+                let rationale = rationale()?;
+                let target = keep_target(&action["verified-duplicate-of=".len()..])?;
+                Decision::VerifiedMetadata { target, rationale }
+            }
+            (action, None) if action.starts_with("duplicate-of=") => {
+                let target = keep_target(&action["duplicate-of=".len()..])?;
+                if !groups[index]
+                    .iter()
+                    .flatten()
+                    .any(|id| groups[target].contains(&Some(*id)))
+                {
+                    return Err(format!(
+                        "{key} and its duplicate target must share a direct candidate group."
+                    ));
+                }
+                Decision::DuplicateOf(target)
+            }
+            _ => {
+                return Err(format!(
+                    "Unknown decision for {key}. Check for extra fields. Use pending, keep, \
+                     keep-with-reason with a rationale, or duplicate-of=<occurrence>. \
+                     Metadata sheets also accept verified-duplicate-of=<occurrence> with a rationale."
+                ));
+            }
+        };
+    }
+    validate_metadata_sets(queue, &decisions, &hints)?;
+    Ok(ResumedSheet {
+        decisions,
+        metadata_hints,
+    })
+}
+
+/// Apply the same guards to every member, including copies assigned via an identifier.
+fn validate_metadata_sets(
+    queue: &ReviewQueue<'_>,
+    decisions: &[Decision],
+    hints: &[Option<usize>],
+) -> Result<(), String> {
+    let mut sets: BTreeMap<_, _> = decisions
+        .iter()
+        .filter_map(|decision| match decision {
+            Decision::VerifiedMetadata { target, .. } => {
+                Some((*target, (None, ReportIdentifiers::default())))
+            }
+            _ => None,
+        })
+        .collect();
+    if sets.is_empty() {
+        return Ok(());
+    }
+    let records = queue.sources.iter().flat_map(|s| &s.source.occurrences);
+    for (i, (rec, decision)) in records.zip(decisions).enumerate() {
+        let target = decision.target().unwrap_or(i);
+        let Some((publication, ids)) = sets.get_mut(&target) else {
+            continue;
+        };
+        let entry = &queue.entries[i];
+        let key = format!("{}:{}", entry.label, entry.ordinal);
+        if hints[i].is_none() || hints[i] != hints[target] {
+            return Err(format!(
+                "{key} and its keep target must belong to the same bounded metadata hint."
+            ));
+        }
+        let details = rec.publication_details();
+        if details.is_none() || (publication.is_some() && *publication != details) {
+            return Err(format!(
+                "Missing or differing publication details (authors, work type, journal, volume, issue or final pages/article number) for {key} and its keep target."
+            ));
+        }
+        if publication.is_none() {
+            *publication = details;
+        }
+        ids.observe(rec);
+        if let Some(kind) = ids.conflict() {
+            return Err(format!(
+                "Conflicting {} in the verified metadata set at {key}.",
+                match kind {
+                    Identifier::Doi => "DOI",
+                    Identifier::Pmid => "PMID",
+                }
+            ));
+        }
+    }
+    Ok(())
+}

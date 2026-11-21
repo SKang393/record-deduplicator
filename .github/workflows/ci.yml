@@ -15,6 +15,8 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      DEDUP_CLI: target/debug/dedup${{ matrix.os == 'windows-latest' && '.exe' || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install stable Rust with format and lint tools
@@ -27,6 +29,55 @@ jobs:
         run: cargo +stable test --workspace --locked
       - name: CLI foundation smoke check
         run: cargo +stable run --locked -p dedup-cli -- --help
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.13'
+      - name: Audit synthetic RIS triage and reviewed export
+        shell: python
+        run: |
+          import json, os, plistlib, subprocess, sys, tempfile
+          from pathlib import Path
+
+          temp = Path(tempfile.gettempdir())
+          if os.name == "nt":
+              volume = "[IO.DriveInfo]::new($env:AUDIT_DRIVE).DriveFormat"
+              fs = subprocess.check_output(["pwsh", "-NoProfile", "-Command", volume],
+                                           env=dict(os.environ, AUDIT_DRIVE=temp.anchor), text=True).strip()
+              expected = "ntfs"
+          else:
+              device = subprocess.check_output(["df", "-P", temp], text=True).splitlines()[-1].split()[0]
+              info = subprocess.check_output(["diskutil", "info", "-plist", device])
+              fs = plistlib.loads(info)["FilesystemType"]
+              expected = "apfs"
+          print(json.dumps({"audit_filesystem": fs, "platform": sys.platform}), flush=True)
+          assert fs.lower() == expected, f"Expected {expected} temp volume, found {fs}"
+          for audit in ["check_review_triage.py", "check_synthetic_review.py"]:
+              subprocess.run([sys.executable, Path("scripts") / audit, os.environ["DEDUP_CLI"]], check=True)
+      - name: Check pending metadata decisions against the reviewed export
+        run: python scripts/check_metadata_decisions.py "${{ env.DEDUP_CLI }}"
+      - name: Check guided export refresh after a saved decision changes
+        shell: bash
+        run: time python scripts/check_guided_refresh.py "$DEDUP_CLI"
+      - name: Check inspection-only title variants
+        run: python scripts/check_title_variants.py "${{ env.DEDUP_CLI }}"
+      - name: Inspect complementary identifiers and retain separate reports
+        run: python scripts/check_split_identifiers.py "${{ env.DEDUP_CLI }}"
+      - name: Package the CLI and run its first-review walkthrough
+        if: github.event_name == 'push' && github.ref == 'refs/heads/review/native-ris-audits'
+        shell: bash
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: |
+          python scripts/package_review_cli.py
+          bash scripts/check_cli_package.sh target/review-package/*.tar.gz
+      - name: Attach tested CLI to the review run
+        if: github.event_name == 'push' && github.ref == 'refs/heads/review/native-ris-audits'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: target/review-package/*.tar.gz
+          archive: false
+          if-no-files-found: error
+          retention-days: 7
   docs:
     runs-on: ubuntu-latest
     steps:

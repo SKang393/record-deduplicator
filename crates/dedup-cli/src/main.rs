@@ -1,4 +1,13 @@
+mod coverage;
+mod decisions;
+mod inspect;
+mod mapping;
+mod pending;
+mod reconciliation;
+mod reviewed;
 mod sources;
+mod start;
+mod trace;
 
 use dedup_core::identifier_review::{self as ids, Identifier, InputError, Issue, OtherEvidence};
 use std::{
@@ -12,9 +21,22 @@ use dedup_core::ris;
 
 fn help() {
     println!(
-        "record-deduplicator {}\n\nUsage: dedup --help | --version\n       dedup review-ids <input.tsv | ->\n       dedup review-ids --ris <input.ris | ->\n       dedup review-ids --ris-source <label> <file> [--ris-source <label> <file> ...]\n\nGroup rows by a shared full DOI or PMID for review. Keeps all records.\nInput: UTF-8, header doi<TAB>pmid, one occurrence per data line. With --ris, review TY/ER records and report original byte spans.\nOutput: TSV on standard output; occurrence numbers start at 1.\nNo fuzzy matching, merging, or record export.",
+        "record-deduplicator {}\n\nUsage: dedup start    (create or reopen a review sheet and export reviewed RIS)\n       dedup verify-export <mapping.tsv> <reviewed.ris> [<reconciliation.tsv>]\n       dedup trace [--show-keep-reason] <mapping.tsv> <label:n> <originals-directory> [<originals-directory> ...]\n       dedup --help | --version\n       dedup review-ids <input.tsv | ->\n       dedup review-ids --ris <input.ris | ->\n       dedup review-ids [--init-decisions <new.tsv> | --init-metadata-decisions <new.tsv> | --resume-decisions <saved.tsv> | --pending-decisions <saved.tsv> [--earlier-sheet <prior.tsv>] | --inspect-pair <saved.tsv> <label:n> <label:n> | --export-reviewed <saved.tsv> <new-dir> [--asreview-ris]] --ris-source <label> <file> [--ris-source <label> <file> ...]\n       dedup review-ids --check-coverage <snapshot> [--expected-total <count>] [--batch-range <label> <first-last>]... [--ris-source <label> <file>]...\nSupply a total or batch ranges for one snapshot. Coverage exits 0 when counts and ranges match and batch fingerprints are distinct. Exit 2 with a report means discrepancies. Exit 2 without a report means the check failed.\n\nGroup rows by a shared full DOI or PMID for review. Named RIS queues also show metadata hints and inspection-only pairs. A complementary_id_locator pair has matching citation details, with a DOI in one source and a PMID in the other. The lead adds no removal decision.\nInput: UTF-8, header doi<TAB>pmid, one occurrence per data line. With --ris, review TY/ER records and report original byte spans.\nQueue output: TSV on standard output; occurrence numbers start at 1. Use --pending-decisions to view unresolved groups with their direct kept members. Add --earlier-sheet to list historical choices for still-pending occurrences after a search update. Use --inspect-pair for a plain-text view of two RIS records and their current decisions.\nFor metadata verification, create a sheet with --init-metadata-decisions. Mark the target keep and enter verified-duplicate-of=<label:row><TAB><rationale> on the copy after comparing the source reports.\nTo record why an editable occurrence stays separate, use keep-with-reason<TAB><rationale>. The sheet and mapping.tsv store this optional reason in plain text. The reviewed RIS and ordinary trace omit it. Use trace --show-keep-reason to read it.\nReviewed export: apply the verified sheet decisions and write reviewed.ris, mapping.tsv and per-source reconciliation.tsv in a new directory. Add --asreview-ris for a separate title/abstract-compatible RIS and its checksum receipt.",
         dedup_core::VERSION
     );
+}
+
+fn group_labels(group: &ids::Group) -> (&'static str, &'static str) {
+    let kind = match group.shared {
+        Identifier::Doi => "doi",
+        Identifier::Pmid => "pmid",
+    };
+    let detail = match group.other_evidence {
+        OtherEvidence::Conflict => "other_id_conflict",
+        OtherEvidence::Agreement => "other_id_agreement",
+        OtherEvidence::Incomplete => "other_id_incomplete",
+    };
+    (kind, detail)
 }
 
 fn render<T: std::fmt::Display>(
@@ -32,15 +54,7 @@ fn render<T: std::fmt::Display>(
         report.groups.len()
     )?;
     for group in &report.groups {
-        let kind = match group.shared {
-            Identifier::Doi => "doi",
-            Identifier::Pmid => "pmid",
-        };
-        let detail = match group.other_evidence {
-            OtherEvidence::Conflict => "other_id_conflict",
-            OtherEvidence::Agreement => "other_id_agreement",
-            OtherEvidence::Incomplete => "other_id_incomplete",
-        };
+        let (kind, detail) = group_labels(group);
         write!(out, "candidate\t{kind}\t")?;
         for (index, row) in group.rows.iter().enumerate() {
             if index > 0 {
@@ -117,7 +131,15 @@ fn read_input(
     if bytes.len() > remaining_bytes {
         return Err(input_error(InputError::ByteLimit));
     }
-    String::from_utf8(bytes).map_err(|_| "Input is not UTF-8; no report produced.")
+    String::from_utf8(bytes).map_err(|_| {
+        if native_ris {
+            "Input is not UTF-8. Keep the original. For a new review, request a separate UTF-8 RIS export. \
+             For a saved sheet, use the exact UTF-8 RIS used to create it. \
+             For BibTeX, see the README section \"Bring a BibTeX export into a named RIS review\"."
+        } else {
+            "Input is not UTF-8; no report produced."
+        }
+    })
 }
 
 fn recheck(path: &OsStr, original: &[u8]) -> Result<(), &'static str> {
@@ -137,13 +159,8 @@ fn input_error(error: InputError) -> &'static str {
     }
 }
 
-fn render_occurrence(
-    out: &mut impl Write,
-    row: impl std::fmt::Display,
-    rec: &ris::Occurrence<'_>,
-    disposition: Option<&str>,
-) -> io::Result<()> {
-    let status = if !rec.has_type {
+fn occurrence_status(rec: &ris::Occurrence<'_>) -> &'static str {
+    if !rec.has_type {
         "fragment"
     } else if !rec.has_end {
         "partial"
@@ -151,7 +168,16 @@ fn render_occurrence(
         "malformed"
     } else {
         "complete"
-    };
+    }
+}
+
+fn render_occurrence(
+    out: &mut impl Write,
+    row: impl std::fmt::Display,
+    rec: &ris::Occurrence<'_>,
+    disposition: Option<&str>,
+) -> io::Result<()> {
+    let status = occurrence_status(rec);
     write!(
         out,
         "source\tris\t{row}\tbytes={}..{};status={status};closed={};malformed_lines={};fields={};unmapped_fields={}",
@@ -199,7 +225,44 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
     let native_ris = args.len() == 3 && args[0] == "review-ids" && args[1] == "--ris";
-    let result = if args.starts_with(&["review-ids".into(), "--ris-source".into()]) {
+    let result = if args.len() == 1 && args[0] == "start" {
+        start::run()
+    } else if matches!(args.len(), 3 | 4) && args[0] == "verify-export" {
+        mapping::verify_output(
+            args[1].as_ref(),
+            args[2].as_ref(),
+            args.get(3).map(AsRef::as_ref),
+        )
+    } else if args[0] == "trace" {
+        let (show_keep_reason, paths) = match &args[1..] {
+            [flag, rest @ ..] if flag == "--show-keep-reason" => (true, rest),
+            paths => (false, paths),
+        };
+        match paths {
+            [mapping, key, directories @ ..] if !directories.is_empty() => {
+                trace::run(mapping.as_ref(), key, directories, show_keep_reason)
+            }
+            _ => Err(
+                "Expected a mapping, occurrence key and originals directory. See dedup --help."
+                    .into(),
+            ),
+        }
+    } else if args.len() >= 2
+        && args[0] == "review-ids"
+        && matches!(
+            args[1].to_str(),
+            Some(
+                "--ris-source"
+                    | "--init-decisions"
+                    | "--init-metadata-decisions"
+                    | "--resume-decisions"
+                    | "--pending-decisions"
+                    | "--inspect-pair"
+                    | "--export-reviewed"
+                    | "--check-coverage"
+            )
+        )
+    {
         sources::run(&args[1..])
     } else if native_ris || (args.len() == 2 && args[0] == "review-ids") {
         run(&args[if native_ris { 2 } else { 1 }], native_ris).map_err(String::from)

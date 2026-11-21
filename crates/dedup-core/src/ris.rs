@@ -2,15 +2,18 @@
 //! UTF-8 input, including its original line endings. No field is reserialized.
 
 use crate::identifier_review::{
-    InputError, Issue, MAX_INPUT_BYTES, MAX_RECORDS, Review, Row, doi_key, pmid_key, review_rows,
+    Identifier, InputError, Issue, MAX_INPUT_BYTES, MAX_RECORDS, Review, Row, doi_key, pmid_key,
+    review_rows,
 };
 use std::ops::Range;
 
 mod queue;
+mod triage;
 pub use queue::{
     Disposition, MAX_SOURCES, NamedSource, QueueEntry, QueueError, ReviewQueue, review_sources,
     valid_source_label,
 };
+pub use triage::{CitationValue, LocatorPairs, MAX_HINT_MEMBERS, MetadataHint, PublicationDetails};
 
 pub const MAX_FIELDS: usize = 250_000;
 
@@ -36,6 +39,8 @@ pub struct Occurrence<'a> {
     pub has_type: bool,
     pub has_end: bool,
     pub malformed_lines: usize,
+    /// First BOM-prefixed TY header found inside the file, in original bytes.
+    pub embedded_header_byte: Option<usize>,
 }
 
 impl Occurrence<'_> {
@@ -74,6 +79,13 @@ fn tag(line: &str) -> Option<(&str, &str)> {
     Some((&line[..2], tail.trim_start_matches([' ', '\t'])))
 }
 
+fn embedded_header_byte(line: &str, start: usize) -> Option<usize> {
+    line.match_indices('\u{feff}').find_map(|(index, bom)| {
+        let byte = start + index;
+        (byte != 0 && matches!(tag(&line[index + bom.len()..]), Some(("TY", _)))).then_some(byte)
+    })
+}
+
 /// A nonblank fragment outside TY/ER gets an ordinal instead of disappearing.
 /// A new TY ends an unterminated occurrence; its fields never leak into the next.
 pub fn parse(input: &str) -> Result<Source<'_>, InputError> {
@@ -96,11 +108,11 @@ fn parse_source<'a>(input: &'a str, counts: &mut ParseCounts) -> Result<Source<'
         if raw.ends_with('\r') && lines.next_if_eq(&"\n").is_some() {
             end += 1;
         }
-        let body = raw.trim_end_matches(['\r', '\n']);
+        let line = raw.trim_end_matches(['\r', '\n']);
         let body = if offset == 0 {
-            body.strip_prefix('\u{feff}').unwrap_or(body)
+            line.strip_prefix('\u{feff}').unwrap_or(line)
         } else {
-            body
+            line
         };
         let parsed = tag(body);
         let starts = matches!(parsed, Some(("TY", _)));
@@ -118,12 +130,15 @@ fn parse_source<'a>(input: &'a str, counts: &mut ParseCounts) -> Result<Source<'
                 has_type: starts,
                 has_end: false,
                 malformed_lines: 0,
+                embedded_header_byte: None,
             });
             can_continue = false;
         }
         if let Some(rec) = current.as_mut() {
             rec.bytes.end = end;
-            if body.bytes().any(|b| b.is_ascii_control() && b != b'\t') {
+            let header = embedded_header_byte(line, offset);
+            rec.embedded_header_byte = rec.embedded_header_byte.or(header);
+            if header.is_some() || body.bytes().any(|b| b.is_ascii_control() && b != b'\t') {
                 rec.malformed_lines += 1;
                 can_continue = false;
                 offset = end;
@@ -253,6 +268,45 @@ impl Values {
     }
 }
 
+/// Full identifier evidence across occurrences proposed to represent a single report.
+/// Missing or unsupported fields cannot erase a disagreement between supported values.
+#[derive(Default)]
+pub struct ReportIdentifiers {
+    doi: Values,
+    pmid: Values,
+}
+
+impl ReportIdentifiers {
+    pub fn observe(&mut self, rec: &Occurrence<'_>) {
+        if !rec.usable() {
+            return;
+        }
+        for field in &rec.fields {
+            match projected(field) {
+                Some(Projected::Doi(raw)) => {
+                    self.doi
+                        .add(if field.continued { None } else { doi_key(raw) });
+                }
+                Some(Projected::Pmid(raw)) => {
+                    self.pmid
+                        .add(if field.continued { None } else { pmid_key(raw) });
+                }
+                None => {}
+            }
+        }
+    }
+
+    pub fn conflict(&self) -> Option<Identifier> {
+        if self.doi.conflict {
+            Some(Identifier::Doi)
+        } else if self.pmid.conflict {
+            Some(Identifier::Pmid)
+        } else {
+            None
+        }
+    }
+}
+
 impl Source<'_> {
     /// Skip ambiguous namespaces and withhold all evidence from structurally
     /// damaged occurrences. Every occurrence still enters reconciliation.
@@ -267,19 +321,12 @@ impl Source<'_> {
         for rec in &self.occurrences {
             let mut row = Row::default();
             if rec.usable() {
-                let mut d = Values::default();
-                let mut p = Values::default();
-                for field in &rec.fields {
-                    match projected(field) {
-                        Some(Projected::Doi(raw)) => {
-                            d.add(if field.continued { None } else { doi_key(raw) })
-                        }
-                        Some(Projected::Pmid(raw)) => {
-                            p.add(if field.continued { None } else { pmid_key(raw) })
-                        }
-                        None => {}
-                    }
-                }
+                let mut identifiers = ReportIdentifiers::default();
+                identifiers.observe(rec);
+                let ReportIdentifiers {
+                    doi: mut d,
+                    pmid: mut p,
+                } = identifiers;
                 let ordinal = rows.len() + 1;
                 if d.unsupported {
                     issues.push((ordinal, Issue::UnsupportedDoi));

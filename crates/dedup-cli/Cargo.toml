@@ -15,7 +15,9 @@ path = "src/main.rs"
 
 [dependencies]
 dedup-core = { path = "../dedup-core" }
+renamore = "0.3.2"
 sha2 = "0.10.9"
+tempfile = "3.27"
 
 [lints]
 workspace = true

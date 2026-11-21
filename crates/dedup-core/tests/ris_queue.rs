@@ -4,6 +4,47 @@ use dedup_core::ris::{
 };
 
 #[test]
+fn scopus_article_numbers_supply_only_direct_cross_field_inspection_leads() {
+    let record = |fields: &str| {
+        format!(
+            "TY  - JOUR\nTI  - A census of painted wooden wheels\nAU  - Reed, Q\n\
+             PY  - 2024\nJO  - Fictional Cart Journal\nVL  - 7\n{fields}\nER  -\n"
+        )
+    };
+    let scopus = record("DB  - Scopus\nC7  - 073021\nDO  - 10.0000/wheels");
+    let peer = record("SP  - Article number 073021\nUR  - https://pubmed.ncbi.nlm.nih.gov/980001/");
+    let pairs = |left: &str, right: &str| {
+        review_sources(&[("one", left), ("two", right)])
+            .unwrap()
+            .locator_pairs()
+            .complementary_ids
+    };
+    assert_eq!(pairs(&scopus, &peer), [[1, 2]]);
+    let queue = review_sources(&[("one", &scopus), ("two", &peer)]).unwrap();
+    assert!(queue.review.groups.is_empty() && queue.metadata_hints().is_empty());
+    assert!(
+        queue.sources[0].source.occurrences[0]
+            .publication_details()
+            .is_none()
+    );
+
+    for field in ["SP  - 073021", "C7  - 073021", "SP  - Article number 73021"] {
+        assert!(pairs(&scopus, &peer.replace("SP  - Article number 073021", field)).is_empty());
+    }
+    for db in [
+        "DB  - Other",
+        "DB  - Scopus\nSP  - 1",
+        "DB  - Scopus\nC7  - 73022",
+    ] {
+        assert!(pairs(&scopus.replace("DB  - Scopus", db), &peer).is_empty());
+    }
+    let bystander = scopus.replace("10.0000/wheels", "10.0000/bystander");
+    assert!(pairs(&format!("{scopus}{bystander}"), &peer).is_empty());
+    let standard = record("SP  - Article number 073021\nDO  - 10.0000/ordinary");
+    assert_eq!(pairs(&format!("{standard}{bystander}"), &peer), [[1, 3]]);
+}
+
+#[test]
 fn identical_and_empty_exports_keep_their_declared_source_identity() {
     let input = "TY  - JOUR\rDO  - 10.0000/example\rER  -\rstray";
     let queue = review_sources(&[("z", input), ("empty", ""), ("a", input)]).unwrap();
@@ -122,4 +163,50 @@ fn limits_apply_to_the_entire_queue_including_later_sources() {
         let over = [exact[0], exact[1], ("c", extra)];
         assert_eq!(review_sources(&over).unwrap_err(), QueueError::Input(error));
     }
+}
+
+#[test]
+fn metadata_hints_report_large_blocks_without_expanding_pairs() {
+    use dedup_core::ris::{MAX_HINT_MEMBERS, MetadataHint};
+    let rec = "TY  - JOUR\nTI  - Reading the tides\nAU  - Rowan, A.\nPY  - 2020\nER  -\n";
+    let input = rec.repeat(MAX_HINT_MEMBERS);
+    let queue = review_sources(&[("a", &input)]).unwrap();
+    assert_eq!(
+        queue.metadata_hints(),
+        [MetadataHint::Inspect((1..=MAX_HINT_MEMBERS).collect())]
+    );
+    let queue = review_sources(&[("b", rec), ("a", &input)]).unwrap();
+    assert_eq!(
+        queue.metadata_hints(),
+        [MetadataHint::Overflow {
+            first: 1,
+            count: MAX_HINT_MEMBERS + 1
+        }]
+    );
+    assert!(queue.review.groups.is_empty());
+}
+
+#[test]
+fn incomplete_or_contradictory_metadata_does_not_supply_a_key() {
+    use dedup_core::ris::MetadataHint;
+    let base = "TY  - JOUR\nTI  - Reading the tides\nAU  - Rowan, A.\nPY  - 2020\nER  -\n";
+    let mut input = base.to_owned();
+    for replacement in [
+        base.replace("ER  -", "T1  - Reading the tides: protocol\nER  -"),
+        base.replace("ER  -", "A1  - Rowan, B.\nER  -"),
+        base.replace("ER  -", "Y1  - 2021\nER  -"),
+        base.replace("Reading the tides", "Reading the tides\n      in winter"),
+        base.replace("PY  - 2020", "PY  - 2020/2021"),
+        base.replace("PY  - 2020", "PY  - 2020/13/01"),
+        base.replace("AU  - Rowan, A.", "AU  - unknown"),
+        base.replace("ER  -\n", ""),
+    ] {
+        input.push_str(&replacement);
+    }
+    input.push_str(&base.replace(
+        "ER  -",
+        "T1  - READING THE TIDES\nA1  - rowan, a.\nY1  - 2020/03/04/\nER  -",
+    ));
+    let queue = review_sources(&[("test", &input)]).unwrap();
+    assert_eq!(queue.metadata_hints(), [MetadataHint::Inspect(vec![1, 10])]);
 }
