@@ -268,10 +268,12 @@ planned --ris-source first first.ris --ris-source second first.ris
 Use `--expected-total` alone when the log has only a total. With
 `--batch-range` alone, the check covers the window from the first declared
 position to the last. Supply both to check the entire numbered interval.
-A repeated-bytes flag means the named inputs share a whole-file SHA-256 in
-this snapshot, including when a copy was renamed. Check the batch assignments
-against the search log. A change in line endings changes the fingerprint,
-and an equally sized batch of different records can pass. Counts and file
+A repeated-bytes flag means two or more labels in this snapshot share a
+SHA-256 fingerprint of the original file bytes. Renaming a download preserves
+its fingerprint. Changing its line endings changes the fingerprint even when
+every normalized RIS field is identical. Two distinct batches can share
+individual records and pass. Check the flagged labels against the search log.
+An equally sized batch of different records can also pass. Counts and file
 fingerprints alone cannot establish record identity. PRISMA-S lists records
 retrieved per source and deduplication methods as separate reporting items. [PRISMA-S, items 15 and 16](https://doi.org/10.1186/s13643-020-01542-z)
 

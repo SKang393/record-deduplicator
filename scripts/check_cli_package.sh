@@ -65,6 +65,8 @@ a3cb119441cbfee42cb2d85e5561e94eccf2990e740c968114f25ba13a2ed472 *inspection.txt
 48314f0dce442cd7c83355e561c2e6f0977e8c91c66cb9c917ccd22134d28afe *clean/mapping.tsv
 59def875d9cd1a68023e3e9301e260a21965fc7a04345a9c4d4915d0a7b2c0c5 *clean/reconciliation.tsv
 SUMS
+    cp catalog.ris renamed.ris
+    cat catalog.ris index.ris > combined.ris
     # Capture coverage output outside this project so every project file can be checked.
     find . -print | LC_ALL=C sort > "$work/project-before.txt"
     report="$work/coverage.tsv"
@@ -87,17 +89,28 @@ SUMS
     grep -Fxq $'snapshot\ttide\tparsed=2\texpected_total=2' "$report"
     grep -Fxq $'issue\trange_overlap\tidx\tpositions=1-1' "$report"
     grep -Fxq $'issue\trange_gap\tpositions=2-2' "$report"
-    coverage_case 2 "${plan[@]}" "${catalog[@]}" --ris-source idx catalog.ris
+    coverage_case 2 "${plan[@]}" "${catalog[@]}" --ris-source idx renamed.ris
     grep -Fxq $'counts_and_ranges\ttide\tmatched_expectations' "$report"
     grep -Fxq $'source_flag\trepeated_source_bytes\tcat,idx' "$report"
-    coverage_case 0 tide-update --expected-total 1 --ris-source cat index.ris
+    grep -Fxq $'result\ttide\tdiscrepancies' "$report"
+    coverage_case 0 tide --expected-total 3 --batch-range cat 1-1 --batch-range idx 2-3 \
+        "${catalog[@]}" --ris-source idx combined.ris
+    grep -Fxq $'snapshot\ttide\tparsed=3\texpected_total=3' "$report"
+    grep -Fxq $'result\ttide\tmatched_expectations' "$report"
+    if grep -q $'^source_flag\t' "$report"; then exit 1; fi
+    coverage_case 0 tide-update --expected-total 1 --ris-source cat renamed.ris
     grep -Fxq $'snapshot\ttide-update\tparsed=1\texpected_total=1' "$report"
+    grep -Fxq $'result\ttide-update\tmatched_expectations' "$report"
+    if grep -q $'^source_flag\t' "$report"; then exit 1; fi
     coverage_case 2 "${plan[@]}" --check-coverage tide-update --expected-total 1 "${both[@]}"
     test ! -s "$report"
     test -s "$work/coverage.err"
     find . -print | LC_ALL=C sort | cmp - "$work/project-before.txt"
     "${checksum[@]}" -c "$work/baseline.sha256"
+    cmp catalog.ris renamed.ris
+    cat catalog.ris index.ris | cmp - combined.ris
     review_input | cmp - queue.tsv
+    echo "PASS: renamed download flagged with 2 of 2 positions matched. Distinct batches sharing a record and a separate snapshot passed."
     echo "PASS: coverage matched 2, flagged a missing batch and equal-total overlap/gap, and checked the update separately."
     echo "PASS: project entries and byte hashes match the ordinary review baseline after all coverage checks."
 
