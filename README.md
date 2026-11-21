@@ -603,6 +603,11 @@ Compare each source's `input` count with the count recorded when you exported
 that batch. A download that stops after a complete `ER` record can still be
 valid RIS. A repeated page can also offset a missing page in the total. Keep
 the original batch boundaries and check their ranges against the search log.
+For example, if a search returned 12 records and overlapping download pages
+produced 14 input occurrences, the removal columns start from 14. If both
+repeated occurrences were removed, subtracting all those removals from 12
+would count the overlap twice. Resolve the discrepancy against the batch log
+before transferring the counts to a flow diagram.
 
 - `input = removed_id + removed_metadata + retained`. The removal columns
   count explicit duplicate decisions applied before literature screening.
@@ -615,9 +620,11 @@ the original batch boundaries and check their ranges against the search log.
   in the selected sheet. For `outside_sheet_flagged`, inspect the queue's
   `review_input` records and their input issues.
 
-The total `retained` count is the number of records in `reviewed.ris` going
-forward to screening. Title/abstract exclusions, full-text exclusions and
-study inclusion decisions belong to later screening stages.
+Three removed occurrences assigned to one keeper contribute three removals
+for one report. The total `retained` count is the number of records sent
+forward in `reviewed.ris`. It can include unresolved copies of a report
+and separate reports from the same study. Use the screening log for records
+actually screened, reports assessed, exclusions and studies included.
 
 ### Import the reviewed RIS into Zotero
 
