@@ -3,6 +3,7 @@
 set -euo pipefail
 work=$(mktemp -d)
 trap 'cd / && rm -rf "$work"' EXIT
+advisory_check="$(cd "$(dirname "$0")" && pwd)/check_export_advisory.py"
 mkdir "$work/verify-pairs"
 cp -R "$(dirname "$0")/../testdata/fixtures/reviewed-export-v1" "$work/verify-pairs/legacy"
 mkdir "$work/Extracted package"
@@ -21,6 +22,10 @@ if [[ $# == 2 ]]; then
     runner=$2
     windows_binary="$PWD/dedup.exe"
     dedup() { env -u TMPDIR "$runner" "$windows_binary" "$@"; }
+else
+    binary="$PWD/dedup"
+    if [[ -f "$binary.exe" ]]; then binary="$binary.exe"; fi
+    PYTHONUTF8=1 python "$advisory_check" "$binary" --package-smoke
 fi
 dedup --version
 awk '
