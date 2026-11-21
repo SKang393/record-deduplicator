@@ -281,13 +281,15 @@ guided_start() (
     printf '%s\n' $'triage\ttitle_variant_locator\tcat:1,idx:2\tinspect_only' > expected-lead.tsv
     review --inspect-pair resolved.tsv cat:1 idx:2 > expected-pair.txt
     grep -Fq '[idx:2] outside-decision-sheet' expected-pair.txt
+    printf '%s\n' $'idx:2\toutside-decision-sheet\t"Marsh transects after spring flooding: seasonal observations"' \
+        'Found 1. Use :inspect KEY,KEY to compare two originals. Only existing sheet rows are editable.' > expected-find.txt
     "${checksum[@]}" -b catalog.ris index.ris resolved.tsv > leads-inputs.sha256
 
     sheet_answer=$(guide_path resolved.tsv)
     catalog_path=$(guide_path catalog.ris)
     index_answer=$(guide_path index.ris)
-    guided_start yes :leads ':inspect cat:1,idx:2' :leads "$(guide_path leads-export)" write > leads-session.txt 2> leads-prompts.txt
-    cat pending-leads.tsv expected-lead.tsv expected-pair.txt expected-lead.tsv | cmp - leads-session.txt
+    guided_start yes :leads ':find SEASONAL observations' ':inspect cat:1,idx:2' :leads "$(guide_path leads-export)" write > leads-session.txt 2> leads-prompts.txt
+    cat pending-leads.tsv expected-lead.tsv expected-find.txt expected-pair.txt expected-lead.tsv | cmp - leads-session.txt
     grep -Fq 'These pairs add no decision rows.' leads-prompts.txt
     grep -Fq 'The guide keeps no history of viewed pairs.' leads-prompts.txt
     grep -Fq 'Explicitly marked duplicates to remove: 1' leads-prompts.txt
@@ -295,7 +297,7 @@ guided_start() (
         cmp "leads-reference/$file" "leads-export/$file"
     done
     "${checksum[@]}" -c leads-inputs.sha256
-    echo "PASS: $start_shell reopened with zero pending, listed the same lead before and after inspection, and exported the saved one-removal decision byte for byte."
+    echo "PASS: $start_shell found an occurrence outside the sheet, inspected its pair, preserved the leads and exported the saved one-removal decision byte for byte."
 )
 
 find "$project" "$handoff" -print | LC_ALL=C sort > "$work/before.txt"

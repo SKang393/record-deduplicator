@@ -91,6 +91,9 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    a pair after export, keep both keys with your review notes and
    [trace each occurrence](#trace-an-exported-occurrence-to-its-originals)
    against that export's mapping.
+   If you remember the citation but neither key, type `:find marsh transects`
+   or `:find Reed`. The guide searches titles and authors in every selected
+   export, including occurrences outside the suggested groups.
 5. When several groups are pending, the reopened guide repeats the first
    group just before the inspection prompt. Type `:inspect KEY,KEY` to compare
    records from any pending row. You can paste two keys from the pending
@@ -498,6 +501,15 @@ the summary counts each pending occurrence once.
 In the reopened guide, type `:inspect idx:1,cat:1` to compare the two records
 in the example above. When a group has three or more members, choose the two
 you want to read. Either key can come first. Inspection leaves the sheet as saved.
+
+Use `:find TEXT` to locate a fragment within one title (`TI` or `T1`) or
+one author (`AU` or `A1`). Capitalization, repeated spaces and wrapped
+lines are ignored. Each matching occurrence appears once with its key,
+sheet status and title. Compare the two originals with `:inspect`.
+Edit the saved sheet only when the occurrence already has a decision row.
+An `outside-decision-sheet` record stays in the export. Even when you
+recognize two copies, a lookup cannot authorize their removal. Leave an
+uncertain editable row `pending`.
 
 From the command line, pass the same two keys to `--inspect-pair`. Both forms
 check the sheet's fingerprints and show selected citation fields in the key

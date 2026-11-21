@@ -6,6 +6,7 @@ use std::{
 };
 
 use super::decisions::{Decision, ResumedSheet};
+use super::start::Inspection;
 use dedup_core::{
     identifier_review as ids,
     ris::{self, Disposition, QueueError, ReviewQueue},
@@ -283,28 +284,34 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                         // A formatting-only save can represent the same validated decisions.
                         validated_text = current;
                     }
-                    let super::start::Inspection::Pair(left, right) = request else {
-                        let pairs = queue.locator_pairs();
-                        let count = pairs.title_variants.len() + pairs.complementary_ids.len();
-                        eprintln!(
-                            "Inspection-only pairs: {count}. Use :inspect with the two keys from a row. These pairs add no decision rows. Both records stay in the export unless a saved decision removes one. The guide keeps no history of viewed pairs."
-                        );
-                        let mut out = io::BufWriter::new(io::stdout().lock());
-                        return write_inspection_leads(&queue, pairs, &mut out)
-                            .and_then(|()| out.flush())
-                            .map_err(|_| "Cannot write inspection leads.".into());
-                    };
-                    match super::inspect::pair(
-                        &queue,
-                        &sheet.decisions,
-                        left.as_ref(),
-                        right.as_ref(),
-                    ) {
-                        Err(e) if e.kind() == io::ErrorKind::InvalidInput => {
-                            eprintln!("{e}");
-                            Ok(())
+                    match request {
+                        Inspection::Find(query) => {
+                            super::inspect::find(&queue, &sheet.decisions, query)
+                                .map_err(|e| e.to_string())
                         }
-                        result => result.map_err(|e| e.to_string()),
+                        Inspection::ListLeads => {
+                            let pairs = queue.locator_pairs();
+                            let count = pairs.title_variants.len() + pairs.complementary_ids.len();
+                            eprintln!(
+                                "Inspection-only pairs: {count}. Use :inspect with the two keys from a row. These pairs add no decision rows. Both records stay in the export unless a saved decision removes one. The guide keeps no history of viewed pairs."
+                            );
+                            let mut out = io::BufWriter::new(io::stdout().lock());
+                            write_inspection_leads(&queue, pairs, &mut out)
+                                .and_then(|()| out.flush())
+                                .map_err(|_| "Cannot write inspection leads.".into())
+                        }
+                        Inspection::Pair(left, right) => match super::inspect::pair(
+                            &queue,
+                            &sheet.decisions,
+                            left.as_ref(),
+                            right.as_ref(),
+                        ) {
+                            Err(e) if e.kind() == io::ErrorKind::InvalidInput => {
+                                eprintln!("{e}");
+                                Ok(())
+                            }
+                            result => result.map_err(|e| e.to_string()),
+                        },
                     }
                 })?
                 else {

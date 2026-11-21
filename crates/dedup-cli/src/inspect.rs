@@ -1,15 +1,94 @@
-//! Display two selected source records after reopening their decision sheet.
+//! Look up occurrences and display selected originals in a reopened review.
 use std::{
+    borrow::Cow,
     ffi::OsStr,
     io::{self, Write},
 };
 
 use dedup_core::{
     identifier_review::Identifier,
-    ris::{CitationValue, ReportIdentifiers, ReviewQueue},
+    ris::{CitationValue, Field, ReportIdentifiers, ReviewQueue},
 };
 
 use super::decisions::Decision;
+
+fn sheet_status(decision: &Decision, queue: &ReviewQueue<'_>) -> Cow<'static, str> {
+    match decision {
+        Decision::NotCandidate => "outside-decision-sheet".into(),
+        decision => decision.label(queue),
+    }
+}
+
+fn single_line(text: &str) -> String {
+    let mut line = String::new();
+    for word in text.split_whitespace() {
+        if !line.is_empty() {
+            line.push(' ');
+        }
+        line.push_str(word);
+    }
+    line
+}
+
+pub(super) fn find(queue: &ReviewQueue<'_>, decisions: &[Decision], query: &str) -> io::Result<()> {
+    let needle = single_line(query).to_lowercase();
+    let mut out = io::BufWriter::new(io::stdout().lock());
+    let mut count = 0;
+    let mut decisions = decisions.iter();
+    for named in &queue.sources {
+        let field_text = |field: &Field<'_>| {
+            // The parsed span includes continuation lines and starts with the tagged header.
+            let tagged = &named.source.original[field.bytes.clone()];
+            single_line(tagged.split_once('-').expect("parsed field header").1)
+        };
+        for (index, (record, decision)) in named
+            .source
+            .occurrences
+            .iter()
+            .zip(&mut decisions)
+            .enumerate()
+        {
+            let hit = record
+                .fields
+                .iter()
+                .filter(|f| matches!(f.tag, "TI" | "T1" | "AU" | "A1"))
+                .find(|f| field_text(f).to_lowercase().contains(&needle));
+            let Some(hit) = hit else { continue };
+            let title = if matches!(hit.tag, "TI" | "T1") {
+                Some(hit)
+            } else {
+                record.fields.iter().find(|f| matches!(f.tag, "TI" | "T1"))
+            };
+            let mut title = title
+                .map(field_text)
+                .unwrap_or_else(|| "(title absent)".into());
+            if let Some((end, _)) = title.char_indices().nth(120) {
+                title.truncate(end);
+                title.push('…');
+            }
+            writeln!(
+                out,
+                "{}:{}\t{}\t{title:?}",
+                named.label,
+                index + 1,
+                sheet_status(decision, queue)
+            )?;
+            count += 1;
+        }
+    }
+    if count == 0 {
+        writeln!(
+            out,
+            "No occurrences matched. Try a shorter title or author fragment."
+        )?;
+    } else {
+        writeln!(
+            out,
+            "Found {count}. Use :inspect KEY,KEY to compare two originals. Only existing sheet rows are editable."
+        )?;
+    }
+    out.flush()
+}
 
 fn display_value(value: &CitationValue) -> String {
     let values = match value {
@@ -111,10 +190,7 @@ pub(super) fn pair(
     }
     for (index, rec, raw) in [first, second] {
         let entry = &queue.entries[index];
-        let status = match &decisions[index] {
-            Decision::NotCandidate => "outside-decision-sheet".into(),
-            decision => decision.label(queue),
-        };
+        let status = sheet_status(&decisions[index], queue);
         writeln!(
             out,
             "[{}:{}] {} (bytes {}..{})",

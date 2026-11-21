@@ -190,6 +190,7 @@ pub(super) fn run() -> Result<(), String> {
 
 pub(super) enum Inspection<'a> {
     ListLeads,
+    Find(&'a str),
     Pair(&'a str, &'a str),
 }
 
@@ -199,19 +200,28 @@ pub(super) fn export_destination(
 ) -> Result<Option<PathBuf>, String> {
     while let Some(path) = ask_path_or_action(
         input,
-        "To compare two keys, type :inspect KEY,KEY. Type :leads to list inspection-only pairs. To preview an export, enter a new folder path. Press Enter to close this session:",
+        "To compare two keys, type :inspect KEY,KEY. Use :find TEXT to look up a title or author, or :leads to list inspection-only pairs. To preview an export, enter a new folder path. Press Enter to close this session:",
         |answer| {
             if answer == ":leads" {
                 inspect(Inspection::ListLeads)?;
                 return Ok(true);
             }
-            let (command, keys) = answer
+            let (command, argument) = answer
                 .split_once(char::is_whitespace)
                 .unwrap_or((answer, ""));
+            if command == ":find" {
+                let query = argument.trim();
+                if query.is_empty() {
+                    eprintln!("Enter part of a title or an author after :find.");
+                } else {
+                    inspect(Inspection::Find(query))?;
+                }
+                return Ok(true);
+            }
             if command != ":inspect" {
                 return Ok(false);
             }
-            match keys.split_once(',').map(|(a, b)| (a.trim(), b.trim())) {
+            match argument.split_once(',').map(|(a, b)| (a.trim(), b.trim())) {
                 Some((left, right))
                     if !left.is_empty() && !right.is_empty() && !right.contains(',') =>
                 {
