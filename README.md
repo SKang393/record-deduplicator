@@ -100,9 +100,16 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    `mapping.tsv` for individual decisions and `reconciliation.tsv` for
    counts by source.
 
-Compare the source reports before editing a decision. Leave uncertain rows
-pending. For a worked example of pair inspection, an explicit decision and
-export, follow the [two-export walkthrough](#verify-a-copy-found-through-metadata).
+Before choosing a keeper for screening, use the guide's `:inspect catalog:1,index:1`
+with your own keys. Read the complete record under each key for fields such
+as an abstract (`AB`) and keywords (`KW`). If two confirmed copies share a DOI
+and only `index:1` has those fields, marking it `keep` and setting `catalog:1`
+to `duplicate-of=index:1` carries them into `reviewed.ris`. Keeping the sparse
+catalog copy leaves the index-only fields in the original index download.
+Keep a distinct follow-up separate even if it shares that DOI.
+
+Leave uncertain rows pending. For a worked example of pair inspection, an
+explicit decision and export, follow the [two-export walkthrough](#verify-a-copy-found-through-metadata).
 To run that example, open Bash (Git Bash on Windows) in the extracted
 directory and run `export PATH="$PWD:$PATH"`.
 
