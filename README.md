@@ -525,6 +525,31 @@ count with `retained` in the total row of `reconciliation.tsv`. Pending records
 count toward that total. Keep the original exports, decision sheet and
 `mapping.tsv` together to trace each item back to its source occurrences.
 
+**Find a retained pending item.** Open `mapping.tsv` read-only and filter
+`type` to `map` and `signal` to `pending`. The `rows` column gives the
+source label and occurrence number for [tracing the original](#trace-an-exported-occurrence-to-its-originals).
+From the export folder, use Bash to verify the handoff and print the pending
+keys and details.
+
+```sh
+dedup verify-export mapping.tsv reviewed.ris &&
+  awk -F '\t' '$1 == "map" && $2 == "pending" {print $3 "\t" $4}' mapping.tsv
+```
+
+To read the selected record in the verified RIS, replace `3` with the
+`output=` number from that row.
+
+```sh
+awk -v output=3 '/^TY  -/ {++record} record == output' reviewed.ris
+```
+
+Zotero can sort the collection in a different order. In the tested import,
+RIS `AN` (accession number) appeared in the item's **Archive Location**.
+Compare that exact value across the same-title items and check the other
+available fields, such as pages. If the saved fields cannot distinguish one
+imported item, leave the correspondence unresolved. A pending decision
+concerns duplication only.
+
 The [synthetic Zotero handoff](testdata/fixtures/README.md#zotero-ris-handoff)
 includes a ready-to-import file and the fields observed in Zotero Desktop.
 Zotero's [file import guide](https://www.zotero.org/support/kb/importing_standardized_formats)
