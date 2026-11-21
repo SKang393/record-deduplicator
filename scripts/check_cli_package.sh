@@ -222,6 +222,50 @@ cmp reference-queue.tsv guided.tsv
 grep -Fxq $'cat:1\tpending' "$sheet"
 grep -Fxq $'idx:1\tpending' "$sheet"
 
+# Inspect two pending members with no keeper, then export in that same guide session.
+reference_review --pending-decisions reference.tsv > initial-pending.tsv
+grep -Fxq $'pending\ttitle_author_year_type\tcat:1,idx:1,idx:2\tinspect_metadata_only;keep=;assigned=' initial-pending.tsv
+reference_review --inspect-pair reference.tsv cat:1 idx:2 > pair.txt
+grep -Fxq '  SP  - 41-46' pair.txt
+pending_dest="$handoff/Pending comparison"
+guided_start yes ':inspect cat:1,idx:2' "$(guide_path "$pending_dest")" write > inspected.txt 2> prompts.txt
+cat initial-pending.tsv pair.txt | cmp - inspected.txt
+grep -Fq 'Records retained: 3 (including 3 pending).' prompts.txt
+grep -Fxq $'summary\tall\t3\tretained=3;suppressed=0' "$pending_dest/mapping.tsv"
+reference_review --export-reviewed reference.tsv pending-export
+for file in reviewed.ris mapping.tsv reconciliation.tsv; do
+    cmp "pending-export/$file" "$pending_dest/$file"
+done
+cmp reference.tsv "$sheet"
+echo "PASS: $start_shell inspected two pending records without a keeper and exported all three in the same session."
+
+# Wait for the actual pending view before changing a disposable copy of the index.
+cp guide-index.ris stale-index.ris
+stale_answers() {
+    printf '%s\n' reference.tsv cat catalog.ris idx stale-index.ris '' yes
+    for ((attempt=0; attempt<200; attempt++)); do
+        if cmp -s initial-pending.tsv stale-output.tsv; then
+            printf '\n' >> stale-index.ris
+            printf '%s\n' ':inspect cat:1,idx:2'
+            return 0
+        fi
+        sleep 0.05
+    done
+    echo 'Timed out waiting for the pending view.' >&2
+    return 1
+}
+if stale_answers | dedup start > stale-output.tsv 2> stale-prompts.txt; then
+    exit 1
+else
+    statuses=("${PIPESTATUS[@]}")
+    [[ ${statuses[0]} == 0 && ${statuses[1]} == 2 ]]
+fi
+cmp initial-pending.tsv stale-output.tsv
+grep -Fq 'idx: RIS source changed while being read' stale-prompts.txt
+if grep -Fq 'Marsh transects after spring flooding' initial-pending.tsv prompts.txt stale-prompts.txt; then exit 1; fi
+cmp reference.tsv "$sheet"
+echo 'PASS: changing the index after the pending view refused inspection with exit 2 and displayed no source record.'
+
 # Record an explicit keeper and one verified copy. Keep the distinct report pending.
 awk -F '\t' '
     $1 == "cat:1" {print "cat:1\tkeep"; next}
