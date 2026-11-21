@@ -293,6 +293,14 @@ impl PreparedExport {
         let staging = tempfile::Builder::new()
             .prefix(".dedup-export-")
             .tempdir_in(parent)?;
+        self.write_files(staging.path())?;
+        // Publish all files together. An existing or concurrently created destination wins.
+        renamore::rename_exclusive(staging.path(), directory)?;
+        let _ = staging.keep();
+        Ok(())
+    }
+
+    fn write_files(self, staging: &Path) -> io::Result<()> {
         let mut files = Vec::new();
         if let Some(copy) = self.asreview {
             let receipt = format!(
@@ -304,17 +312,48 @@ impl PreparedExport {
         }
         files.extend([
             ("reviewed.ris", self.ris),
-            ("mapping.tsv", self.mapping),
             ("reconciliation.tsv", self.reconciliation),
+            // An interrupted staging directory should not contain a verifiable RIS/mapping
+            // pair while the reconciliation is still missing or incomplete.
+            ("mapping.tsv", self.mapping),
         ]);
         for (name, contents) in files {
-            let mut file = File::create_new(staging.path().join(name))?;
+            let mut file = File::create_new(staging.join(name))?;
             file.write_all(contents.as_bytes())?;
             file.sync_all()?;
         }
-        // Publish all files together. An existing or concurrently created destination wins.
-        renamore::rename_exclusive(staging.path(), directory)?;
-        let _ = staging.keep();
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn failed_reconciliation_write_leaves_no_mapping_in_staging() {
+        let staging = tempfile::tempdir().unwrap();
+        // Prevent exclusive creation of the counts file on any supported filesystem.
+        let counts_path = staging.path().join("reconciliation.tsv");
+        fs::write(&counts_path, b"occupied").unwrap();
+        let export = PreparedExport {
+            ris: "TY  - JOUR\nER  -\n".into(),
+            asreview: None,
+            mapping: String::new(),
+            reconciliation: String::new(),
+            retained: 1,
+            removed: 0,
+            pending: 0,
+        };
+
+        let error = export.write_files(staging.path()).unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::AlreadyExists);
+        assert_eq!(
+            fs::read_to_string(staging.path().join("reviewed.ris")).unwrap(),
+            "TY  - JOUR\nER  -\n"
+        );
+        assert_eq!(fs::read(counts_path).unwrap(), b"occupied");
+        assert!(!staging.path().join("mapping.tsv").exists());
     }
 }

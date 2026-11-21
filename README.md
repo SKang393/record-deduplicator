@@ -118,7 +118,8 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    [Check the RIS and mapping together](#reconcile-a-reviewed-export-before-screening)
    before opening `reviewed.ris` in your reference manager. Use
    `mapping.tsv` for individual decisions and `reconciliation.tsv` for
-   counts by source.
+   counts by source. If writing stops unexpectedly, follow
+   [Recover an interrupted export](#recover-an-interrupted-export).
 
 Before choosing a keeper for screening, use the guide's `:inspect catalog:1,index:1`
 with your own keys. Read the complete record under each key for fields such
@@ -679,6 +680,37 @@ for one report. The total `retained` count is the number of records sent
 forward in `reviewed.ris`. It can include unresolved copies of a report
 and separate reports from the same study. Use the screening log for records
 actually screened, reports assessed, exclusions and studies included.
+
+#### Recover an interrupted export
+
+Look for the destination you chose in the guide. The exporter writes and
+syncs each file in a temporary folder before renaming the folder to that
+destination. A forced stop can leave a sibling named `.dedup-export-…`.
+Use only the named destination for handoff.
+
+To retry after a write error, resolve the reported problem, reopen the
+same saved sheet with the same named downloads, and confirm `write` at
+an unused destination such as `retry`. The example below checks the new
+RIS against its mapping.
+
+```sh
+dedup verify-export retry/mapping.tsv retry/reviewed.ris
+```
+
+If you also have an earlier folder called `reviewed` whose contents are
+uncertain, compare all three files against the successful retry from
+the same CLI version, sheet and sources. A matching RIS and mapping alone
+leaves the counts file unchecked.
+
+```sh
+cmp reviewed/reviewed.ris retry/reviewed.ris &&
+  cmp reviewed/mapping.tsv retry/mapping.tsv &&
+  cmp reviewed/reconciliation.tsv retry/reconciliation.tsv
+```
+
+In Bash (Git Bash on Windows), this exits zero only when all three files
+match byte for byte. If any file is missing or differs, hand off the
+verified retry folder as a unit and preserve the earlier folder for review.
 
 ### Import mixed RIS titles and abstracts into ASReview
 
