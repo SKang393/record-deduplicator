@@ -739,6 +739,24 @@ fn pending_view_shows_direct_context_in_conflict_order_without_changing_decision
     let reversed = inputs.run(&[&["--pending-decisions", "choices.tsv"][..], &b, &a].concat());
     assert!(reversed.status.success());
     assert_eq!(view.stdout, reversed.stdout);
+    inputs.write(
+        "guide.txt",
+        b"choices.tsv\ncat\ncat.ris\nidx\nidx.ris\n\nyes\n:inspect cat:1,idx:1\n:inspect idx:2,cat:2\n:cancel\n",
+    );
+    let guided = Command::new(env!("CARGO_BIN_EXE_dedup"))
+        .current_dir(&inputs.0)
+        .arg("start")
+        .stdin(fs::File::open(inputs.0.join("guide.txt")).unwrap())
+        .output()
+        .unwrap();
+    assert!(guided.status.success(), "{:?}", guided.stderr);
+    let mut expected = view.stdout.clone();
+    for keys in [["cat:1", "idx:1"], ["idx:2", "cat:2"]] {
+        let pair = inputs.run(&[&["--inspect-pair", "choices.tsv"][..], &keys, &sources].concat());
+        assert!(pair.status.success());
+        expected.extend(pair.stdout);
+    }
+    assert_eq!(guided.stdout, expected);
     assert!(inputs.export("after", &sources).status.success());
     for file in ["mapping.tsv", "reconciliation.tsv", "reviewed.ris"] {
         assert_eq!(

@@ -32,12 +32,23 @@ fn ask(input: &mut dyn BufRead, prompt: &str) -> Result<Option<String>, String> 
 }
 
 fn ask_path(input: &mut dyn BufRead, prompt: &str) -> Result<Option<String>, String> {
+    ask_path_or_action(input, prompt, |_| Ok(false))
+}
+
+fn ask_path_or_action(
+    input: &mut dyn BufRead,
+    prompt: &str,
+    mut action: impl FnMut(&str) -> Result<bool, String>,
+) -> Result<Option<String>, String> {
     while let Some(answer) = ask(input, prompt)? {
         // An existing literal name wins, including names containing quotes or backslashes.
         match fs::symlink_metadata(&answer) {
             Ok(_) => return Ok(Some(answer)),
             Err(e) if e.kind() == ErrorKind::PermissionDenied => return Ok(Some(answer)),
             Err(_) => {}
+        }
+        if action(&answer)? {
+            continue;
         }
         let quoted = answer.strip_prefix('"').and_then(|s| s.strip_suffix('"'));
         let single_quoted = answer
@@ -176,10 +187,30 @@ pub(super) fn run() -> Result<(), String> {
     Ok(())
 }
 
-pub(super) fn export_destination(input: &mut dyn BufRead) -> Result<Option<PathBuf>, String> {
-    let Some(path) = ask_path(
+pub(super) fn export_destination(
+    input: &mut dyn BufRead,
+    mut inspect: impl FnMut(&str, &str) -> Result<(), String>,
+) -> Result<Option<PathBuf>, String> {
+    let Some(path) = ask_path_or_action(
         input,
-        "To preview an export, enter a new folder path. Press Enter to close this session:",
+        "To compare two keys from a pending row, type :inspect KEY,KEY. You can compare two pending records. To preview an export, enter a new folder path. Press Enter to close this session:",
+        |answer| {
+            let (command, keys) = answer
+                .split_once(char::is_whitespace)
+                .unwrap_or((answer, ""));
+            if command != ":inspect" {
+                return Ok(false);
+            }
+            match keys.split_once(',').map(|(a, b)| (a.trim(), b.trim())) {
+                Some((left, right))
+                    if !left.is_empty() && !right.is_empty() && !right.contains(',') =>
+                {
+                    inspect(left, right)?;
+                }
+                _ => eprintln!("Enter exactly two keys, for example :inspect catalog:1,index:2."),
+            }
+            Ok(true)
+        },
     )?
     else {
         return Ok(None);

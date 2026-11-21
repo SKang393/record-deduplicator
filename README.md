@@ -77,7 +77,12 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    It checks their fingerprints and shows pending decisions and keeper context.
    Optional comparisons appear in the full queue. To see them again, use
    `--resume-decisions` with the saved sheet and the same named sources.
-5. Press Enter to close this session, or enter a new
+5. To compare records from a pending row, type `:inspect KEY,KEY` at the next
+   prompt. You can paste two keys from the pending column, even when `keep=`
+   is empty. To compare a pending record with a previously reviewed member,
+   use a second key from that row's `keep=` or `assigned=` list.
+   The guide shows both original records and returns to the prompt.
+   Press Enter to close this session, or enter a new
    folder path to preview an export. Choose a folder name inside an existing
    directory, which can be outside the project. Check the sheet path,
    destination, explicit duplicate count, and how many pending records will
@@ -433,7 +438,11 @@ the order is DOI, PMID, then opt-in metadata hints. Every group with a pending
 member appears, even when it has zero or several keepers. Groups can overlap and
 the summary counts each pending occurrence once.
 
-Pass two keys from a group to `--inspect-pair` to read their tagged fields and
+In the reopened guide, type `:inspect idx:1,cat:1` to compare the two records
+in the example above. When a group has three or more members, choose the two
+you want to read. Either key can come first. Inspection leaves the sheet as saved.
+
+From the command line, pass two keys from a group to `--inspect-pair` to read their tagged fields and
 continuation lines in source order. The display checks the sheet's fingerprints
 and escapes control characters for reading in a terminal. If a record lacks a
 usable final page range or article number, the comparison identifies its source

@@ -13,7 +13,7 @@ pub(super) fn pair(
     decisions: &[Decision],
     left: &OsStr,
     right: &OsStr,
-) -> Result<(), String> {
+) -> io::Result<()> {
     let locate = |key: &OsStr| {
         let syntax = "Expected an occurrence key from the review, for example catalog:2.";
         let (label, number) = key.to_str().and_then(|s| s.split_once(':')).ok_or(syntax)?;
@@ -36,13 +36,16 @@ pub(super) fn pair(
             "Unknown occurrence {key:?}. Use a label and ordinal from the review."
         ))
     };
-    let first = locate(left)?;
-    let second = locate(right)?;
+    let invalid_key = |message| io::Error::new(io::ErrorKind::InvalidInput, message);
+    let first = locate(left).map_err(invalid_key)?;
+    let second = locate(right).map_err(invalid_key)?;
     if first.0 == second.0 {
-        return Err("Select two different occurrences to inspect.".into());
+        return Err(invalid_key(
+            "Select two different occurrences to inspect.".into(),
+        ));
     }
     let mut out = io::BufWriter::new(io::stdout().lock());
-    let write_error = |_: io::Error| "Cannot write comparison.";
+    let write_error = |_: io::Error| io::Error::other("Cannot write comparison.");
     for (index, rec, raw) in [first, second] {
         let entry = &queue.entries[index];
         let status = match &decisions[index] {
@@ -73,5 +76,5 @@ pub(super) fn pair(
             writeln!(out, "  {}", line.escape_debug()).map_err(write_error)?;
         }
     }
-    out.flush().map_err(|_| "Cannot write comparison.".into())
+    out.flush().map_err(write_error)
 }

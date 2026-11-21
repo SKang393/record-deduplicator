@@ -181,7 +181,8 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
         Action::Resume(path) => Some(super::decisions::resume(path, &queue, &manifest)?),
         Action::InspectPair(path, left, right) => {
             let sheet = super::decisions::resume(path, &queue, &manifest)?;
-            return super::inspect::pair(&queue, &sheet.decisions, left, right);
+            return super::inspect::pair(&queue, &sheet.decisions, left, right)
+                .map_err(|e| e.to_string());
         }
         Action::Export(path, directory) => {
             let sheet = super::decisions::resume(path, &queue, &manifest)?;
@@ -197,18 +198,37 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                     .map_err(|_| "Cannot write report.")?;
             }
             if let Some(input) = guide {
-                let Some(directory) = super::start::export_destination(input)? else {
+                let recheck_review = || -> Result<(), String> {
+                    recheck_sources()?;
+                    if super::decisions::resume(path, &queue, &manifest)?.decisions
+                        != sheet.decisions
+                    {
+                        return Err("Decisions changed. Reopen the sheet to see the current pending groups.".into());
+                    }
+                    Ok(())
+                };
+                let Some(directory) = super::start::export_destination(input, |left, right| {
+                    recheck_review()?;
+                    match super::inspect::pair(
+                        &queue,
+                        &sheet.decisions,
+                        left.as_ref(),
+                        right.as_ref(),
+                    ) {
+                        Err(e) if e.kind() == io::ErrorKind::InvalidInput => {
+                            eprintln!("{e}");
+                            Ok(())
+                        }
+                        result => result.map_err(|e| e.to_string()),
+                    }
+                })?
+                else {
                     return Ok(());
                 };
                 super::reviewed::require_new_destination(&directory).map_err(|e| e.to_string())?;
                 let export = super::reviewed::prepare(&queue, &manifest, &sheet.decisions)?;
                 if super::start::confirm_export(input, path.as_ref(), &directory, &export)? {
-                    recheck_sources()?;
-                    if super::decisions::resume(path, &queue, &manifest)?.decisions
-                        != sheet.decisions
-                    {
-                        return Err("Decisions changed during confirmation. Reopen the sheet to preview again.".into());
-                    }
+                    recheck_review()?;
                     export.publish(&directory)?;
                     eprintln!(
                         "Saved {} with mapping.tsv and reconciliation.tsv.",
