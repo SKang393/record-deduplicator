@@ -210,7 +210,7 @@ pub(super) fn export_destination(
 ) -> Result<Option<PathBuf>, String> {
     while let Some(path) = ask_path_or_action(
         input,
-        "To compare two keys, type :inspect KEY,KEY. Use :find TEXT to look up a title or author, or :leads to list inspection-only pairs. To preview an export, enter a new folder path. Press Enter to close this session:",
+        "To compare two keys, type :inspect KEY,KEY. Use :find TEXT or :find --author NAME | TITLE to look up records. Type :leads to list inspection-only pairs. To preview an export, enter a new folder path. Press Enter to close this session:",
         |answer| {
             if answer == ":leads" {
                 inspect(Inspection::ListLeads)?;

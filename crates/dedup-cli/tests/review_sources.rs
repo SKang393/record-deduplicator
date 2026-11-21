@@ -1428,3 +1428,42 @@ fn optional_keep_reason_follows_the_selected_kept_report() {
     );
     assert_failed_before_report(trace(true, "noted/mapping.tsv", "s:3"));
 }
+
+#[test]
+fn guided_find_shows_named_authors_in_either_order_and_filters_by_title() {
+    let inputs = Inputs::new("find-author");
+    inputs.write("folio.ris", b"TY  - JOUR\nTI  - Paper lattices\nAU  - Pell, Ora\nAU  - de Orrel, Nessa\nER  -\n\
+        TY  - JOUR\nT1  - Paper lattices\nA1  - Nessa de Orrel\nER  -\n\
+        TY  - JOUR\nTI  - Paper lattices\nAU  - de Orrel, N.\nED  - de Orrel, Nessa\nER  -\n\
+        TY  - JOUR\nTI  - Copper braids\nAU  - de Orrel, Nessa\nER  -\n\
+        TY  - JOUR\nTI  - Paper lattices\nAU  - Nessa Pell\nAU  - Ivo de Orrel\nA2  - de Orrel, Nessa\nER  -\n");
+    inputs.write(
+        "answers.txt",
+        b"choices.tsv\nfolio\nfolio.ris\n\nreview\n\
+        :find --author Nessa de Orrel | paper lattices\n\
+        :find de Orrel, Nessa\n\
+        :find --author de Orrel | paper lattices\n\
+        :cancel\n",
+    );
+    let guide = Command::new(env!("CARGO_BIN_EXE_dedup"))
+        .current_dir(&inputs.0)
+        .arg("start")
+        .stdin(fs::File::open(inputs.0.join("answers.txt")).unwrap())
+        .output()
+        .unwrap();
+    assert!(guide.status.success(), "{:?}", guide.stderr);
+    let text = String::from_utf8(guide.stdout).unwrap();
+    let rows: Vec<_> = text.lines().filter(|l| l.starts_with("folio:")).collect();
+    let keys: Vec<_> = rows.iter().map(|r| r.split('\t').next().unwrap()).collect();
+    assert_eq!(
+        keys,
+        [
+            "folio:1", "folio:2", "folio:1", "folio:2", "folio:4", "folio:1", "folio:2", "folio:3",
+            "folio:5"
+        ]
+    );
+    assert!(rows[0].ends_with("AU=\"de Orrel, Nessa\""));
+    assert!(rows[1].ends_with("A1=\"Nessa de Orrel\""));
+    assert!(rows[7].ends_with("AU=\"de Orrel, N.\""));
+    assert!(rows[8].ends_with("AU=\"Ivo de Orrel\""));
+}

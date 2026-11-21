@@ -96,7 +96,8 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    a pair after export, keep both keys and
    [link your assessment to the exported records](#record-a-reviewers-assessment-of-two-retained-occurrences).
    If you remember the citation but neither key, type `:find marsh transects`
-   or `:find Reed`. The guide searches titles and authors in every selected
+   or `:find Reed`. To narrow a surname search, use
+   `:find --author Reed | marsh transects`. The guide searches every selected
    export, including occurrences outside the suggested groups.
 5. When several groups are pending, the guide repeats the first
    group just before the inspection prompt. Type `:inspect KEY,KEY` to compare
@@ -509,8 +510,17 @@ you want to read. Either key can come first. Inspection leaves the sheet as save
 
 Use `:find TEXT` to locate a fragment within one title (`TI` or `T1`) or
 one author (`AU` or `A1`). Capitalization, repeated spaces and wrapped
-lines are ignored. Each matching occurrence appears once with its key,
-sheet status and title. Compare the two originals with `:inspect`.
+lines are ignored. For a complete name, `:find Nessa de Orrel` also finds
+`de Orrel, Nessa`, and either spelling can be used as the query. This
+alternate spelling uses a single comma in the query or source and keeps
+all name parts. Initials are searched as entered.
+
+Use `:find --author de Orrel | paper lattices` to require both an author
+and a title fragment on the same occurrence. Each fragment must appear
+within one field. Results include every matching occurrence, its key,
+sheet status and title. An author hit also shows the matching `AU` or
+`A1` value in source order. Several people can share a surname or initials.
+Compare the two originals with `:inspect` before making a decision.
 Edit the saved sheet only when the occurrence already has a decision row.
 An `outside-decision-sheet` record stays in the export. Even when you
 recognize two copies, a lookup cannot authorize their removal. Leave an

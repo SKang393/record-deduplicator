@@ -30,8 +30,34 @@ fn single_line(text: &str) -> String {
     line
 }
 
+// Compare the whole alternate spelling only when a single comma gives the split.
+fn given_first(name: &str) -> Option<String> {
+    let (family, given) = name.split_once(',')?;
+    let (family, given) = (family.trim(), given.trim());
+    if family.is_empty() || given.is_empty() || given.contains(',') {
+        return None;
+    }
+    Some(format!("{given} {family}"))
+}
+
 pub(super) fn find(queue: &ReviewQueue<'_>, decisions: &[Decision], query: &str) -> io::Result<()> {
-    let needle = single_line(query).to_lowercase();
+    let query = single_line(query).to_lowercase();
+    let (prefix, rest) = query.split_once(' ').unwrap_or((&query, ""));
+    let (needle, required_title) = if prefix == "--author" {
+        let Some((author, title)) = rest
+            .split_once('|')
+            .map(|(a, t)| (a.trim(), t.trim()))
+            .filter(|(a, t)| !a.is_empty() && !t.is_empty())
+        else {
+            eprintln!("Enter :find --author NAME | TITLE with text on both sides of the bar.");
+            return Ok(());
+        };
+        (author, Some(title))
+    } else {
+        (query.as_str(), None)
+    };
+    let reversed_query = given_first(needle);
+    let query_name = reversed_query.as_deref().unwrap_or(needle);
     let mut out = io::BufWriter::new(io::stdout().lock());
     let mut count = 0;
     let mut decisions = decisions.iter();
@@ -48,31 +74,52 @@ pub(super) fn find(queue: &ReviewQueue<'_>, decisions: &[Decision], query: &str)
             .zip(&mut decisions)
             .enumerate()
         {
-            let hit = record
+            let titles = || {
+                record
+                    .fields
+                    .iter()
+                    .filter(|f| matches!(f.tag, "TI" | "T1"))
+            };
+            let title_hit = titles().map(field_text).find(|value| {
+                value
+                    .to_lowercase()
+                    .contains(required_title.unwrap_or(needle))
+            });
+            if required_title.is_some() && title_hit.is_none() {
+                continue;
+            }
+            let author = record
                 .fields
                 .iter()
-                .filter(|f| matches!(f.tag, "TI" | "T1" | "AU" | "A1"))
-                .find(|f| field_text(f).to_lowercase().contains(&needle));
-            let Some(hit) = hit else { continue };
-            let title = if matches!(hit.tag, "TI" | "T1") {
-                Some(hit)
-            } else {
-                record.fields.iter().find(|f| matches!(f.tag, "TI" | "T1"))
-            };
-            let mut title = title
-                .map(field_text)
+                .filter(|f| matches!(f.tag, "AU" | "A1"))
+                .find_map(|f| {
+                    let original = field_text(f);
+                    let value = original.to_lowercase();
+                    (value.contains(needle)
+                        || given_first(&value).as_deref().unwrap_or(&value) == query_name)
+                        .then_some((f.tag, original))
+                });
+            if author.is_none() && (required_title.is_some() || title_hit.is_none()) {
+                continue;
+            }
+            let mut title = title_hit
+                .or_else(|| titles().next().map(field_text))
                 .unwrap_or_else(|| "(title absent)".into());
             if let Some((end, _)) = title.char_indices().nth(120) {
                 title.truncate(end);
                 title.push('…');
             }
-            writeln!(
+            write!(
                 out,
                 "{}:{}\t{}\t{title:?}",
                 named.label,
                 index + 1,
                 sheet_status(decision, queue)
             )?;
+            if let Some((tag, original)) = author {
+                write!(out, "\t{tag}={original:?}")?;
+            }
+            writeln!(out)?;
             count += 1;
         }
     }
