@@ -375,15 +375,16 @@ if [[ $start_shell == zsh ]]; then
     check_untouched
     echo "PASS: ambiguous zsh destination prompted for a path and wrote no files."
 fi
-guided_start yes "$dest_path" '' > guided-pending.tsv 2> prompts.txt
+occupied_path=$(guide_path "$handoff/Dossier occupé")
+guided_start yes "$occupied_path" "\"$dest_path\"" '' > guided-pending.tsv 2> prompts.txt
 cmp reference-pending.tsv guided-pending.tsv
+grep -Fq 'Destination already exists.' prompts.txt
 grep -Fq "Decision sheet: $sheet_path" prompts.txt
 grep -Fq "New export folder: $dest_path" prompts.txt
 grep -Fq 'Explicitly marked duplicates to remove: 1' prompts.txt
 grep -Fq 'Records retained: 2 (including 1 pending).' prompts.txt
 grep -Fq 'Export cancelled.' prompts.txt
 check_untouched
-occupied_path=$(guide_path "$handoff/Dossier occupé")
 guided_start yes "$occupied_path" :cancel > guided-pending.tsv 2> prompts.txt
 grep -Fq 'Destination already exists.' prompts.txt
 if grep -Fq 'Type write to create' prompts.txt; then exit 1; fi
@@ -410,7 +411,7 @@ done
 cmp saved.tsv "$sheet"
 cmp catalog.ris "$catalog"
 cmp guide-index.ris "$index"
-echo "PASS: $start_shell guided export outside the project matched all three reference files, removed one verified copy and kept two records including one pending."
+echo "PASS: $start_shell cancelled at the occupied folder and at the replacement preview without writing. Explicit write to the replacement matched all three reference files, removed one verified copy and kept two records including one pending."
 
 # Annotate the same keeper and compare with the completed review above.
 note='Catalog documents the final pages.'
