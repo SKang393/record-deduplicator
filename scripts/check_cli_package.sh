@@ -351,25 +351,48 @@ cmp catalog.ris "$catalog"
 cmp guide-index.ris "$index"
 echo "PASS: $start_shell guided export outside the project matched all three reference files, removed one verified copy and kept two records including one pending."
 
-# A changed source must be diagnosed before emitting any saved decisions.
+# Reopen the saved review with a different two-record download of exactly the same size.
+wrong_index="$project/Other index.ris"
 if [[ $start_shell == zsh ]]; then
     # Both names exist. The literal spelling must select the different source.
-    literal_index="$project/Índice\ final.ris"
-    cp "$index" "$literal_index"
-    printf '\n' >> "$literal_index"
-    index_answer=$(guide_path "$literal_index")
-else
-    printf '\n' >> "$index"
+    wrong_index="$project/Índice\ final.ris"
 fi
-if guided_start yes > rejected.tsv 2> prompts.txt; then exit 1; fi
+sed 's/Marsh/Tidal/g' "$index" > "$wrong_index"
+test "$(wc -c < "$wrong_index")" -eq "$(wc -c < "$index")"
+index_answer=$(guide_path "$wrong_index")
+recovery="$handoff/Retry export"
+recovery_path=$(guide_path "$recovery")
+touch -t 200101010000 "$work/reopen.stamp"
+find "$project" "$handoff" -depth -exec touch -r "$work/reopen.stamp" {} +
+find "$project" "$handoff" -print | LC_ALL=C sort > "$work/reopen-paths.txt"
+if guided_start yes "$recovery_path" write > rejected.tsv 2> prompts.txt; then exit 1; else test "$?" -eq 2; fi
 test ! -s rejected.tsv
-grep -Fq 'Decision sheet inputs differ.' prompts.txt
+saved_digest=$("${checksum[@]}" < guide-index.ris)
+grep -Fq "Source 'idx' has a different SHA-256 from the saved value ${saved_digest%% *}." prompts.txt
+grep -Fq "Reopen this sheet with the same labels and the original file for 'idx' at its current path." prompts.txt
+if grep -Eiq 'transects after spring flooding|TY  -|TI  -' prompts.txt; then exit 1; fi
+find "$project" "$handoff" -print | LC_ALL=C sort | cmp - "$work/reopen-paths.txt"
+test -z "$(find "$project" "$handoff" -newer "$work/reopen.stamp" -print)"
+cmp saved.tsv "$sheet"
 if [[ $start_shell == zsh ]]; then
     grep -Fq "idx = $index_answer" prompts.txt
     echo "PASS: literal backslash filename selected while both spellings existed."
 fi
+echo "PASS: $start_shell refused a same-size substitute for idx with exit 2, empty stdout and no project or export changes."
+
+renamed_index="$project/Saved index.ris"
+mv "$index" "$renamed_index"
+index_answer=$(guide_path "$renamed_index")
+guided_start yes "$recovery_path" write > guided-pending.tsv 2> prompts.txt
+cmp reference-pending.tsv guided-pending.tsv
+if grep -Eiq 'transects after spring flooding|TY  -|TI  -' prompts.txt; then exit 1; fi
+for file in reviewed.ris mapping.tsv reconciliation.tsv; do
+    cmp "reference-export/$file" "$recovery/$file"
+done
 cmp saved.tsv "$sheet"
-echo "PASS: $start_shell guided start with spaced Unicode paths; cancellation preserved project bytes and entries; created 3 pending; reopened the partially reviewed sheet; changed source refused."
+cmp catalog.ris "$catalog"
+cmp guide-index.ris "$renamed_index"
+echo "PASS: $start_shell reopened the same sheet with its renamed original. Pending decisions and all three exported files matched."
 
 # Trace the existing three-occurrence reference export after archiving its downloads.
 mkdir -p downloads/keepers
