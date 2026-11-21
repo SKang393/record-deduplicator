@@ -238,7 +238,10 @@ pub(super) fn confirm_export(
         .iter()
         .any(|d| matches!(d, Decision::Keep(Some(_))))
     {
-        eprintln!("The local mapping.tsv will include your saved keep reasons.");
+        eprintln!(
+            "Keep reasons are optional. The decision sheet and exported mapping.tsv contain them in plain text. \
+             The reviewed RIS and ordinary trace omit them."
+        );
     }
     show_title_advisories(queue, decisions);
     let Some(answer) = ask(

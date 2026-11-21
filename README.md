@@ -73,6 +73,9 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    The sheet also includes editable metadata candidates. Open it in a plain-text editor or
    [edit it in LibreOffice Calc](#edit-the-decision-sheet-in-libreoffice-calc).
    A key such as `catalog:2` means the second RIS record in the export labeled `catalog`.
+   Use `keep` to retain a report. If you choose `keep-with-reason`, the
+   decision sheet and exported `mapping.tsv` store your note in plain text.
+   The reviewed RIS and ordinary trace omit the note.
    To reopen, run the guide again with the same labels and original files.
    It checks their fingerprints and shows pending decisions and keeper context.
    If you moved or renamed a download, enter its new path under its original
@@ -139,7 +142,7 @@ directory and run `export PATH="$PWD:$PATH"`.
    an empty text delimiter. Leave **Quote all text cells** off and keep the
    `.tsv` filename. Close Calc and reopen the sheet with `dedup start` and
    the original named sources to see pending decisions. Check the saved
-   rationale in the reviewed export's `mapping.tsv` or with the
+   metadata-copy rationale in the reviewed export's `mapping.tsv` or with the
    [walkthrough's `--resume-decisions` command](#verify-a-copy-found-through-metadata).
 
 In a synthetic trial with Calc 25.2.3.2 on Linux, Standard import converted
@@ -516,7 +519,7 @@ This tab-separated row records a reason for keeping a protocol separately.
 reg:1	keep-with-reason	Protocol describes planned methods. The results report gives outcomes.
 ```
 
-The note is saved in the decision sheet and copied to a `rationale` row in
+The note is saved in plain text in the decision sheet and copied to a `rationale` row in
 the local export's `mapping.tsv`. Sharing either file shares the note.
 The reviewed RIS contains only the retained source records. To see the reason
 from that export, request it for the kept occurrence.

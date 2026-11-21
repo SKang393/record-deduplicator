@@ -356,6 +356,22 @@ cmp catalog.ris "$catalog"
 cmp guide-index.ris "$index"
 echo "PASS: $start_shell guided export outside the project matched all three reference files, removed one verified copy and kept two records including one pending."
 
+# Annotate the same keeper and compare with the completed review above.
+note='Catalog documents the final pages.'
+awk -F '\t' -v note="$note" '$1 == "cat:1" {print $1 "\tkeep-with-reason\t" note; next} {print}' saved.tsv > noted.tsv
+sheet_answer=$(guide_path noted.tsv) guided_start yes "$(guide_path noted-export)" write > noted-queue.tsv 2> noted-prompts.txt
+sed -n '/Type write to create this export/q;p' noted-prompts.txt > before-write.txt
+grep -Fq 'Keep reasons are optional. The decision sheet and exported mapping.tsv contain them in plain text. The reviewed RIS and ordinary trace omit them.' before-write.txt
+cmp reference-pending.tsv noted-queue.tsv
+cmp reference-export/reviewed.ris noted-export/reviewed.ris
+cmp reference-export/reconciliation.tsv noted-export/reconciliation.tsv
+grep -Fxq $'rationale\tkeep\tcat:1\t'"$note" noted-export/mapping.tsv
+grep -v $'^rationale\tkeep\t' noted-export/mapping.tsv | cmp - reference-export/mapping.tsv
+dedup trace noted-export/mapping.tsv cat:1 "$project" > noted-trace.tsv
+if grep -Fq "$note" noted-trace.tsv noted-prompts.txt noted-queue.tsv; then exit 1; fi
+dedup trace --show-keep-reason noted-export/mapping.tsv cat:1 "$project" | cut -f7 | grep -Fxq "$note"
+echo "PASS: $start_shell showed the plain-text keep-reason notice before write. Only the mapping and requested trace gained the note; disposition and RIS bytes matched."
+
 # Reopen the saved review with a different two-record download of exactly the same size.
 wrong_index="$project/Other index.ris"
 if [[ $start_shell == zsh ]]; then
