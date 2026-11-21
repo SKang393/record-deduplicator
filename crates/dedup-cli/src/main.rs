@@ -1,6 +1,7 @@
 mod coverage;
 mod decisions;
 mod inspect;
+mod mapping;
 mod pending;
 mod reviewed;
 mod sources;
@@ -19,7 +20,7 @@ use dedup_core::ris;
 
 fn help() {
     println!(
-        "record-deduplicator {}\n\nUsage: dedup start    (create or reopen a review sheet and export reviewed RIS)\n       dedup trace <mapping.tsv> <label:n> <originals-directory> [<originals-directory> ...]\n       dedup --help | --version\n       dedup review-ids <input.tsv | ->\n       dedup review-ids --ris <input.ris | ->\n       dedup review-ids [--init-decisions <new.tsv> | --init-metadata-decisions <new.tsv> | --resume-decisions <saved.tsv> | --pending-decisions <saved.tsv> | --inspect-pair <saved.tsv> <label:n> <label:n> | --export-reviewed <saved.tsv> <new-dir>] --ris-source <label> <file> [--ris-source <label> <file> ...]\n       dedup review-ids --check-coverage <snapshot> [--expected-total <count>] [--batch-range <label> <first-last>]... [--ris-source <label> <file>]...\nSupply a total or batch ranges for one snapshot. Coverage exits 0 when counts and ranges match and batch fingerprints are distinct. Exit 2 with a report means discrepancies. Exit 2 without a report means the check failed.\n\nGroup rows by a shared full DOI or PMID for review. Named RIS queues also show metadata hints and inspection-only pairs. A complementary_id_locator pair has matching citation details, with a DOI in one source and a PMID in the other. The lead adds no removal decision.\nInput: UTF-8, header doi<TAB>pmid, one occurrence per data line. With --ris, review TY/ER records and report original byte spans.\nQueue output: TSV on standard output; occurrence numbers start at 1. Use --pending-decisions to view unresolved groups with their direct kept members. Use --inspect-pair for a plain-text view of two RIS records and their current decisions.\nFor metadata verification, create a sheet with --init-metadata-decisions. Mark the target keep and enter verified-duplicate-of=<label:row><TAB><rationale> on the copy after comparing the source reports.\nReviewed export: apply the verified sheet decisions and write reviewed.ris, mapping.tsv and per-source reconciliation.tsv in a new directory.",
+        "record-deduplicator {}\n\nUsage: dedup start    (create or reopen a review sheet and export reviewed RIS)\n       dedup verify-export <mapping.tsv> <reviewed.ris>\n       dedup trace <mapping.tsv> <label:n> <originals-directory> [<originals-directory> ...]\n       dedup --help | --version\n       dedup review-ids <input.tsv | ->\n       dedup review-ids --ris <input.ris | ->\n       dedup review-ids [--init-decisions <new.tsv> | --init-metadata-decisions <new.tsv> | --resume-decisions <saved.tsv> | --pending-decisions <saved.tsv> | --inspect-pair <saved.tsv> <label:n> <label:n> | --export-reviewed <saved.tsv> <new-dir>] --ris-source <label> <file> [--ris-source <label> <file> ...]\n       dedup review-ids --check-coverage <snapshot> [--expected-total <count>] [--batch-range <label> <first-last>]... [--ris-source <label> <file>]...\nSupply a total or batch ranges for one snapshot. Coverage exits 0 when counts and ranges match and batch fingerprints are distinct. Exit 2 with a report means discrepancies. Exit 2 without a report means the check failed.\n\nGroup rows by a shared full DOI or PMID for review. Named RIS queues also show metadata hints and inspection-only pairs. A complementary_id_locator pair has matching citation details, with a DOI in one source and a PMID in the other. The lead adds no removal decision.\nInput: UTF-8, header doi<TAB>pmid, one occurrence per data line. With --ris, review TY/ER records and report original byte spans.\nQueue output: TSV on standard output; occurrence numbers start at 1. Use --pending-decisions to view unresolved groups with their direct kept members. Use --inspect-pair for a plain-text view of two RIS records and their current decisions.\nFor metadata verification, create a sheet with --init-metadata-decisions. Mark the target keep and enter verified-duplicate-of=<label:row><TAB><rationale> on the copy after comparing the source reports.\nReviewed export: apply the verified sheet decisions and write reviewed.ris, mapping.tsv and per-source reconciliation.tsv in a new directory.",
         dedup_core::VERSION
     );
 }
@@ -217,6 +218,8 @@ fn main() -> ExitCode {
     let native_ris = args.len() == 3 && args[0] == "review-ids" && args[1] == "--ris";
     let result = if args.len() == 1 && args[0] == "start" {
         start::run()
+    } else if args.len() == 3 && args[0] == "verify-export" {
+        mapping::verify_output(args[1].as_ref(), args[2].as_ref())
     } else if args.len() >= 4 && args[0] == "trace" {
         trace::run(args[1].as_ref(), &args[2], &args[3..])
     } else if args.len() >= 2

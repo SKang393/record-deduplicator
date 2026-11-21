@@ -6,16 +6,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use dedup_core::{
-    identifier_review::{MAX_INPUT_BYTES, MAX_RECORDS},
-    ris,
-};
+use dedup_core::{identifier_review::MAX_INPUT_BYTES, ris};
 use sha2::{Digest, Sha256};
 
-const INVALID: &str = "Invalid reviewed export mapping.";
-
-// Each exported occurrence fits within 1 KiB including a possible rationale row.
-const MAX_MAPPING_BYTES: usize = (MAX_RECORDS + ris::MAX_SOURCES + 4) * 1024;
+use super::mapping::INVALID;
 
 fn row<'a>(mapping: &'a str, kind: &str, key: &str) -> Result<(&'a str, &'a str), String> {
     let mut matches = mapping.lines().filter_map(|line| {
@@ -142,22 +136,7 @@ fn resolve(folder: &Path, locations: &mut [Location<'_>]) -> Result<(), String> 
 }
 
 pub(super) fn run(mapping: &Path, key: &OsStr, originals: &[OsString]) -> Result<(), String> {
-    let mut text = String::new();
-    super::open_ris(mapping.as_os_str())
-        .map_err(|_| "Cannot open mapping.tsv as a regular file.")?
-        .take(MAX_MAPPING_BYTES as u64 + 1)
-        .read_to_string(&mut text)
-        .map_err(|_| "Cannot read UTF-8 mapping.tsv.")?;
-    let mut header = text.lines();
-    if text.len() > MAX_MAPPING_BYTES
-        || header.next() != Some("type\tsignal\trows\tdetail")
-        || !matches!(
-            header.next(),
-            Some("schema\texport\t1\treviewed-ris" | "schema\texport\t2\treviewed-ris")
-        )
-    {
-        return Err(INVALID.into());
-    }
+    let text = super::mapping::read(mapping)?;
     let selected = Location::lookup(&text, key.to_str().ok_or("Expected a label and ordinal.")?)?;
     let mut locations = vec![selected];
     let decision = locations[0].decision;

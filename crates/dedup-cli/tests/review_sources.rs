@@ -1017,3 +1017,101 @@ fn coverage_flags_repeated_file_bytes_within_a_snapshot() {
         assert_eq!(fs::read(inputs.0.join(path)).unwrap(), data.as_bytes());
     }
 }
+
+#[test]
+fn verify_export_detects_a_swapped_equal_count_and_length_ris() {
+    use sha2::{Digest, Sha256};
+    let inputs = Inputs::new("verify-export");
+    let first = "TY  - JOUR\nTI  - Tidal survey results\nAU  - Reed, A.\nPY  - 2020\nJO  - Model Journal\nVL  - 1\nSP  - 1-9\nAN  - SYN-A\nER  -\n";
+    let second = first.replace("SYN-A", "SYN-B");
+    let protocol = "TY  - JOUR\nTI  - Tidal survey protocol\nER  -\n";
+    inputs.write(
+        "records.ris",
+        format!("{first}{second}{protocol}").as_bytes(),
+    );
+    let sources = ["--ris-source", "batch", "records.ris"];
+    assert!(
+        inputs
+            .run(&[&["--init-metadata-decisions", "choices.tsv"][..], &sources].concat())
+            .status
+            .success()
+    );
+    let pending = fs::read_to_string(inputs.0.join("choices.tsv")).unwrap();
+    assert!(inputs.export("pending", &sources).status.success());
+    let verify = |mapping: &str, ris: &str| {
+        Command::new(env!("CARGO_BIN_EXE_dedup"))
+            .current_dir(&inputs.0)
+            .args(["verify-export", mapping, ris])
+            .output()
+            .unwrap()
+    };
+    let read = |path: &str| fs::read(inputs.0.join(path)).unwrap();
+    // The all-pending export uses the original v1 mapping layout.
+    assert!(
+        read("pending/mapping.tsv").starts_with(b"type\tsignal\trows\tdetail\nschema\texport\t1\t")
+    );
+    assert!(
+        verify("pending/mapping.tsv", "pending/reviewed.ris")
+            .status
+            .success()
+    );
+    for (dir, keep, drop, representative) in
+        [("run A", 1, 2, first), ("run B", 2, 1, second.as_str())]
+    {
+        let choices = pending
+            .replace(
+                &format!("batch:{keep}\tpending"),
+                &format!("batch:{keep}\tkeep"),
+            )
+            .replace(
+                &format!("batch:{drop}\tpending"),
+                &format!(
+                    "batch:{drop}\tverified-duplicate-of=batch:{keep}\tCompared full citation."
+                ),
+            );
+        inputs.write("choices.tsv", choices.as_bytes());
+        assert!(inputs.export(dir, &sources).status.success());
+        let mapping = format!("{dir}/mapping.tsv");
+        let ris = format!("{dir}/reviewed.ris");
+        let map_bytes = read(&mapping);
+        let ris_bytes = read(&ris);
+        assert_eq!(ris_bytes, format!("{representative}{protocol}").as_bytes());
+        let verified = verify(&mapping, &ris);
+        assert!(verified.status.success(), "{:?}", verified.stderr);
+        let row = format!(
+            "matched_output_fingerprint\t{mapping:?}\t{:x}\t{ris:?}\t{}\t{:x}",
+            Sha256::digest(&map_bytes),
+            ris_bytes.len(),
+            Sha256::digest(&ris_bytes)
+        );
+        let report = String::from_utf8(verified.stdout).unwrap();
+        assert_eq!(report.lines().count(), 2);
+        assert_eq!(report.lines().nth(1), Some(row.as_str()));
+        assert_eq!(read(&mapping), map_bytes);
+        assert_eq!(read(&ris), ris_bytes);
+    }
+    assert_eq!(
+        read("run A/reconciliation.tsv"),
+        read("run B/reconciliation.tsv")
+    );
+    let swapped = verify("run A/mapping.tsv", "run B/reviewed.ris");
+    assert_eq!(swapped.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&swapped.stderr).contains("SHA-256 differs"));
+    assert_failed_before_report(swapped);
+
+    let map = fs::read_to_string(inputs.0.join("run A/mapping.tsv")).unwrap();
+    let (without_output, fingerprint) = map.rsplit_once("output\t").unwrap();
+    for invalid in [
+        without_output.to_owned(),
+        format!("{map}output\t{fingerprint}"),
+        format!(
+            "{without_output}output\t{}",
+            fingerprint.replace(";sha256=", ";missing=")
+        ),
+    ] {
+        inputs.write("incomplete.tsv", invalid.as_bytes());
+        let result = verify("incomplete.tsv", "run A/reviewed.ris");
+        assert_eq!(result.status.code(), Some(2));
+        assert_failed_before_report(result);
+    }
+}

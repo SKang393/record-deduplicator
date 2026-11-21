@@ -81,9 +81,10 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    directory, which can be outside the project. Check the sheet path,
    destination, explicit duplicate count, and how many pending records will
    be kept. Type `write` to save the three
-   files, or press Enter to cancel. Open `reviewed.ris` in your reference
-   manager. Use `mapping.tsv` for individual decisions and `reconciliation.tsv`
-   for counts by source.
+   files, or press Enter to cancel. [Check the RIS and mapping together](#reconcile-a-reviewed-export-before-screening)
+   before opening `reviewed.ris` in your reference manager. Use
+   `mapping.tsv` for individual decisions and `reconciliation.tsv` for
+   counts by source.
 
 Compare the source reports before editing a decision. Leave uncertain rows
 pending. For a worked example of pair inspection, an explicit decision and
@@ -469,6 +470,24 @@ paths with spaces. The read-only lookup prints paths and provenance. Use
 `--inspect-pair` when you also want to read the original RIS fields.
 
 ### Reconcile a reviewed export before screening
+
+Before handing off a reviewed RIS file, compare its exact bytes with the output
+fingerprint in the mapping from the intended run. Supply both paths, even if
+you have renamed the files or moved them to different folders.
+
+```sh
+dedup verify-export reviewed/mapping.tsv reviewed/reviewed.ris
+```
+
+Exit 0 prints `matched_output_fingerprint`, both supplied paths and their
+SHA-256 digests, and the RIS byte length. The mapping digest identifies the
+mapping you supplied. This read-only check works with version 1 and 2 mappings
+that contain an output fingerprint. A mismatch or an unreadable, missing or
+ambiguous fingerprint gives exit 2 with a diagnostic and empty standard output.
+
+The check covers only the mapping's output fingerprint and the selected RIS
+bytes. Different runs can produce byte-identical RIS files. Authenticating a
+mapping or verifying review decisions requires separate evidence.
 
 Open `reconciliation.tsv` in the export directory. It has one row per named
 source and one total row. Every count represents input occurrences. Each
