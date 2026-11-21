@@ -40,6 +40,47 @@ grep -Fxq 'TI  - Marsh transects after spring flooding: seasonal observations' r
 cat catalog.ris index.ris | cmp - restored/reviewed.ris
 echo "PASS: packaged CLI verified one copy, retained the subtitled record and restored all three occurrences."
 
+# Compare the extracted CLI with the mixed-source control from 417b9b491ea2.
+(
+    mkdir input-check
+    cd input-check
+    bom=$'\xef\xbb\xbf'
+    printf '%s\r\n' "${bom}TY  - JOUR" 'TI  - Tidal survey protocol' \
+        "N1  - Été ${bom}à marée basse, ${bom}TY  -texte" 'DO  - 10.0000/tide' 'ER  -' > catalog.ris
+    printf '%s\n' 'TY  - JOUR' 'TI  - Tidal survey follow-up' 'SP  - ahead of print' \
+        'DO  - 10.0000/tide' 'ER  -' > index.ris
+    review_input() { dedup review-ids "$@" --ris-source cat catalog.ris --ris-source idx index.ris; }
+    review_input --init-decisions choices.tsv > queue.tsv
+    review_input --inspect-pair choices.tsv cat:1 idx:1 > inspection.txt
+    grep -Fxq 'cat:1 has no SP or EP field for a final page range or article number.' inspection.txt
+    grep -Fxq 'idx:1 supplies pagination fields without a usable final page range or article number.' inspection.txt
+    review_input --export-reviewed choices.tsv clean
+    "${checksum[@]}" -c <<'SUMS'
+1d82abac0229ac0219fbac70bee42653b1e944bfe23a075b75693c97a2c95d4e *catalog.ris
+390bb4a3fbc69f21eb4dc04f448c3fc8624c641dd8fca22b726ed0dc815d88b1 *index.ris
+8106ad9551dfe5a8fa74ac6c12292a837affdc72495b1bbc7e6961d1d027a6b0 *choices.tsv
+0e84d084db3d065bc3572211880e45d2929060243246acb79b4000571ea2a2dc *clean/reviewed.ris
+48314f0dce442cd7c83355e561c2e6f0977e8c91c66cb9c917ccd22134d28afe *clean/mapping.tsv
+59def875d9cd1a68023e3e9301e260a21965fc7a04345a9c4d4915d0a7b2c0c5 *clean/reconciliation.tsv
+SUMS
+    echo "PASS: two pending reports and literal field BOMs matched the baseline sheet and export."
+
+    printf 'TY  - JOUR\r\nTI  - Enquêt' >> index.ris
+    printf '%s\n' "${bom}TY  - JOUR" 'TI  - Next batch' 'ER  -' >> index.ris
+    "${checksum[@]}" -b catalog.ris index.ris choices.tsv clean/* > before.sha256
+    reject_join() {
+        if review_input "$@" > queue.tsv 2> error.txt; then exit 1; else test "$?" -eq 2; fi
+        test ! -s queue.tsv
+        grep -Fq 'idx:2 (bytes 86..148, malformed). A UTF-8 BOM precedes a TY header inside the file at byte 111.' error.txt
+    }
+    reject_join --init-decisions new.tsv
+    reject_join --export-reviewed choices.tsv incomplete
+    test ! -e new.tsv
+    test ! -e incomplete
+    "${checksum[@]}" -c before.sha256
+    echo "PASS: interrupted idx:2 rejected before sheet or export at embedded header byte 111."
+)
+
 # Mimic pasted file paths in the packaged guide, including Windows drive letters.
 project='Étude de terrain'
 handoff='Résultats partagés'
