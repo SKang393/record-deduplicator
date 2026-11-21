@@ -440,6 +440,32 @@ If the records give insufficient evidence, leave the decision pending. Edit
 `choices.tsv` when you reach a decision, then rerun `--pending-decisions`.
 Use `--resume-decisions` for the full queue, including input issues.
 
+### Trace an exported occurrence to its originals
+
+Take the occurrence key from the third column of a `map` row in
+`mapping.tsv`. Give `dedup trace` that mapping, the key and the folders
+containing the original downloads. In the metadata walkthrough above, the
+downloads are in the current directory.
+
+```sh
+dedup trace reviewed/mapping.tsv idx:1 .
+dedup trace reviewed/mapping.tsv idx:2 .
+```
+
+The first lookup shows the removed `idx:1` and its explicit keeper `cat:1`,
+both at output record 1. The second shows the retained `idx:2` at output
+record 2. Each row gives the matching file path, its whole-file SHA-256,
+and the original half-open byte range (start included, end excluded).
+The decision and output number come from that export's mapping, so you can
+trace it even after editing the sheet or renaming a download.
+
+The command checks regular files directly inside each folder you supply.
+It verifies the source fingerprint, record ordinal and byte range before
+printing any rows. Byte-identical files can have multiple matching paths,
+which it lists. Supply additional folders as separate arguments and quote
+paths with spaces. The read-only lookup prints paths and provenance. Use
+`--inspect-pair` when you also want to read the original RIS fields.
+
 ### Reconcile a reviewed export before screening
 
 Open `reconciliation.tsv` in the export directory. It has one row per named
