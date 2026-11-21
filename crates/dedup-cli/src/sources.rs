@@ -205,10 +205,21 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                     recheck_sources()?;
                     super::decisions::resume(path, &queue, &manifest).map(|sheet| sheet.decisions)
                 };
-                let Some(directory) = super::start::export_destination(input, |left, right| {
+                let Some(directory) = super::start::export_destination(input, |request| {
                     if read_current_decisions()? != sheet.decisions {
                         return Err("Decisions changed. Reopen the sheet to see the current pending groups.".into());
                     }
+                    let super::start::Inspection::Pair(left, right) = request else {
+                        let pairs = queue.locator_pairs();
+                        let count = pairs.title_variants.len() + pairs.complementary_ids.len();
+                        eprintln!(
+                            "Inspection-only pairs: {count}. Use :inspect with the two keys from a row. These pairs add no decision rows. Both records stay in the export unless a saved decision removes one. The guide keeps no history of viewed pairs."
+                        );
+                        let mut out = io::BufWriter::new(io::stdout().lock());
+                        return write_inspection_leads(&queue, pairs, &mut out)
+                            .and_then(|()| out.flush())
+                            .map_err(|_| "Cannot write inspection leads.".into());
+                    };
                     match super::inspect::pair(
                         &queue,
                         &sheet.decisions,
@@ -280,6 +291,27 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
     Ok(())
 }
 
+fn write_inspection_leads(
+    queue: &ReviewQueue<'_>,
+    pairs: ris::LocatorPairs,
+    out: &mut impl Write,
+) -> io::Result<()> {
+    for (signal, leads) in [
+        ("title_variant_locator", pairs.title_variants),
+        ("complementary_id_locator", pairs.complementary_ids),
+    ] {
+        for rows in leads {
+            let [a, b] = rows.map(|row| &queue.entries[row - 1]);
+            writeln!(
+                out,
+                "triage\t{signal}\t{}:{},{}:{}\tinspect_only",
+                a.label, a.ordinal, b.label, b.ordinal
+            )?;
+        }
+    }
+    Ok(())
+}
+
 fn render_queue(
     queue: &ReviewQueue<'_>,
     manifest: &[String],
@@ -322,23 +354,11 @@ fn render_queue(
     let pairs = queue.locator_pairs();
     if guided && !pairs.complementary_ids.is_empty() {
         eprintln!(
-            "Look for complementary_id_locator to see optional comparisons ({} total). The citation details match, with a DOI in one source and a PMID in the other. Use --inspect-pair with the two keys. These leads add no removal decisions.",
+            "Look for complementary_id_locator to see optional comparisons ({} total). The citation details match, with a DOI in one source and a PMID in the other. Reopen the guide and type :leads to find these keys again. These leads add no removal decisions.",
             pairs.complementary_ids.len()
         );
     }
-    for (signal, leads) in [
-        ("title_variant_locator", pairs.title_variants),
-        ("complementary_id_locator", pairs.complementary_ids),
-    ] {
-        for [left, right] in leads {
-            writeln!(
-                out,
-                "triage\t{signal}\t{},{}\tinspect_only",
-                reference(left),
-                reference(right)
-            )?;
-        }
-    }
+    write_inspection_leads(queue, pairs, out)?;
     let mut entries = queue.entries.iter();
     for (named, identity) in queue.sources.iter().zip(manifest) {
         writeln!(out, "{identity}")?;

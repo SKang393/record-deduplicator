@@ -110,6 +110,11 @@ def check_undecided(root, flags, before, after):
     assert all(line.endswith("\tinspect_only") for line in added)
     assert f"optional comparisons ({len(added)} total)" in guided.stderr.decode()
     pending = subprocess.check_output([after, "review-ids", "--pending-decisions", sheet, *flags])
+    listed = subprocess.run([after, "start"], input="\n".join([*answers, "", "yes", ":leads", "", ""]).encode(),
+                            capture_output=True, check=True)
+    leads = [row for row in groups if row.endswith("\tinspect_only")]
+    assert listed.stdout.decode().splitlines() == [*pending.decode().splitlines(), *leads]
+    assert f"Inspection-only pairs: {len(leads)}." in listed.stderr.decode()
     subprocess.run([after, "review-ids", "--export-reviewed", sheet, root / "new", *flags], check=True)
     if before:
         old_sheet = root / "baseline.tsv"

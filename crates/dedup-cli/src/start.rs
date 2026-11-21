@@ -188,14 +188,23 @@ pub(super) fn run() -> Result<(), String> {
     Ok(())
 }
 
+pub(super) enum Inspection<'a> {
+    ListLeads,
+    Pair(&'a str, &'a str),
+}
+
 pub(super) fn export_destination(
     input: &mut dyn BufRead,
-    mut inspect: impl FnMut(&str, &str) -> Result<(), String>,
+    mut inspect: impl FnMut(Inspection<'_>) -> Result<(), String>,
 ) -> Result<Option<PathBuf>, String> {
     while let Some(path) = ask_path_or_action(
         input,
-        "To compare two keys from a pending row, type :inspect KEY,KEY. You can compare two pending records. To preview an export, enter a new folder path. Press Enter to close this session:",
+        "To compare two keys, type :inspect KEY,KEY. Type :leads to list inspection-only pairs. To preview an export, enter a new folder path. Press Enter to close this session:",
         |answer| {
+            if answer == ":leads" {
+                inspect(Inspection::ListLeads)?;
+                return Ok(true);
+            }
             let (command, keys) = answer
                 .split_once(char::is_whitespace)
                 .unwrap_or((answer, ""));
@@ -206,7 +215,7 @@ pub(super) fn export_destination(
                 Some((left, right))
                     if !left.is_empty() && !right.is_empty() && !right.contains(',') =>
                 {
-                    inspect(left, right)?;
+                    inspect(Inspection::Pair(left, right))?;
                 }
                 _ => eprintln!("Enter exactly two keys, for example :inspect catalog:1,index:2."),
             }

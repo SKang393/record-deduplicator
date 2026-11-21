@@ -83,8 +83,14 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    saved hash. Run the guide again with the same sheet and select the original
    download for that label. Your saved choices carry over.
    If a later search adds a download, follow [Add a later search export](#add-a-later-search-export).
-   Optional comparisons appear in the full queue. To see them again, use
-   `--resume-decisions` with the saved sheet and the same named sources.
+   At the reopened prompt, type `:leads` for the inspection-only pairs from
+   the original queue, even when the pending count is zero. Copy both keys
+   from a row into `:inspect KEY,KEY` to read the two source records.
+   The list includes previously viewed pairs. Viewing a pair saves no verdict.
+   A removal requires a separately eligible decision in the sheet. To revisit
+   a pair after export, keep both keys with your review notes and
+   [trace each occurrence](#trace-an-exported-occurrence-to-its-originals)
+   against that export's mapping.
 5. When several groups are pending, the reopened guide repeats the first
    group just before the inspection prompt. Type `:inspect KEY,KEY` to compare
    records from any pending row. You can paste two keys from the pending
