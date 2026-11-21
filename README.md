@@ -66,9 +66,14 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    about a new name, use plain spaces, or double-quote the full path to keep
    a literal backslash. For other shell escapes, copy the plain path from
    the file manager. Repeat for each export.
-3. Press Enter at the next label prompt. Check the sheet, labels and paths
-   shown, then type `yes`. Type `:cancel` at any prompt to stop.
-4. For a new sheet, the guide reports how many rows start pending. The queue's
+3. Press Enter at the next label prompt and check the sheet, labels and paths.
+   For a new sheet, type **`review`** to create it and go straight to the
+   pending groups with those sources. At the inspection prompt, choose two
+   keys from a group and type `:inspect KEY,KEY`. Press Enter to stop with
+   the sheet saved. To create the sheet and print the full queue instead,
+   type `yes` at setup confirmation. For a saved sheet, type `yes` to reopen.
+   Type `:cancel` at any prompt to stop.
+4. For a new sheet, the guide reports how many rows start pending. The full queue's
    `candidate_records` and `groups` count shared DOI or PMID matches only.
    The sheet also includes editable metadata candidates. Open it in a plain-text editor or
    [edit it in LibreOffice Calc](#edit-the-decision-sheet-in-libreoffice-calc).
@@ -93,7 +98,7 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    If you remember the citation but neither key, type `:find marsh transects`
    or `:find Reed`. The guide searches titles and authors in every selected
    export, including occurrences outside the suggested groups.
-5. When several groups are pending, the reopened guide repeats the first
+5. When several groups are pending, the guide repeats the first
    group just before the inspection prompt. Type `:inspect KEY,KEY` to compare
    records from any pending row. You can paste two keys from the pending
    column, even when `keep=` is empty. To compare a pending record with a

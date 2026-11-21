@@ -53,6 +53,12 @@ fn named_paths(args: &[OsString]) -> Result<BTreeMap<&str, &OsStr>, &'static str
     Ok(paths)
 }
 
+pub(super) enum PendingMode<'a> {
+    List,
+    CreateAndReview(&'a mut dyn BufRead),
+    Reopen(&'a mut dyn BufRead),
+}
+
 pub(super) enum Action<'a> {
     Review,
     Coverage(super::coverage::Plan<'a>),
@@ -62,7 +68,7 @@ pub(super) enum Action<'a> {
         guided: bool,
     },
     Resume(&'a OsStr),
-    Pending(&'a OsStr, Option<&'a mut dyn BufRead>),
+    Pending(&'a OsStr, PendingMode<'a>),
     EarlierChoices {
         current: &'a OsStr,
         earlier: &'a OsStr,
@@ -103,7 +109,7 @@ pub(super) fn run(args: &[OsString]) -> Result<(), String> {
             (Action::EarlierChoices { current, earlier }, rest)
         }
         [flag, path, rest @ ..] if flag == "--pending-decisions" => {
-            (Action::Pending(path, None), rest)
+            (Action::Pending(path, PendingMode::List), rest)
         }
         [flag, path, left, right, rest @ ..] if flag == "--inspect-pair" => {
             (Action::InspectPair(path, left, right), rest)
@@ -257,7 +263,19 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
             )?
             .publish(directory);
         }
-        Action::Pending(path, guide) => {
+        Action::Pending(path, mode) => {
+            let guide = match mode {
+                PendingMode::List => None,
+                PendingMode::Reopen(input) => Some(input),
+                PendingMode::CreateAndReview(input) => {
+                    let count = super::decisions::create(path, &queue, &manifest, true)?;
+                    eprintln!(
+                        "Created {} with {count} pending rows. Press Enter at the inspection prompt to stop and edit this sheet.",
+                        Path::new(path).display()
+                    );
+                    Some(input)
+                }
+            };
             let parse = |text: &str| super::decisions::parse_sheet(text, &queue, &manifest);
             let mut validated_text = super::decisions::read_sheet(path)?;
             let sheet = parse(&validated_text)?;

@@ -2,7 +2,7 @@
 use super::{
     decisions::Decision,
     reviewed::PreparedExport,
-    sources::{self, Action},
+    sources::{self, Action, PendingMode},
 };
 use dedup_core::ris;
 use std::{
@@ -159,20 +159,30 @@ pub(super) fn run() -> Result<(), String> {
         eprintln!("  {label} = {path}");
         args.extend(["--ris-source".into(), label.into(), path.into()]);
     }
-    let Some(answer) = ask(
-        &mut input,
-        "Type yes to continue, or press Enter to cancel:",
-    )?
-    else {
+    let confirmation = if existing {
+        "Type yes to continue, or press Enter to cancel:"
+    } else {
+        "Type review to create the sheet and inspect pending groups now, or yes to create it and print the full queue. Press Enter to cancel:"
+    };
+    let Some(answer) = ask(&mut input, confirmation)? else {
         return Ok(());
     };
+    if !existing && answer.eq_ignore_ascii_case("review") {
+        return sources::run_action(
+            Action::Pending(sheet.as_ref(), PendingMode::CreateAndReview(&mut input)),
+            &args,
+        );
+    }
     if !answer.eq_ignore_ascii_case("yes") {
         eprintln!("Review setup cancelled.");
         return Ok(());
     }
 
     if existing {
-        return sources::run_action(Action::Pending(sheet.as_ref(), Some(&mut input)), &args);
+        return sources::run_action(
+            Action::Pending(sheet.as_ref(), PendingMode::Reopen(&mut input)),
+            &args,
+        );
     }
     sources::run_action(
         Action::Init {

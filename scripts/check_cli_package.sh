@@ -326,14 +326,18 @@ cmp reference-queue.tsv guided.tsv
 grep -Fxq $'cat:1\tpending' "$sheet"
 grep -Fxq $'idx:1\tpending' "$sheet"
 
-# Inspect two pending members with no keeper, then export in that same guide session.
+# Compare the new sheet in its setup session, stop, then reopen it and export.
 reference_review --pending-decisions reference.tsv > initial-pending.tsv
 grep -Fxq $'pending\ttitle_author_year_type\tcat:1,idx:1,idx:2\tinspect_metadata_only;keep=;assigned=' initial-pending.tsv
 reference_review --inspect-pair reference.tsv cat:1 idx:2 > pair.txt
 grep -Fxq '  SP  - 41-46' pair.txt
 pending_dest="$handoff/Pending comparison"
-guided_start yes ':inspect cat:1,idx:2' "$(guide_path "$pending_dest")" write > inspected.txt 2> prompts.txt
+first_sheet=$(guide_path 'First review.tsv')
+sheet_answer="$first_sheet" guided_start review ':inspect cat:1,idx:2' '' > inspected.txt 2> prompts.txt
 cat initial-pending.tsv pair.txt | cmp - inspected.txt
+cmp reference.tsv 'First review.tsv'
+sheet_answer="$first_sheet" guided_start yes ':inspect cat:1,idx:2' "$(guide_path "$pending_dest")" write > resumed.txt 2> prompts.txt
+cmp inspected.txt resumed.txt
 grep -Fq 'Records to export for screening: 3 (including 3 pending duplicate review).' prompts.txt
 grep -Fxq $'summary\tall\t3\tretained=3;suppressed=0' "$pending_dest/mapping.tsv"
 reference_review --export-reviewed reference.tsv pending-export
@@ -341,7 +345,9 @@ for file in reviewed.ris mapping.tsv reconciliation.tsv; do
     cmp "pending-export/$file" "$pending_dest/$file"
 done
 cmp reference.tsv "$sheet"
-echo "PASS: $start_shell inspected two pending records without a keeper and exported all three in the same session."
+dedup verify-export "$pending_dest/mapping.tsv" "$pending_dest/reviewed.ris" "$pending_dest/reconciliation.tsv" > verified.tsv
+grep -Fq 'mapped_disposition_counts_match' verified.tsv
+echo "PASS: $start_shell created the sheet and inspected a pair in one setup, then resumed and verified all three pending records."
 
 # Wait for the actual pending view before changing a disposable copy of the index.
 cp guide-index.ris stale-index.ris
