@@ -75,6 +75,10 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    A key such as `catalog:2` means the second RIS record in the export labeled `catalog`.
    To reopen, run the guide again with the same labels and original files.
    It checks their fingerprints and shows pending decisions and keeper context.
+   If you moved or renamed a download, enter its new path under its original
+   label. If its SHA-256 differs, the guide names the label and shows the
+   saved hash. Run the guide again with the same sheet and select the original
+   download for that label. Your saved choices carry over.
    Optional comparisons appear in the full queue. To see them again, use
    `--resume-decisions` with the saved sheet and the same named sources.
 5. To compare records from a pending row, type `:inspect KEY,KEY` at the next

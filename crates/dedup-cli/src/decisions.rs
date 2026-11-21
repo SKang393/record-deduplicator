@@ -113,6 +113,22 @@ pub(super) struct ResumedSheet {
     pub metadata_hints: Option<Vec<MetadataHint>>,
 }
 
+// Diagnose a rejected row only when both rows describe the same named source.
+fn changed_fingerprint<'a>(saved: &'a str, selected: &str) -> Option<(&'a str, &'a str)> {
+    let (saved_key, saved_detail) = saved.rsplit_once('\t')?;
+    let (selected_key, selected_detail) = selected.rsplit_once('\t')?;
+    if saved_key != selected_key {
+        return None;
+    }
+    let label = saved_key.strip_prefix("input\tris\t")?;
+    let (_, saved_hash) = saved_detail.rsplit_once(";sha256=")?;
+    let (_, selected_hash) = selected_detail.rsplit_once(";sha256=")?;
+    (saved_hash.len() == 64
+        && saved_hash.bytes().all(|b| b.is_ascii_hexdigit())
+        && !saved_hash.eq_ignore_ascii_case(selected_hash))
+    .then_some((label, saved_hash))
+}
+
 pub(super) fn resume(
     path: &OsStr,
     queue: &ReviewQueue<'_>,
@@ -142,7 +158,14 @@ pub(super) fn resume(
         _ => return Err("Unsupported decision sheet header or version.".into()),
     };
     for identity in manifest {
-        if lines.next() != Some(identity.as_str()) {
+        let saved = lines.next();
+        if saved != Some(identity.as_str()) {
+            if let Some((label, hash)) = saved.and_then(|row| changed_fingerprint(row, identity)) {
+                return Err(format!(
+                    "Decision sheet inputs differ. Source '{label}' has a different SHA-256 from the saved value {hash}. \
+                     Reopen this sheet with the same labels and the original file for '{label}' at its current path."
+                ));
+            }
             return Err(
                 "Decision sheet inputs differ. Check all RIS labels and source bytes.".into(),
             );

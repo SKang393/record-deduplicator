@@ -262,6 +262,7 @@ fn converted_ris_and_blank_sources_can_be_reviewed_together() {
 
 #[test]
 fn decisions_reopen_against_named_bytes_and_can_be_reversed() {
+    use sha2::{Digest, Sha256};
     let inputs = Inputs::new("reopen");
     let catalog =
         b"TY  - JOUR\r\nTI  - Lantern study results\r\nDO  - 10.0000/lantern\r\nER  -\r\n";
@@ -331,12 +332,23 @@ fn decisions_reopen_against_named_bytes_and_can_be_reversed() {
             .as_bytes(),
     );
     let stale = run("--resume-decisions", "review.tsv");
-    assert!(String::from_utf8_lossy(&stale.stderr).contains("inputs differ"));
+    let saved_hash = format!("{:x}", Sha256::digest(catalog));
+    assert!(String::from_utf8_lossy(&stale.stderr).contains(&format!(
+        "Source 'catalog' has a different SHA-256 from the saved value {saved_hash}."
+    )));
     assert_failed_before_report(stale);
     assert_eq!(
         fs::read(inputs.0.join("review.tsv")).unwrap(),
         reversed.as_bytes()
     );
+    inputs.write(
+        "review.tsv",
+        reversed.replace(&saved_hash, "damaged-cell").as_bytes(),
+    );
+    let damaged = run("--resume-decisions", "review.tsv");
+    let error = String::from_utf8_lossy(&damaged.stderr);
+    assert!(error.contains("Check all RIS labels") && !error.contains("damaged-cell"));
+    assert_failed_before_report(damaged);
 }
 
 #[test]
