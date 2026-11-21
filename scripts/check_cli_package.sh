@@ -339,10 +339,11 @@ sed 's/bytes=0\.\.127;output=1/bytes=0..126;output=1/' "$mapping" > changed-span
 reject_trace 'Original occurrence idx:1 disagrees' changed-span.tsv idx:1 downloads downloads/keepers
 
 # Byte hashes from the same guided fixture exported at e92ade288ad7, before trace existed.
-"${checksum[@]}" -c <<'SUMS'
+cat > "$work/trace-export.sha256" <<'SUMS'
 b0cedb50c703d63d28832635724ebd4e8d5e0db177a509af305487a263e0d68a *reference-export/reviewed.ris
 4364562f7dd989c5e5c7c64df1d5b2d890e4bb7da4643f8f7f28d20e8e160e6e *reference-export/mapping.tsv
 c12cb656ce49f76d67b58a056fed25ecc225a46f18e31284c5b7abf4abdca2c4 *reference-export/reconciliation.tsv
 SUMS
+"${checksum[@]}" -c "$work/trace-export.sha256"
 echo "PASS: trace found the verified copy and keeper at output 1 and the pending report at output 2 in renamed files."
 echo "PASS: same-size substitute with keeper outside the selected folders and altered span both exited 2 with empty stdout; all three export hashes matched."
