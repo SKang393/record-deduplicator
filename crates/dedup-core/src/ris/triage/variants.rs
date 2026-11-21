@@ -1,5 +1,7 @@
 //! Direct inspection leads only. These pairs never define sheet membership.
-use super::{Occurrence, ReviewQueue, publication_year, text, title};
+use super::{
+    Occurrence, Pagination, PublicationLocator, ReviewQueue, publication_year, text, title,
+};
 use crate::ris::{Disposition, ReportIdentifiers};
 use std::collections::BTreeMap;
 
@@ -58,6 +60,29 @@ struct Member<'a> {
     full_title: bool,
 }
 
+impl Occurrence<'_> {
+    // This exporter-specific locator is used only for inspection across field types.
+    fn scopus_article_locator(&self) -> Option<PublicationLocator> {
+        if self.fields.iter().any(|f| matches!(f.tag, "SP" | "EP"))
+            || !self.scalar("DB")??.eq_ignore_ascii_case("Scopus")
+        {
+            return None;
+        }
+        let article = self.scalar("C7")??.to_ascii_lowercase();
+        let digits = article.strip_prefix('e').unwrap_or(&article);
+        if digits.len() < 5 || !digits.bytes().all(|b| b.is_ascii_digit()) {
+            return None;
+        }
+        self.locator_with_pagination(Pagination::ArticleNumber(article))
+    }
+}
+
+#[derive(Default)]
+struct TitleBlock<'a> {
+    standard: Vec<Member<'a>>,
+    scopus_articles: Vec<Member<'a>>,
+}
+
 /// Direct one-based queue rows for two distinct kinds of inspection evidence.
 #[derive(Default)]
 pub struct LocatorPairs {
@@ -100,7 +125,8 @@ impl ReviewQueue<'_> {
     }
 
     /// Index a complete title and at most one explicit subtitle omission.
-    /// A fifth member withholds the entire key. Never compare two omissions.
+    /// A fifth paginated member withholds that key. C7 leads require one
+    /// member of each kind. Never compare two omissions.
     pub fn locator_pairs(&self) -> LocatorPairs {
         let mut pairs = LocatorPairs::default();
         if self.sources.len() < 2 {
@@ -112,22 +138,37 @@ impl ReviewQueue<'_> {
             if !record.usable() {
                 continue;
             }
-            let (Some(locator), Some(title), Some(year), Some(kind)) = (
-                record.publication_locator(),
+            let (Some(title), Some(year), Some(kind)) = (
                 title(record),
                 publication_year(record),
                 record.fields.first().and_then(text),
             ) else {
                 continue;
             };
-            let titles: &mut BTreeMap<String, Vec<Member>> =
+            let (locator, from_c7) = if let Some(locator) = record.publication_locator() {
+                (locator, false)
+            } else if let Some(locator) = record.scopus_article_locator() {
+                (locator, true)
+            } else {
+                continue;
+            };
+            let titles: &mut BTreeMap<String, TitleBlock> =
                 locations.entry((locator, year, kind)).or_default();
             for (form, full_title) in [(title_key(&title), true), (without_subtitle(&title), false)]
             {
                 let Some(form) = form else { continue };
+                if from_c7 && !full_title {
+                    continue;
+                }
                 let block = titles.entry(form).or_default();
-                if block.len() <= MAX_BLOCK {
-                    block.push(Member {
+                // Keep separate caps so a C7 row cannot crowd out an ordinary lead.
+                let (members, limit) = if from_c7 {
+                    (&mut block.scopus_articles, 1)
+                } else {
+                    (&mut block.standard, MAX_BLOCK)
+                };
+                if members.len() <= limit {
+                    members.push(Member {
                         row: index + 1,
                         record,
                         full_title,
@@ -136,11 +177,20 @@ impl ReviewQueue<'_> {
             }
         }
 
-        for block in locations
-            .into_values()
-            .flat_map(BTreeMap::into_values)
-            .filter(|b| (2..=MAX_BLOCK).contains(&b.len()))
-        {
+        for block in locations.into_values().flat_map(BTreeMap::into_values) {
+            if let ([a], [b]) = (block.scopus_articles.as_slice(), block.standard.as_slice()) {
+                if !b.record.fields.iter().any(|f| f.tag == "C7")
+                    && self.complementary_id_pair(a, b)
+                {
+                    pairs
+                        .complementary_ids
+                        .push([a.row.min(b.row), a.row.max(b.row)]);
+                }
+            }
+            let block = block.standard;
+            if !(2..=MAX_BLOCK).contains(&block.len()) {
+                continue;
+            }
             if let [a, b] = block.as_slice() {
                 if self.complementary_id_pair(a, b) {
                     pairs.complementary_ids.push([a.row, b.row]);

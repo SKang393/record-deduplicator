@@ -178,6 +178,10 @@ impl Occurrence<'_> {
     }
 
     fn publication_locator(&self) -> Option<PublicationLocator> {
+        self.locator_with_pagination(self.final_pagination()?)
+    }
+
+    fn locator_with_pagination(&self, pages: Pagination) -> Option<PublicationLocator> {
         let journal = self.journal()?;
         let volume = self.scalar("VL")??;
         if !volume.bytes().any(|b| b.is_ascii_digit()) {
@@ -188,7 +192,7 @@ impl Occurrence<'_> {
             journal,
             volume: volume.to_owned(),
             issue: self.scalar("IS")?.map(str::to_owned),
-            pages: self.final_pagination()?,
+            pages,
         })
     }
 }

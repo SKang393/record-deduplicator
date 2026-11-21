@@ -226,7 +226,13 @@ even when their filenames or contents are identical.
   two occurrences at the matching title and location, with the same full title
   of at least five words, the same listed authors in order, year, RIS type,
   journal, volume and final page range or article number. Issue and work type
-  must agree as well. Use `--inspect-pair` to read each original. A protocol
+  must agree as well. For a record marked `DB  - Scopus` with no page fields,
+  the queue can compare its `C7` article number to an article number in the
+  other record's `SP` field. The `C7` value must contain at least five digits,
+  optionally prefixed by `e`. Leading zeros count. A bare number in `SP` alone
+  supplies only a start page. This use of `C7` is limited to inspection.
+  See the [Scopus RIS field mapping](https://www.elsevier.support/scopus/answer/what-ris-format-mapping-does-scopus-use-when-exporting-results-when-exchanging-citation-information).
+  Use `--inspect-pair` to read each original. A protocol
   and follow-up abstract can share a heading and printed pages. Read the
   original notes (`N1`) and abstracts (`AB`) for differences in what each
   report describes. The lead adds no editable decision, and both records

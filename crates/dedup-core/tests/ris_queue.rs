@@ -4,6 +4,47 @@ use dedup_core::ris::{
 };
 
 #[test]
+fn scopus_article_numbers_supply_only_direct_cross_field_inspection_leads() {
+    let record = |fields: &str| {
+        format!(
+            "TY  - JOUR\nTI  - A census of painted wooden wheels\nAU  - Reed, Q\n\
+             PY  - 2024\nJO  - Fictional Cart Journal\nVL  - 7\n{fields}\nER  -\n"
+        )
+    };
+    let scopus = record("DB  - Scopus\nC7  - 073021\nDO  - 10.0000/wheels");
+    let peer = record("SP  - Article number 073021\nUR  - https://pubmed.ncbi.nlm.nih.gov/980001/");
+    let pairs = |left: &str, right: &str| {
+        review_sources(&[("one", left), ("two", right)])
+            .unwrap()
+            .locator_pairs()
+            .complementary_ids
+    };
+    assert_eq!(pairs(&scopus, &peer), [[1, 2]]);
+    let queue = review_sources(&[("one", &scopus), ("two", &peer)]).unwrap();
+    assert!(queue.review.groups.is_empty() && queue.metadata_hints().is_empty());
+    assert!(
+        queue.sources[0].source.occurrences[0]
+            .publication_details()
+            .is_none()
+    );
+
+    for field in ["SP  - 073021", "C7  - 073021", "SP  - Article number 73021"] {
+        assert!(pairs(&scopus, &peer.replace("SP  - Article number 073021", field)).is_empty());
+    }
+    for db in [
+        "DB  - Other",
+        "DB  - Scopus\nSP  - 1",
+        "DB  - Scopus\nC7  - 73022",
+    ] {
+        assert!(pairs(&scopus.replace("DB  - Scopus", db), &peer).is_empty());
+    }
+    let bystander = scopus.replace("10.0000/wheels", "10.0000/bystander");
+    assert!(pairs(&format!("{scopus}{bystander}"), &peer).is_empty());
+    let standard = record("SP  - Article number 073021\nDO  - 10.0000/ordinary");
+    assert_eq!(pairs(&format!("{standard}{bystander}"), &peer), [[1, 3]]);
+}
+
+#[test]
 fn identical_and_empty_exports_keep_their_declared_source_identity() {
     let input = "TY  - JOUR\rDO  - 10.0000/example\rER  -\rstray";
     let queue = review_sources(&[("z", input), ("empty", ""), ("a", input)]).unwrap();
