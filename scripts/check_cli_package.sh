@@ -40,7 +40,7 @@ grep -Fxq 'TI  - Marsh transects after spring flooding: seasonal observations' r
 cat catalog.ris index.ris | cmp - restored/reviewed.ris
 echo "PASS: packaged CLI verified one copy, retained the subtitled record and restored all three occurrences."
 
-# Compare the extracted CLI with the mixed-source control from 417b9b491ea2.
+# Compare ordinary review output with the mixed-source control from 0d61ee7441e3.
 (
     mkdir input-check
     cd input-check
@@ -55,16 +55,51 @@ echo "PASS: packaged CLI verified one copy, retained the subtitled record and re
     grep -Fxq 'cat:1 has no SP or EP field for a final page range or article number.' inspection.txt
     grep -Fxq 'idx:1 supplies pagination fields without a usable final page range or article number.' inspection.txt
     review_input --export-reviewed choices.tsv clean
-    cat > baseline.sha256 <<'SUMS'
+    cat > "$work/baseline.sha256" <<'SUMS'
 1d82abac0229ac0219fbac70bee42653b1e944bfe23a075b75693c97a2c95d4e *catalog.ris
 390bb4a3fbc69f21eb4dc04f448c3fc8624c641dd8fca22b726ed0dc815d88b1 *index.ris
 8106ad9551dfe5a8fa74ac6c12292a837affdc72495b1bbc7e6961d1d027a6b0 *choices.tsv
+0a505359c056098596e7ead809b1c6224e333ae648969b3009c2435e004de3fa *queue.tsv
+a3cb119441cbfee42cb2d85e5561e94eccf2990e740c968114f25ba13a2ed472 *inspection.txt
 0e84d084db3d065bc3572211880e45d2929060243246acb79b4000571ea2a2dc *clean/reviewed.ris
 48314f0dce442cd7c83355e561c2e6f0977e8c91c66cb9c917ccd22134d28afe *clean/mapping.tsv
 59def875d9cd1a68023e3e9301e260a21965fc7a04345a9c4d4915d0a7b2c0c5 *clean/reconciliation.tsv
 SUMS
-    "${checksum[@]}" -c baseline.sha256
-    echo "PASS: two pending reports and literal field BOMs matched the baseline sheet and export."
+    # Capture coverage output outside this project so every project file can be checked.
+    find . -print | LC_ALL=C sort > "$work/project-before.txt"
+    report="$work/coverage.tsv"
+    coverage_case() {
+        local expected=$1 status=0
+        shift
+        dedup review-ids --check-coverage "$@" > "$report" 2> "$work/coverage.err" || status=$?
+        test "$status" -eq "$expected"
+    }
+    catalog=(--ris-source cat catalog.ris)
+    both=("${catalog[@]}" --ris-source idx index.ris)
+    tide=(tide --expected-total 2 --batch-range cat 1-1)
+    plan=("${tide[@]}" --batch-range idx 2-2)
+    coverage_case 0 "${plan[@]}" "${both[@]}"
+    grep -Fxq $'snapshot\ttide\tparsed=2\texpected_total=2' "$report"
+    grep -Fxq $'result\ttide\tmatched_expectations' "$report"
+    coverage_case 2 "${plan[@]}" "${catalog[@]}"
+    grep -Fxq $'issue\tmissing_batch\tidx\tpositions=2-2' "$report"
+    coverage_case 2 "${tide[@]}" --batch-range idx 1-1 "${both[@]}"
+    grep -Fxq $'snapshot\ttide\tparsed=2\texpected_total=2' "$report"
+    grep -Fxq $'issue\trange_overlap\tidx\tpositions=1-1' "$report"
+    grep -Fxq $'issue\trange_gap\tpositions=2-2' "$report"
+    # An equally sized replacement satisfies the counts. The check cannot verify identity.
+    coverage_case 0 "${plan[@]}" "${catalog[@]}" --ris-source idx catalog.ris
+    grep -Fxq $'result\ttide\tmatched_expectations' "$report"
+    coverage_case 0 tide-update --expected-total 1 --ris-source cat index.ris
+    grep -Fxq $'snapshot\ttide-update\tparsed=1\texpected_total=1' "$report"
+    coverage_case 2 "${plan[@]}" --check-coverage tide-update --expected-total 1 "${both[@]}"
+    test ! -s "$report"
+    test -s "$work/coverage.err"
+    find . -print | LC_ALL=C sort | cmp - "$work/project-before.txt"
+    "${checksum[@]}" -c "$work/baseline.sha256"
+    review_input | cmp - queue.tsv
+    echo "PASS: coverage matched 2, flagged a missing batch and equal-total overlap/gap, and checked the update separately."
+    echo "PASS: project entries and byte hashes match the ordinary review baseline after all coverage checks."
 
     printf 'TY  - JOUR\r\nTI  - Enquêt' >> index.ris
     printf '%s\n' "${bom}TY  - JOUR" 'TI  - Next batch' 'ER  -' >> index.ris

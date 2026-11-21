@@ -223,7 +223,8 @@ Copy the expected total or inclusive batch ranges from that search log.
 List the files actually received with `--ris-source`. Give a later search
 update its own invocation, even if it uses the same database and batch labels.
 The check reads the original RIS and prints pre-deduplication occurrence
-counts and file fingerprints to standard output.
+counts and file fingerprints to standard output. You assign each file to its
+snapshot using the search log.
 
 For a synthetic walkthrough, run these Bash commands with `dedup` on your path.
 The two batches deliberately include one report twice.
@@ -243,8 +244,11 @@ dedup review-ids --check-coverage coast-update --expected-total 1 --ris-source f
 ```
 
 The first check reports four parsed occurrences and `matched_expectations`.
-The update independently reports one. Try the following three checks individually.
-Each exits with code 2 and prints the discrepancies.
+The update independently reports one. Both commands exit with code 0.
+When counts or ranges disagree, exit code 2 accompanies a coverage report
+on standard output. Invalid arguments or unreadable or malformed RIS also
+produce exit code 2, with a diagnostic on standard error and no coverage
+report. Try the following three discrepancy checks individually.
 
 ```sh
 planned --ris-source first first.ris
