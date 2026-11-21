@@ -90,14 +90,19 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    The guide shows both original records and returns to the prompt.
    Press Enter to close this session, or enter a new
    folder path to preview an export. Choose a folder name inside an existing
-   directory, which can be outside the project. Check the sheet path,
+   directory, which can be outside the project. The guide rereads the saved
+   decisions when you request the preview. Check the sheet path,
    destination, explicit duplicate count, and how many pending records will
    be kept. If a marked copy and its keeper share a DOI or PMID and their
    titles differ only in the final words “protocol” and “results”, the guide
    lists their keys before confirmation. Those words can describe separate
    reports or label parts of one report. If unsure, cancel, reopen the sheet
    and compare the keys with `:inspect`. Type `write` to save the three
-   files, or press Enter to cancel. [Check the RIS and mapping together](#reconcile-a-reviewed-export-before-screening)
+   files, or press Enter to cancel. If a saved decision changes after the
+   preview, the guide validates the edited sheet when you type `write`.
+   A valid change brings up a fresh preview in the same session.
+   Check it and type `write` again to export, or press Enter to cancel.
+   [Check the RIS and mapping together](#reconcile-a-reviewed-export-before-screening)
    before opening `reviewed.ris` in your reference manager. Use
    `mapping.tsv` for individual decisions and `reconciliation.tsv` for
    counts by source.

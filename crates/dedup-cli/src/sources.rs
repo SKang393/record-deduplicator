@@ -201,17 +201,14 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 if let Some(row) = first_group {
                     eprintln!("First unresolved group from the pending list:\n  {row}");
                 }
-                let recheck_review = || -> Result<(), String> {
+                let read_current_decisions = || {
                     recheck_sources()?;
-                    if super::decisions::resume(path, &queue, &manifest)?.decisions
-                        != sheet.decisions
-                    {
-                        return Err("Decisions changed. Reopen the sheet to see the current pending groups.".into());
-                    }
-                    Ok(())
+                    super::decisions::resume(path, &queue, &manifest).map(|sheet| sheet.decisions)
                 };
                 let Some(directory) = super::start::export_destination(input, |left, right| {
-                    recheck_review()?;
+                    if read_current_decisions()? != sheet.decisions {
+                        return Err("Decisions changed. Reopen the sheet to see the current pending groups.".into());
+                    }
                     match super::inspect::pair(
                         &queue,
                         &sheet.decisions,
@@ -229,21 +226,38 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                     return Ok(());
                 };
                 super::reviewed::require_new_destination(&directory).map_err(|e| e.to_string())?;
-                let export = super::reviewed::prepare(&queue, &manifest, &sheet.decisions)?;
-                if super::start::confirm_export(
-                    input,
-                    path.as_ref(),
-                    &directory,
-                    &export,
-                    &queue,
-                    &sheet.decisions,
-                )? {
-                    recheck_review()?;
+                let mut decisions = read_current_decisions()?;
+                if decisions != sheet.decisions {
+                    eprintln!(
+                        "Saved decisions changed since the pending list. Previewing the current sheet."
+                    );
+                }
+                loop {
+                    let export = super::reviewed::prepare(&queue, &manifest, &decisions)?;
+                    if !super::start::confirm_export(
+                        input,
+                        path.as_ref(),
+                        &directory,
+                        &export,
+                        &queue,
+                        &decisions,
+                    )? {
+                        break;
+                    }
+                    let current = read_current_decisions()?;
+                    if current != decisions {
+                        eprintln!(
+                            "Saved decisions changed after the preview. Review the updated preview and confirm again."
+                        );
+                        decisions = current;
+                        continue;
+                    }
                     export.publish(&directory)?;
                     eprintln!(
                         "Saved {} with mapping.tsv and reconciliation.tsv.",
                         directory.join("reviewed.ris").display()
                     );
+                    break;
                 }
             }
             return Ok(());
