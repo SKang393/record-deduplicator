@@ -926,12 +926,13 @@ also includes new rows and rows left unresolved in the earlier review.
 ```sh
 april --pending-decisions choices-april.tsv
 april --export-reviewed choices-april.tsv reviewed-april
-dedup verify-export reviewed-april/mapping.tsv reviewed-april/reviewed.ris
+dedup verify-export reviewed-april/mapping.tsv reviewed-april/reviewed.ris reviewed-april/reconciliation.tsv
 dedup trace reviewed-april/mapping.tsv idx:1 .
 ```
 
 The new reconciliation counts occurrences across both rounds and includes
-pending rows among the retained records. Use this cumulative total once.
+pending rows among the retained records. When verification reports
+`mapped_disposition_counts_match`, use this cumulative total once.
 Keep download coverage counts separate for each search snapshot.
 
 ### Review a single RIS export
