@@ -52,7 +52,48 @@ impl CitationValue {
     }
 }
 
+/// Literal title evidence used only when previewing a saved removal.
+pub struct NoticeTitle {
+    title: String,
+    prefix: Option<&'static str>,
+    pages: Option<Pagination>,
+}
+
+impl NoticeTitle {
+    /// Return the prefix only on the notice side of an exact title reference.
+    pub fn notice_prefix_for(&self, other: &Self) -> Option<&'static str> {
+        let prefix = self.prefix?;
+        if other.prefix.is_some() || self.title.strip_prefix(prefix)?.trim_start() != other.title {
+            return None;
+        }
+        // Some catalogues omit the prefix on another copy of the notice.
+        if self.pages.is_some() && self.pages == other.pages {
+            return None;
+        }
+        Some(prefix)
+    }
+}
+
 impl Occurrence<'_> {
+    pub fn notice_title(&self) -> Option<NoticeTitle> {
+        let title = title(self)?;
+        let prefix = ["correction:", "correction to:", "erratum:"]
+            .into_iter()
+            .find(|prefix| title.starts_with(prefix));
+        if prefix.is_none()
+            && self.scalar("M3").flatten().is_some_and(|kind| {
+                kind.eq_ignore_ascii_case("correction") || kind.eq_ignore_ascii_case("erratum")
+            })
+        {
+            return None;
+        }
+        Some(NoticeTitle {
+            title,
+            prefix,
+            pages: self.final_pagination(),
+        })
+    }
+
     /// Literal title ending for a review prompt. The words can also be captions.
     pub fn protocol_or_results_wording(&self) -> Option<(String, &'static str)> {
         let normalized = title(self)?;
@@ -203,6 +244,35 @@ mod tests {
         )));
         assert!(fields(1).contains(&("PMID", Known(vec!["980000001".into()]))));
         assert!(fields(1).contains(&(c2, AsSupplied(vec!["C2=980000001".into()]))));
+    }
+
+    #[test]
+    fn notice_prefix_requires_a_reference_to_the_whole_unprefixed_title() {
+        let evidence = |heading: &str, fields: &str| {
+            let ris = format!("TY  - JOUR\nT1  - {heading}\n{fields}ER  -\n");
+            parse(&ris).unwrap().occurrences[0].notice_title()
+        };
+        let article = evidence("Clay basin survey", "").unwrap();
+        let notice = evidence("Correction: Clay basin survey", "SP  - 30-31\n").unwrap();
+        let erratum = evidence("ERRATUM:  CLAY BASIN SURVEY", "").unwrap();
+        assert_eq!(notice.notice_prefix_for(&article), Some("correction:"));
+        assert_eq!(erratum.notice_prefix_for(&article), Some("erratum:"));
+        assert_eq!(notice.notice_prefix_for(&erratum), None);
+        let correction_to = evidence("Correction to: Clay basin survey", "").unwrap();
+        assert_eq!(correction_to.notice_prefix_for(&notice), None);
+        for heading in [
+            "Drift correction: Clay basin survey",
+            "Correction: Clay basin",
+            "Correction to: Clay basin",
+        ] {
+            assert_eq!(
+                evidence(heading, "").unwrap().notice_prefix_for(&article),
+                None
+            );
+        }
+        let unprefixed_copy = evidence("Clay basin survey", "SP  - 30\nEP  - 31\n").unwrap();
+        assert_eq!(notice.notice_prefix_for(&unprefixed_copy), None);
+        assert!(evidence("Clay basin survey", "M3  - Correction\n").is_none());
     }
 
     #[test]

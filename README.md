@@ -104,7 +104,13 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    lists their keys before confirmation. It also flags explicit opposing RIS
    work types (`M3` of “protocol” or “study protocol” versus “results” or
    “results article”, ignoring case). Those words can describe separate
-   reports or label parts of one report. If unsure, cancel, reopen the sheet
+   reports or label parts of one report. A separate notice may repeat an
+   article's DOI. The preview flags a leading `Correction:`, `Correction to:`,
+   or `Erratum:` followed by the other record's full title, ignoring case and
+   extra spaces.
+   It skips this cue when both titles have notice prefixes, the unprefixed
+   record is labeled correction or erratum in `M3`, or both records have
+   the same supported final pagination. If unsure, cancel, reopen the sheet
    and compare the keys with `:inspect`. Type `write` to save the three
    files, or press Enter to cancel. If a saved decision changes after the
    preview, the guide validates the edited sheet when you type `write`.

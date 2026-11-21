@@ -425,8 +425,9 @@ fn show_removal_advisories(queue: &ris::ReviewQueue<'_>, decisions: &[Decision])
             Decision::Keep(_) | Decision::DuplicateOf(_) => (
                 record.protocol_or_results_wording(),
                 record.protocol_or_results_work_type(),
+                record.notice_title(),
             ),
-            _ => (None, None),
+            _ => (None, None, None),
         })
         .collect();
     let mut shown = false;
@@ -435,10 +436,28 @@ fn show_removal_advisories(queue: &ris::ReviewQueue<'_>, decisions: &[Decision])
         let Decision::DuplicateOf(target) = decision else {
             continue;
         };
-        let (removed_title, removed_type) = &wording[index];
-        let (kept_title, kept_type) = &wording[*target];
+        let (removed_title, removed_type, removed_notice) = &wording[index];
+        let (kept_title, kept_type, kept_notice) = &wording[*target];
         let removed = &queue.entries[index];
         let kept = &queue.entries[*target];
+        if let (Some(left), Some(right)) = (removed_notice, kept_notice) {
+            let notice = left
+                .notice_prefix_for(right)
+                .map(|p| (p, removed))
+                .or_else(|| right.notice_prefix_for(left).map(|p| (p, kept)));
+            if let Some((prefix, entry)) = notice {
+                eprintln!(
+                    "Check {}:{} (remove) and {}:{} (keep). The notice prefix '{prefix}' on {}:{} introduces the other record's title. A separately issued notice can repeat the article's identifier.",
+                    removed.label,
+                    removed.ordinal,
+                    kept.label,
+                    kept.ordinal,
+                    entry.label,
+                    entry.ordinal
+                );
+                shown = true;
+            }
+        }
         match (removed_title, kept_title, removed_type, kept_type) {
             (Some((stem, word)), Some((other_stem, other_word)), _, _)
                 if stem == other_stem && word != other_word =>

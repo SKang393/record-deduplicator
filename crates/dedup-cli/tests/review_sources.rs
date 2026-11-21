@@ -1604,6 +1604,72 @@ fn guided_preview_names_removal_with_opposing_work_type_wording() {
 }
 
 #[test]
+fn guided_correction_to_warning_precedes_write_and_keeps_the_reviewers_choice() {
+    let inputs = Inputs::new("correction-to");
+    let record = |title: &str, accession: &str| {
+        format!("TY  - JOUR\nTI  - {title}\nDO  - 10.0000/tin-looms\nAN  - {accession}\nER  -\n")
+    };
+    let article = record("Tin looms at dusk", "A-1");
+    let copy = record("Tin looms at dusk", "B-8");
+    let notice = record("Correction  TO:  Tin looms at dusk", "B-9");
+    inputs.write("a.ris", article.as_bytes());
+    inputs.write("b.ris", format!("{copy}{notice}").as_bytes());
+    let init = inputs.run(&[
+        "--init-decisions",
+        "choices.tsv",
+        "--ris-source",
+        "a",
+        "a.ris",
+        "--ris-source",
+        "b",
+        "b.ris",
+    ]);
+    assert!(init.status.success(), "{:?}", init.stderr);
+    let sheet = fs::read_to_string(inputs.0.join("choices.tsv"))
+        .unwrap()
+        .replace("a:1\tpending", "a:1\tkeep")
+        .replace("b:1\tpending", "b:1\tduplicate-of=a:1");
+    let guide = |notice_choice: &str, answer: &str| {
+        let choices = sheet.replace("b:2\tpending", &format!("b:2\t{notice_choice}"));
+        inputs.write("choices.tsv", choices.as_bytes());
+        let answers = format!("choices.tsv\na\na.ris\nb\nb.ris\n\nyes\nreviewed\n{answer}\n");
+        inputs.write("answers.txt", answers.as_bytes());
+        let result = Command::new(env!("CARGO_BIN_EXE_dedup"))
+            .arg("start")
+            .current_dir(&inputs.0)
+            .stdin(fs::File::open(inputs.0.join("answers.txt")).unwrap())
+            .output()
+            .unwrap();
+        assert!(result.status.success(), "{:?}", result.stderr);
+        assert_eq!(
+            fs::read_to_string(inputs.0.join("choices.tsv")).unwrap(),
+            choices
+        );
+        String::from_utf8(result.stderr).unwrap()
+    };
+
+    let cancelled = guide("duplicate-of=a:1", "");
+    let (preview, after) = cancelled.split_once("Type write").unwrap();
+    assert!(
+        preview.contains("b:2 (remove) and a:1 (keep). The notice prefix 'correction to:' on b:2")
+    );
+    assert!(!preview.contains("b:1 (remove)"));
+    assert!(after.contains("Export cancelled."));
+    assert!(!inputs.0.join("reviewed").exists());
+
+    let confirmed = guide("keep", "write");
+    assert!(!confirmed.contains("notice prefix"));
+    assert_eq!(
+        fs::read(inputs.0.join("reviewed/reviewed.ris")).unwrap(),
+        format!("{article}{notice}").as_bytes()
+    );
+    let mapping = fs::read_to_string(inputs.0.join("reviewed/mapping.tsv")).unwrap();
+    assert!(mapping.contains("summary\tall\t3\tretained=2;suppressed=1\n"));
+    assert!(mapping.contains("map\tduplicate-of=a:1\tb:1\t"));
+    assert!(mapping.contains("map\tkeep\tb:2\t"));
+}
+
+#[test]
 fn guided_review_flags_whole_file_matches_and_keeps_each_occurrence() {
     let inputs = Inputs::new("repeated-download");
     let first = "TY  - JOUR\nTI  - Inlet survey\nAN  - A1\nER  -\n";
