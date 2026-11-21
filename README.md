@@ -81,10 +81,12 @@ PowerShell or **`./dedup start`** in macOS Terminal. At the prompts:
    download for that label. Your saved choices carry over.
    Optional comparisons appear in the full queue. To see them again, use
    `--resume-decisions` with the saved sheet and the same named sources.
-5. To compare records from a pending row, type `:inspect KEY,KEY` at the next
-   prompt. You can paste two keys from the pending column, even when `keep=`
-   is empty. To compare a pending record with a previously reviewed member,
-   use a second key from that row's `keep=` or `assigned=` list.
+5. When several groups are pending, the reopened guide repeats the first
+   group just before the inspection prompt. Type `:inspect KEY,KEY` to compare
+   records from any pending row. You can paste two keys from the pending
+   column, even when `keep=` is empty. To compare a pending record with a
+   previously reviewed member, use a second key from that row's `keep=` or
+   `assigned=` list.
    The guide shows both original records and returns to the prompt.
    Press Enter to close this session, or enter a new
    folder path to preview an export. Choose a folder name inside an existing

@@ -191,13 +191,16 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
         }
         Action::Pending(path, guide) => {
             let sheet = super::decisions::resume(path, &queue, &manifest)?;
-            {
+            let first_group = {
                 let mut out = io::BufWriter::new(io::stdout().lock());
                 super::pending::render(&queue, &manifest, &sheet, &mut out)
-                    .and_then(|()| out.flush())
-                    .map_err(|_| "Cannot write report.")?;
-            }
+                    .and_then(|first| out.flush().map(|()| first))
+                    .map_err(|_| "Cannot write report.")?
+            };
             if let Some(input) = guide {
+                if let Some(row) = first_group {
+                    eprintln!("First unresolved group from the pending list:\n  {row}");
+                }
                 let recheck_review = || -> Result<(), String> {
                     recheck_sources()?;
                     if super::decisions::resume(path, &queue, &manifest)?.decisions

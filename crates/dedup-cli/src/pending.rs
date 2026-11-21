@@ -13,7 +13,7 @@ pub(super) fn render(
     manifest: &[String],
     sheet: &ResumedSheet,
     out: &mut impl Write,
-) -> io::Result<()> {
+) -> io::Result<Option<String>> {
     let mut conflict_in_record = vec![false; queue.entries.len()];
     for &(row, issue) in &queue.review.issues {
         if matches!(issue, Issue::ConflictingDoi | Issue::ConflictingPmid) {
@@ -103,5 +103,11 @@ pub(super) fn render(
     for line in conflicts.iter().chain(&remaining) {
         writeln!(out, "{line}")?;
     }
-    Ok(())
+    // A lone group is already next to the prompt. Otherwise return the same
+    // first row we just printed, including its flags and all member keys.
+    Ok(if conflicts.len() + remaining.len() > 1 {
+        conflicts.into_iter().chain(remaining).next()
+    } else {
+        None
+    })
 }

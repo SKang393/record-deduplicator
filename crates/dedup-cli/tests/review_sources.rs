@@ -762,6 +762,11 @@ fn pending_view_shows_direct_context_in_conflict_order_without_changing_decision
         .output()
         .unwrap();
     assert!(guided.status.success(), "{:?}", guided.stderr);
+    let prompts = String::from_utf8_lossy(&guided.stderr);
+    assert!(prompts.contains(&format!(
+        "First unresolved group from the pending list:\n  {}\nTo compare two keys",
+        rows[4]
+    )));
     let mut expected = view.stdout.clone();
     for keys in [["cat:1", "idx:1"], ["idx:2", "cat:2"]] {
         let pair = inputs.run(&[&["--inspect-pair", "choices.tsv"][..], &keys, &sources].concat());
