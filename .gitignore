@@ -18,7 +18,7 @@ Thumbs.db
 /.local/
 /runs/
 
-# Raw exports and labeler payloads stay private until explicitly cleared.
+# Local datasets and evaluation output
 /testdata/samples/
 /testdata/benchmarks/
 /validation/private/

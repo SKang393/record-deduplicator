@@ -4,45 +4,26 @@
 [![Windows build checks](https://img.shields.io/badge/Windows-build%20checks-0078D4)](https://github.com/SKang393/record-deduplicator/actions/workflows/ci.yml)
 [![macOS build checks](https://img.shields.io/badge/macOS-build%20checks-555555)](https://github.com/SKang393/record-deduplicator/actions/workflows/ci.yml)
 
-An offline bibliographic record deduplication project for systematic reviews and
-meta-analyses, built around a shared Rust engine. The goal is to identify duplicate
-database records while preserving distinct reports, original metadata, and the
-reasoning behind each decision.
+Record Deduplicator is an offline command-line tool for reviewing duplicate
+bibliographic records before literature screening. Load named UTF-8 RIS files,
+inspect the original citations, save decisions in a review sheet, and export
+the retained records with a mapping back to each source. A separate two-column
+DOI/PMID input produces an identifier report.
 
-**In development.** The CLI accepts named UTF-8 RIS files for a saved
-decision sheet and a reviewed RIS export. A standalone two-column DOI/PMID
-TSV produces an identifier report. Both workflows leave the inputs intact.
-Removing a copy from the export requires a human decision. Use a review
-build or compile the CLI from source. The desktop application is planned.
-
-## Features and design
-
-The planned workflow combines:
-
-- **Multiple input formats:** RIS, PubMed NBIB, BibTeX, EndNote XML, CSV/TSV, and
-  Web of Science tagged records.
-- **Deterministic and fuzzy matching:** normalized identifiers and bibliographic
-  fields, multiple candidate-generation keys, and string-similarity comparisons.
-- **Protection for distinct reports:** safeguards for protocols, corrections,
-  conference abstracts, preprints, and other related publications.
-- **Auditable decisions:** preserved source records, field-level provenance,
-  reviewable matches, and reversible decisions.
-- **Reproducible output:** versioned policies, retained-record exports, and counts
-  that can be traced back to the original inputs.
-- **Local processing:** one Rust engine shared by a CLI and a planned Tauri
-  desktop interface, with no upload required for deduplication.
-
-See the [engine contract](docs/10-engine-contract.md) for the technical rules.
+A reviewer chooses each copy to remove. Distinct reports of the same study and
+unresolved records can travel together into screening. The original downloads
+remain intact.
 
 ## Try the CLI without Rust
 
-For a review-branch run that includes the CLI packaging step, sign in to
-GitHub, open the successful run for your chosen commit, and select its
-`recorddedu-…tar.gz` under **Artifacts**. Choose `x86_64-pc-windows-…`
-for 64-bit Intel/AMD Windows or `aarch64-apple-darwin` for Apple silicon.
-The filename includes the commit prefix. The packaging step prints the
-archive's SHA-256 digest. Review artifacts expire after seven
-days. [Review branch runs](https://github.com/SKang393/record-deduplicator/actions/workflows/ci.yml?query=branch%3Areview%2Fnative-ris-audits)
+Open a successful **push** run on `main` and check its commit.
+If the run has an **Artifacts** section, sign in to GitHub and select the
+`recorddedu-…tar.gz` for your computer. Choose `x86_64-pc-windows-…`
+for Intel/AMD Windows or `aarch64-apple-darwin` for Apple silicon.
+The filename includes the commit prefix. The packaging step prints the archive's
+SHA-256 digest. Artifacts expire after seven days. If the run has no download
+for your platform, [build from source](#build-from-source).
+[Main workflow runs](https://github.com/SKang393/record-deduplicator/actions/workflows/ci.yml?query=branch%3Amain+event%3Apush)
 
 Extract the archive (for example, `tar -xzf <downloaded-filename>`) and open
 a terminal in the extracted `recorddedu-…` directory. `BUILD.txt` identifies
@@ -184,18 +165,18 @@ of the rationale. [LibreOffice text import and export settings](https://help.lib
   [Rust installation guide](https://doc.rust-lang.org/book/ch01-01-installation.html)
   for platform setup.
 
-Build the CLI from the review branch.
+Build the CLI from `main` in PowerShell or a macOS terminal.
 
 ```sh
-git clone --branch review/native-ris-audits https://github.com/SKang393/record-deduplicator.git
+git clone --branch main https://github.com/SKang393/record-deduplicator.git
 cd record-deduplicator
 cargo build --release --locked -p dedup-cli
-export PATH="$PWD/target/release:$PATH"
 ```
 
-The executable is `target/release/dedup.exe` on Windows and
-`target/release/dedup` on macOS. Python and Node.js are not required for this CLI
-build.
+From the repository folder, run `.\target\release\dedup.exe start` in PowerShell
+or `./target/release/dedup start` on macOS. For the shell walkthrough below,
+add the executable directory to your path with `export PATH="$PWD/target/release:$PATH"`
+in Bash or zsh. The CLI build requires neither Python nor Node.js.
 
 ## Usage
 
@@ -975,10 +956,7 @@ of three. All three rows are retained; none is suppressed.
 
 ## Development
 
-The repository separates the Rust engine (`crates/dedup-core`) from the command
-line entry point (`crates/dedup-cli`). The desktop architecture is documented in
-[`app/README.md`](app/README.md) and the
-[architecture specification](docs/04-architecture-and-ui-spec.md).
+The Rust engine is in `crates/dedup-core` and the CLI is in `crates/dedup-cli`.
 
 Run the same source checks used in CI:
 
@@ -1018,24 +996,21 @@ python scripts/check_docs.py
 
 ## Validation
 
-Human validation across selected research fields and records is planned.
-Accuracy estimates will require independently reviewed reference labels and a
-completed evaluation. Automated build checks establish software buildability,
-not deduplication accuracy.
+The synthetic checks exercise known inputs and decisions. Estimating accuracy on
+literature searches requires independently reviewed reference labels.
 
 ## Documentation
 
 - [Documentation index](docs/00-index.md)
 - [Methodology and literature](docs/01-methodology-and-literature.md)
-- [Matching rules and pipeline](docs/02-deduplication-rules-and-pipeline.md)
-- [Database schemas and formats](docs/03-database-schemas-and-formats.md)
+- [How record comparisons work](docs/02-deduplication-rules-and-pipeline.md)
+- [RIS fields and source formats](docs/03-database-schemas-and-formats.md)
 
 ## Contributing
 
 [Open an issue](https://github.com/SKang393/record-deduplicator/issues) to discuss
 a bug, format requirement, or proposed change. Include your operating system,
-the command you ran, and the expected and observed behavior. Use synthetic or
-redistributable examples rather than private or licensed database exports.
+the command you ran, and the expected and observed behavior. A small fictional example makes a bug easier to reproduce.
 
 Keep changes focused, follow the [engine contract](docs/10-engine-contract.md),
 and run the relevant checks above.

@@ -1,7 +1,6 @@
 # Public fixtures
 
-Synthetic fixtures demonstrate specific behavior with generated records.
-See the [development plan](../../docs/08-development-plan.md).
+The fixtures below illustrate RIS import and reviewed-export verification.
 
 ## Zotero RIS handoff
 

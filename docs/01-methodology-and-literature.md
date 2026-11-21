@@ -1,25 +1,19 @@
 # 01 — Methodology, Nomenclature & Peer-Reviewed Literature
 
-> **Evidence and scope:** These sources describe record linkage and how other tools have been evaluated. Their results do not establish the accuracy of Record Deduplicator. The thresholds and name-matching heuristics below are design choices, not constants validated by those papers. See the [engine contract](10-engine-contract.md).
+These sources describe bibliographic record linkage and evaluations of other tools.
+For the behavior of this CLI, see [Comparing records](02-deduplication-rules-and-pipeline.md).
 
----
+## 1. Terms used in record linkage
 
-## 1. Formal Methodological Nomenclature
+Blocking uses selected fields to form a smaller set of record pairs for comparison.
+A blocking rule can miss copies with differing metadata. Exact field comparisons,
+string-similarity measures and human inspection can only assess the pairs they receive.
 
-The proposed method combines deterministic field comparisons with approximate string matching. It uses several bibliographic keys to find candidate pairs before comparing them in detail.
-
-The design has four components:
-
-1. **Pre-Processing Normalization & Tokenization:**
-   - Stripping database-specific indexing artifacts (e.g., whitelisted `[Abstract]` tags, trailing APA copyright notices), case folding, Unicode NFKC & diacritic normalization, HTML/MathML stripping, and resolving inverted author strings (`First Last` vs. `Last, First M.`) and hyphenated compound given names.
-2. **Multi-Pass Deterministic Record Linkage & Union Blocking:**
-   - Grouping candidate records via a union of shared blocking keys (normalized DOI, PMID/Accession, title prefix, rare title token stems, first-author surname + year window, ISSN-L + volume + start page) followed by sequential deterministic field combinations.
-3. **Approximate String Matching (Fuzzy Linkage):**
-   - Computing character-level and token-level similarity metrics (normalized Levenshtein distance, Jaro-Winkler similarity, token-set Jaccard similarity, and token containment/overlap coefficients for truncated abstracts) across candidate pairs within blocks.
-4. **Bibliographic Duplicate vs. Data Duplicate (Kin Study) Disambiguation:**
-   - Distinguishing identical publications indexed differently across databases or publication stages (**bibliographic duplicates**, such as *Advance Online Publication / Online First* vs. final volume/issue/page assignment) from distinct publications reporting the same underlying study (**data duplicates / kin reports**, such as a conference abstract, preprint, dissertation, or working paper and a subsequent peer-reviewed journal article).
-
----
+Two database records can represent one publication even if one gives the online-first
+year and the other gives the print year. A protocol and a results article may share
+a study identifier while representing separate publications. Reference labels for
+deduplication therefore distinguish records of the same report from distinct reports
+of the same study.
 
 ## 2. Core Peer-Reviewed Methodological Evidence
 
@@ -51,7 +45,7 @@ The design has four components:
 
 5. **Jiang, Y., Lin, C., Meng, W., Yu, C., Cohen, A. M., & Smalheiser, N. R. (2014).**
    *Rule-based deduplication of article records from bibliographic databases.* Database, 2014, **bat086**. [DOI](https://doi.org/10.1093/database/bat086).
-   - The authors discuss reversed names and omitted initials. The rule below for comparing the initials of hyphenated given names is a project heuristic, not a conclusion of this paper. See [Methods](https://pmc.ncbi.nlm.nih.gov/articles/PMC3893659/#sec2).
+   - The authors discuss reversed names and omitted initials. Their results do not establish that two hyphenated names sharing an initial identify the same author. See [Methods](https://pmc.ncbi.nlm.nih.gov/articles/PMC3893659/#sec2).
 
 ---
 
@@ -70,7 +64,7 @@ The design has four components:
    - Evaluates time commitment, false positives (unique studies erroneously deleted), and false negatives across five deduplication workflows.
 
 9. **Qi, X., et al. (2013).**
-   *Find duplicates among the PubMed, EMBASE, and Cochrane Library databases in systematic review.* PLoS ONE, 8(8), e71838.
+   *Find duplicates among the PubMed, EMBASE, and Cochrane Library databases in systematic review.* PLoS ONE, 8(8), e71838. [Article](https://doi.org/10.1371/journal.pone.0071838).
 
 10. **Page, M. J., et al. (2021).**
     *The PRISMA 2020 statement: an updated guideline for reporting systematic reviews.* BMJ, 372, n71.
@@ -95,14 +89,3 @@ The design has four components:
 15. **von Elm, E., Poglia, G., Walder, B., & Tramèr, M. R. (2004).**
     *Different patterns of duplicate publication: an analysis of articles used in systematic reviews.* JAMA, 291(8), 974–980; and **Tramèr, M. R., et al. (1997).** *Impact of covert duplicate publication on meta-analysis: a case study.* BMJ, 315, 635–640.
     - Demonstrates why covert/data duplicates and kin studies must be tracked so patient cohorts are not double-counted in meta-analyses.
-
----
-
-## 3. How to interpret matching evidence
-
-- **Titles and tags.** Remove only recognized indexing tags, such as `[Abstract]`, `[Book Review]`, `[Editorial]`, `[Erratum]`, `[Published Erratum]`, `[Letter]`, `[Comment]`, `[Retraction]`, and `[Translated Title]`. Do not discard arbitrary bracketed text. If brackets enclose the whole title, keep the text inside, flag it as a translated title, and retain available original-language alternatives (`OT`, `TO`, or `TT`).
-- **Reports versus studies.** Separate reports can describe the same study. Keep both records and record the relationship for review. A shared study does not justify merging the reports.
-- **Identifiers.** Compare complete normalized DOIs, including their suffixes. Check for conflicting identifiers, report types, or bibliographic details across the proposed group before treating records as duplicates.
-- **Blocking and scale.** Comparing every pair in a set of 50,000 records would require 1,249,975,000 comparisons. Blocking reduces the pairs to examine but may miss matches. Neither its speed nor its recall is guaranteed.
-- **Author initials.** A hyphenated given name may yield two initials where a joined spelling yields one. With the same surname, `D` and `D R` can be compatible under the proposed prefix rule. Compatible initials alone do not establish identity.
-- **Years.** The design distinguishes an online-first record and its final print citation (up to two years apart) from separate reports of a shared study (up to five years apart for relationship review). These are search windows, not evidence that two records are the same report.
