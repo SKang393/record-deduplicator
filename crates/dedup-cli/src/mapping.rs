@@ -56,7 +56,11 @@ fn output_fingerprint(mapping: &str) -> Result<(u64, &str), &'static str> {
     Ok((bytes.parse().map_err(|_| invalid)?, digest))
 }
 
-pub(super) fn verify_output(mapping: &Path, reviewed_ris: &Path) -> Result<(), String> {
+pub(super) fn verify_output(
+    mapping: &Path,
+    reviewed_ris: &Path,
+    reconciliation: Option<&Path>,
+) -> Result<(), String> {
     let text = read(mapping)?;
     let (expected_len, expected_hash) = output_fingerprint(&text)?;
     let file = super::open_ris(reviewed_ris.as_os_str())
@@ -71,9 +75,19 @@ pub(super) fn verify_output(mapping: &Path, reviewed_ris: &Path) -> Result<(), S
     if !digest.eq_ignore_ascii_case(expected_hash) {
         return Err("Reviewed RIS SHA-256 differs from the mapping output row.".into());
     }
+    let (extra_columns, extra_values) = match reconciliation {
+        Some(path) => {
+            let hash = super::reconciliation::verify(&text, path)?;
+            (
+                "\treconciliation_path\treconciliation_sha256\tcount_check",
+                format!("\t{path:?}\t{hash}\tmapped_disposition_counts_match"),
+            )
+        }
+        None => ("", String::new()),
+    };
     writeln!(
         io::stdout().lock(),
-        "result\tmapping_path\tmapping_sha256\treviewed_ris_path\treviewed_ris_bytes\treviewed_ris_sha256\nmatched_output_fingerprint\t{mapping:?}\t{:x}\t{reviewed_ris:?}\t{length}\t{digest}",
+        "result\tmapping_path\tmapping_sha256\treviewed_ris_path\treviewed_ris_bytes\treviewed_ris_sha256{extra_columns}\nmatched_output_fingerprint\t{mapping:?}\t{:x}\t{reviewed_ris:?}\t{length}\t{digest}{extra_values}",
         Sha256::digest(text.as_bytes())
     ).map_err(|_| "Cannot write verification result.".into())
 }

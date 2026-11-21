@@ -444,6 +444,23 @@ cmp catalog.ris "$catalog"
 cmp guide-index.ris "$index"
 echo "PASS: $start_shell cancelled at the occupied folder and at the replacement preview without writing. Explicit write to the replacement matched all three reference files, removed one verified copy and kept two records including one pending."
 
+# Reverse the keeper in a separate review so the removal counts against the other source.
+awk -F '\t' '
+    $1 == "cat:1" {print "cat:1\tverified-duplicate-of=idx:1\tCompared both originals."; next}
+    $1 == "idx:1" {print "idx:1\tkeep"; next}
+    {print}
+' saved.tsv > reverse.tsv
+reference_review --export-reviewed reverse.tsv reverse-export
+test "$(tail -n 1 reference-export/reconciliation.tsv)" = "$(tail -n 1 reverse-export/reconciliation.tsv)"
+if dedup verify-export reference-export/mapping.tsv reference-export/reviewed.ris reverse-export/reconciliation.tsv > counts.out 2> counts.err; then
+    exit 1
+else
+    test "$?" -eq 2
+fi
+test ! -s counts.out
+grep -Fq 'Source cat has 1 removed_metadata in reconciliation.tsv and 0 in mapping.tsv.' counts.err
+echo 'PASS: a counts file from the opposite keeper had equal grand totals and failed the per-source check.'
+
 # Annotate the same keeper and compare with the completed review above.
 note='Catalog documents the final pages.'
 awk -F '\t' -v note="$note" '$1 == "cat:1" {print $1 "\tkeep-with-reason\t" note; next} {print}' saved.tsv > noted.tsv
@@ -559,6 +576,9 @@ verify_pair() (
 )
 verify_pair current 4364562f7dd989c5e5c7c64df1d5b2d890e4bb7da4643f8f7f28d20e8e160e6e b0cedb50c703d63d28832635724ebd4e8d5e0db177a509af305487a263e0d68a
 verify_pair legacy 81d4818ca49610bd162e98e98107c64da8fefcc9fb07d81045c7d61e933977f2 cb204a3646da21d35ffb49bf904b40bd4b1f882b363d528ba9a8578ee349055d
+dedup verify-export current/mapping.tsv current/reviewed.ris current/reconciliation.tsv > "$work/counts.tsv"
+grep -Fq $'c12cb656ce49f76d67b58a056fed25ecc225a46f18e31284c5b7abf4abdca2c4\tmapped_disposition_counts_match' "$work/counts.tsv"
+echo 'PASS: the historical three-file handoff matched the mapped counts and the older two-file handoff verified as a pair.'
 if dedup verify-export current/mapping.tsv legacy/reviewed.ris > "$work/pair.tsv" 2> "$work/pair.err"; then
     exit 1
 else

@@ -245,9 +245,7 @@ impl Counts {
 }
 
 fn reconciliation(queue: &ReviewQueue<'_>, decisions: &[Decision]) -> (String, Counts) {
-    let mut table = String::from(
-        "scope\tsource\tinput\tremoved_id\tremoved_metadata\tretained\tkeep\tpending_id\tpending_metadata\toutside_sheet_flagged\toutside_sheet_unflagged\n",
-    );
+    let mut table = format!("{}\n", super::reconciliation::HEADER);
     let mut total = Counts::default();
     let mut entries = queue.entries.iter().zip(decisions);
     for named in &queue.sources {

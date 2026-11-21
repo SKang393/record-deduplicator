@@ -643,6 +643,27 @@ mapping you supplied. This read-only check works with version 1 and 2 mappings
 that contain an output fingerprint. A mismatch or an unreadable, missing or
 ambiguous fingerprint gives exit 2 with a diagnostic and empty standard output.
 
+If you will use the counts for reporting, supply the counts file as a third
+path in the same command.
+
+```sh
+dedup verify-export reviewed/mapping.tsv reviewed/reviewed.ris reviewed/reconciliation.tsv
+```
+
+For each named source, this checks input occurrences, identifier and metadata
+removals, retained occurrences, explicit keeps, combined pending and combined
+outside-sheet counts against the mapping. It also checks that every total
+column adds up. On success the result includes `mapped_disposition_counts_match`
+and the path and SHA-256 of the supplied counts file. A mismatch exits 2
+before printing a success row.
+
+The mapping records a single `pending` status and a single `not-candidate`
+status. It cannot independently verify the identifier/metadata split within
+pending or the flagged/unflagged split outside the sheet. Runs with the
+same per-source counts can yield indistinguishable reports. The displayed
+hash identifies the file you checked. For exact reproduction, compare all
+three files with a fresh export from the saved review.
+
 Use a mapping whose origin and integrity you trust independently. The check
 compares the selected RIS bytes with that mapping's output fingerprint. If two
 runs produced byte-identical RIS files, either file will pass and the result
@@ -690,11 +711,11 @@ Use only the named destination for handoff.
 
 To retry after a write error, resolve the reported problem, reopen the
 same saved sheet with the same named downloads, and confirm `write` at
-an unused destination such as `retry`. The example below checks the new
-RIS against its mapping.
+an unused destination such as `retry`. Check the new RIS and source counts
+against its mapping.
 
 ```sh
-dedup verify-export retry/mapping.tsv retry/reviewed.ris
+dedup verify-export retry/mapping.tsv retry/reviewed.ris retry/reconciliation.tsv
 ```
 
 If you also have an earlier folder called `reviewed` whose contents are
