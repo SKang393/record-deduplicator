@@ -227,7 +227,14 @@ pub(super) fn run_action(action: Action<'_>, args: &[OsString]) -> Result<(), St
                 };
                 super::reviewed::require_new_destination(&directory).map_err(|e| e.to_string())?;
                 let export = super::reviewed::prepare(&queue, &manifest, &sheet.decisions)?;
-                if super::start::confirm_export(input, path.as_ref(), &directory, &export)? {
+                if super::start::confirm_export(
+                    input,
+                    path.as_ref(),
+                    &directory,
+                    &export,
+                    &queue,
+                    &sheet.decisions,
+                )? {
                     recheck_review()?;
                     export.publish(&directory)?;
                     eprintln!(

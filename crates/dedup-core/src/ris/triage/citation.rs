@@ -26,6 +26,20 @@ impl CitationValue {
 }
 
 impl Occurrence<'_> {
+    /// Literal title ending for a review prompt. The words can also be captions.
+    pub fn protocol_or_results_wording(&self) -> Option<(String, &'static str)> {
+        let normalized = title(self)?;
+        let (stem, word) = normalized.rsplit_once(' ')?;
+        let word = match word.strip_suffix('.').unwrap_or(word) {
+            "protocol" => "protocol",
+            "results" => "results",
+            _ => return None,
+        };
+        stem.chars()
+            .any(char::is_alphanumeric)
+            .then(|| (stem.to_owned(), word))
+    }
+
     /// Display normalized fields independently, including for incomplete citations.
     pub fn citation_fields(&self) -> [(&'static str, CitationValue); 11] {
         let field = |tags: &[&str], values| match values {

@@ -1,5 +1,6 @@
 //! Prompt for the arguments to an ordinary, local named-RIS review.
 use super::{
+    decisions::Decision,
     reviewed::PreparedExport,
     sources::{self, Action},
 };
@@ -223,6 +224,8 @@ pub(super) fn confirm_export(
     sheet: &Path,
     directory: &Path,
     export: &PreparedExport,
+    queue: &ris::ReviewQueue<'_>,
+    decisions: &[Decision],
 ) -> Result<bool, String> {
     eprintln!("Decision sheet: {}", sheet.display());
     eprintln!("New export folder: {}", directory.display());
@@ -231,6 +234,7 @@ pub(super) fn confirm_export(
         "Records retained: {} (including {} pending).",
         export.retained, export.pending
     );
+    show_title_advisories(queue, decisions);
     let Some(answer) = ask(
         input,
         "Type write to create this export, or press Enter to cancel:",
@@ -243,4 +247,50 @@ pub(super) fn confirm_export(
     }
     eprintln!("Export cancelled.");
     Ok(false)
+}
+
+fn show_title_advisories(queue: &ris::ReviewQueue<'_>, decisions: &[Decision]) {
+    if !decisions
+        .iter()
+        .any(|d| matches!(d, Decision::DuplicateOf(_)))
+    {
+        return;
+    }
+    // Rows are in queue order. Read each title at most once even for a shared keeper.
+    let endings: Vec<_> = queue
+        .sources
+        .iter()
+        .flat_map(|s| &s.source.occurrences)
+        .zip(decisions)
+        .map(|(record, decision)| match decision {
+            Decision::Keep | Decision::DuplicateOf(_) => record.protocol_or_results_wording(),
+            _ => None,
+        })
+        .collect();
+    let mut shown = false;
+    for (index, decision) in decisions.iter().enumerate() {
+        // A validated identifier decision already requires direct DOI or PMID group membership.
+        let Decision::DuplicateOf(target) = decision else {
+            continue;
+        };
+        let (Some((removed_stem, removed_word)), Some((kept_stem, kept_word))) =
+            (&endings[index], &endings[*target])
+        else {
+            continue;
+        };
+        if removed_stem == kept_stem && removed_word != kept_word {
+            let removed = &queue.entries[index];
+            let kept = &queue.entries[*target];
+            eprintln!(
+                "Title wording differs for this shared-identifier removal. {}:{} (remove) ends in '{removed_word}' and {}:{} (keep) ends in '{kept_word}'.",
+                removed.label, removed.ordinal, kept.label, kept.ordinal
+            );
+            shown = true;
+        }
+    }
+    if shown {
+        eprintln!(
+            "These words may describe separate reports or be literal labels in the same report. If unsure, cancel and reopen the sheet to compare the keys with :inspect."
+        );
+    }
 }
