@@ -47,6 +47,51 @@ grep -Fxq 'TI  - Marsh transects after spring flooding: seasonal observations' r
 cat catalog.ris index.ris | cmp - restored/reviewed.ris
 echo "PASS: packaged CLI verified one copy, retained the subtitled record and restored all three occurrences."
 
+# A fictional article is indexed online, then assigned to a print issue. A later
+# survey reuses its heading. Only the DOI links the online and print occurrences.
+(
+    mkdir date-check
+    cd date-check
+    heading='Enamel wear on rotating ticket drums'
+    byline=('AU  - Oriel, Mina' 'JO  - Fictional Transit Materials')
+    printf '\xef\xbb\xbf' > ahead.ris
+    printf '%s\r\n' 'TY  - JOUR' "TI  - $heading" "${byline[@]}" 'DA  - 2021/12/19/' \
+        'N1  - Published online ahead of print.' 'SP  - Ahead of print' 'DO  - 10.0000/drum.28' 'ER  -' >> ahead.ris
+    printf '%s\r' 'TY  - JOUR' "T1  - $heading" "${byline[@]}" 'Y1  - 2021/12/19/' \
+        'N1  - Electronic article before issue assignment.' 'ER  -' > index.ris
+    printf '%s\n' 'TY  - JOUR' "TI  - $heading" "${byline[@]}" 'PY  - 2022' 'DA  - 2021/12/19/' \
+        'N1  - First posted December 2021. Allocated to the February 2022 print issue.' \
+        'VL  - 8' 'IS  - 2' 'SP  - 41-46' 'DO  - 10.0000/drum.28' 'ER  -' > issue.ris
+    printf '%s\n' 'TY  - JOUR' "TI  - $heading" "${byline[@]}" 'PY  - 2024' 'Y1  - 2024/06/01/' 'Y2  - 2025/05/10/' \
+        'N1  - Follow-up report on wear after two further winters.' \
+        'VL  - 10' 'IS  - 6' 'SP  - 73-80' 'DO  - 10.0000/drum.63' 'ER  -' >> issue.ris
+    date_review() { dedup review-ids "$@" --ris-source ahead ahead.ris --ris-source index index.ris --ris-source issue issue.ris; }
+    date_review --init-metadata-decisions choices.tsv > queue.tsv
+    date_review --inspect-pair choices.tsv ahead:1 issue:1 > editions.txt
+    grep -Fxq '  Reported years  "2021" | "2021", "2022"' editions.txt
+    grep -Fxq '  RIS date fields  "DA=2021/12/19/" | "PY=2022", "DA=2021/12/19/"' editions.txt
+    date_review --inspect-pair choices.tsv index:1 issue:2 > follow-up.txt
+    grep -Fxq '  Reported years (different)  "2021" | "2024"' follow-up.txt
+    grep -Fxq '  RIS date fields  "Y1=2021/12/19/" | "PY=2024", "Y1=2024/06/01/"' follow-up.txt
+    grep -Fxq '  Y2  - 2025/05/10/' follow-up.txt
+
+    date_review --export-reviewed choices.tsv pending
+    sed -e $'s/^ahead:1\tpending$/ahead:1\tduplicate-of=issue:1/' \
+        -e $'s/^issue:1\tpending$/issue:1\tkeep/' choices.tsv > saved.tsv
+    date_review --export-reviewed saved.tsv reviewed
+    # Byte fingerprints produced by 8a67ff85b5c3 on these exact input bytes.
+    "${checksum[@]}" -c - <<'SUMS'
+e55c16f0cede302eb1c1f516f55de9cd234c9256acbc4ff36b76d7de9b96b04a *queue.tsv
+091ba0b0d01ca9eb60d43c81f07fec4826139452008af2d0a12ac21e4201d149 *pending/reviewed.ris
+8de69eeea7fd2967a93b12b3d50aa071938f04fd6a7826e541f63d118cbdb242 *pending/mapping.tsv
+ddad57e4cafb4495e899e4f42c6d4a4f5ac25c685242d42ee258b61c34cd87c9 *pending/reconciliation.tsv
+2bfb21fbf1a9da2659cad626cce37904dce0412685d898b1665fef3368f61747 *reviewed/reviewed.ris
+4d44ebb09550d21c36cb7940dbd8142254e01d0d2a1596be1944ff100c3f5546 *reviewed/mapping.tsv
+d9de45bf76cdd769f246574437ebda4c0caf55ee674c4a62fa84543bc0fea16e *reviewed/reconciliation.tsv
+SUMS
+    echo "PASS: inspected PY, Y1 and DA as reported. Y2 stayed in the original. The queue and both exports matched the baseline."
+)
+
 # Compare ordinary review output with the mixed-source control from 0d61ee7441e3.
 (
     mkdir input-check

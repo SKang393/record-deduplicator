@@ -107,7 +107,7 @@ impl Occurrence<'_> {
         [
             ("Title", single(&["TI", "T1"], title(self))),
             ("Authors", field(&["AU", "A1"], self.authors())),
-            ("Year", years),
+            ("Reported years", years),
             ("RIS date fields", dates),
             ("RIS type", scalar("TY")),
             ("Work type", scalar("M3")),
@@ -127,7 +127,7 @@ mod tests {
     use crate::ris::parse;
 
     #[test]
-    fn inspection_preserves_publication_date_evidence() {
+    fn inspection_preserves_reported_date_tags() {
         let record = |fields: &str| {
             let text = format!("TY  - JOUR\n{fields}ER  -\n");
             parse(&text).unwrap().occurrences[0].inspection_dates()
