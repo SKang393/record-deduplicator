@@ -310,6 +310,31 @@ fn decisions_reopen_against_named_bytes_and_can_be_reversed() {
         .replace("index:1\tpending", "index:1\tduplicate-of=catalog:1")
         .replace("index:2\tpending", "index:2\tkeep");
     inputs.write("review.tsv", reviewed.replace('\n', "\r\n").as_bytes());
+    let initial = &sources[..3];
+    assert!(
+        inputs
+            .run(&[&["--init-decisions", "initial.tsv"][..], initial].concat())
+            .status
+            .success()
+    );
+    for (sheet, selected, diagnostic) in [
+        (
+            "review.tsv",
+            initial,
+            "Saved source 'index' is missing from the selection.",
+        ),
+        (
+            "initial.tsv",
+            &sources[..],
+            "Selected source 'index' is absent from the sheet.",
+        ),
+    ] {
+        let refused =
+            inputs.run(&[&["--export-reviewed", sheet, "wrong-wave"][..], selected].concat());
+        assert!(String::from_utf8_lossy(&refused.stderr).contains(diagnostic));
+        assert_failed_before_report(refused);
+        assert!(!inputs.0.join("wrong-wave").exists());
+    }
     assert_failed_before_report(run("--init-decisions", "catalog.ris"));
     assert_failed_before_report(run("--init-decisions", "review.tsv"));
     let reopened = run("--resume-decisions", "review.tsv");

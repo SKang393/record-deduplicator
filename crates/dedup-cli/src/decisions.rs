@@ -1,7 +1,7 @@
 //! Editable review snapshots for named RIS inputs.
 use std::{
     borrow::Cow,
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     ffi::OsStr,
     fmt::Write as _,
     fs::{self, File},
@@ -143,6 +143,49 @@ fn changed_fingerprint<'a>(saved: &'a str, selected: &str) -> Option<(&'a str, &
     .then_some((label, saved_hash))
 }
 
+fn source_selection_error<'a>(
+    saved_inputs: impl Iterator<Item = &'a str>,
+    queue: &ReviewQueue<'_>,
+) -> String {
+    const MISMATCH: &str = "Decision sheet inputs differ. Check all RIS labels and source bytes.";
+    let mut saved = BTreeSet::new();
+    for row in saved_inputs {
+        let Some((label, _)) = row
+            .strip_prefix("input\tris\t")
+            .and_then(|s| s.split_once('\t'))
+        else {
+            return MISMATCH.into();
+        };
+        if saved.len() == dedup_core::ris::MAX_SOURCES
+            || !dedup_core::ris::valid_source_label(label)
+            || !saved.insert(label)
+        {
+            return MISMATCH.into();
+        }
+    }
+    let selected = queue.sources.iter().map(|s| s.label).collect();
+    if saved.is_empty() || saved == selected {
+        return MISMATCH.into();
+    }
+    let mut message = String::from("Decision sheet inputs differ.");
+    for label in saved.difference(&selected) {
+        write!(
+            message,
+            " Saved source '{label}' is missing from the selection."
+        )
+        .unwrap();
+    }
+    for label in selected.difference(&saved) {
+        write!(
+            message,
+            " Selected source '{label}' is absent from the sheet."
+        )
+        .unwrap();
+    }
+    message.push_str(" Reopen with the sheet's original named inputs. To include a later search, create a new sheet with the original downloads and the update.");
+    message
+}
+
 pub(super) fn resume(
     path: &OsStr,
     queue: &ReviewQueue<'_>,
@@ -177,12 +220,16 @@ pub(super) fn parse_sheet(
         .strip_prefix('\u{feff}')
         .unwrap_or(text)
         .lines()
-        .map(|line| line.trim_end_matches('\t'));
+        .map(|line| line.trim_end_matches('\t'))
+        .peekable();
     let metadata = match lines.next() {
         Some(VERSION) => false,
         Some(METADATA_VERSION) => true,
         _ => return Err("Unsupported decision sheet header or version.".into()),
     };
+    let saved_inputs = lines
+        .clone()
+        .take_while(|line| line.starts_with("input\tris\t"));
     for identity in manifest {
         let saved = lines.next();
         if saved != Some(identity.as_str()) {
@@ -192,10 +239,14 @@ pub(super) fn parse_sheet(
                      Reopen this sheet with the same labels and the original file for '{label}' at its current path."
                 ));
             }
-            return Err(
-                "Decision sheet inputs differ. Check all RIS labels and source bytes.".into(),
-            );
+            return Err(source_selection_error(saved_inputs, queue));
         }
+    }
+    if lines
+        .peek()
+        .is_some_and(|line| line.starts_with("input\tris\t"))
+    {
+        return Err(source_selection_error(saved_inputs, queue));
     }
     let metadata_hints = metadata.then(|| queue.metadata_hints());
     let hints = metadata_groups(queue, metadata_hints.as_deref().unwrap_or_default());

@@ -681,6 +681,8 @@ lists the supported import formats.
 A saved sheet resumes with exactly its original named inputs. For a cumulative
 review, keep the first sheet, downloads and export together. Start a new sheet
 with those same original downloads and give the later download its own label.
+If reopening reports a missing source label, select its original download.
+If the later label is absent from the saved sheet, use a new cumulative sheet.
 Using the earlier `reviewed.ris` as input would lose the removed occurrences
 and their original source keys from the new review.
 
