@@ -511,9 +511,18 @@ trace it even after editing the sheet or renaming a download. Trace verifies
 these rows against the mapping you supply. Authenticating the mapping itself
 requires independent evidence of its origin and integrity.
 
+The command checks regular files directly inside each folder you supply.
+It verifies the source fingerprint, record ordinal and byte range before
+printing any rows. Byte-identical files can have multiple matching paths,
+which it lists. Supply additional folders as separate arguments and quote
+paths with spaces. The read-only lookup prints paths and provenance. Use
+`--inspect-pair` when you also want to read the original RIS fields.
+
+### Trace a saved keep reason
+
 To document why you retained a distinct report, enter `keep-with-reason`
 and a single-line reason (1–512 UTF-8 bytes) on its editable decision row.
-This tab-separated row records a reason for keeping a protocol separately.
+For example, this editable row keeps a protocol under the key `reg:1`.
 
 ```text
 reg:1	keep-with-reason	Protocol describes planned methods. The results report gives outcomes.
@@ -521,8 +530,8 @@ reg:1	keep-with-reason	Protocol describes planned methods. The results report gi
 
 The note is saved in plain text in the decision sheet and copied to a `rationale` row in
 the local export's `mapping.tsv`. Sharing either file shares the note.
-The reviewed RIS contains only the retained source records. To see the reason
-from that export, request it for the kept occurrence.
+The reviewed RIS contains only the retained source records. If that review's
+original downloads are in `originals`, retrieve the reason with this command.
 
 ```sh
 dedup trace --show-keep-reason reviewed/mapping.tsv reg:1 originals
@@ -531,13 +540,6 @@ dedup trace --show-keep-reason reviewed/mapping.tsv reg:1 originals
 This adds a `keep_reason` column to the verified trace. A plain `keep`
 has an empty reason. To withdraw the note from future exports, restore
 `keep`, clear the reason cell, and export to a new directory.
-
-The command checks regular files directly inside each folder you supply.
-It verifies the source fingerprint, record ordinal and byte range before
-printing any rows. Byte-identical files can have multiple matching paths,
-which it lists. Supply additional folders as separate arguments and quote
-paths with spaces. The read-only lookup prints paths and provenance. Use
-`--inspect-pair` when you also want to read the original RIS fields.
 
 ### Reconcile a reviewed export before screening
 

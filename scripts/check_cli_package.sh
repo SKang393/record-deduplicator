@@ -30,11 +30,11 @@ fi
 dedup --version
 awk '
     /^### Verify a copy found through metadata$/ { walkthrough = 1 }
-    /^### Reconcile a reviewed export before screening$/ { exit }
+    /^### Trace a saved keep reason$/ { exit }
     walkthrough && /^```sh$/ { block = 1; count++; next }
     /^```$/ { block = 0 }
     block { print }
-    END { if (count != 5) exit 1 }
+    END { if (count != 5) { print "Expected 5 walkthrough command blocks, found " count > "/dev/stderr"; exit 1 } }
 ' README.md > "$work/first-run.sh"
 export TMPDIR="$work"
 source "$work/first-run.sh" > "$work/output.tsv"
