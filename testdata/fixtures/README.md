@@ -33,3 +33,11 @@ link in URL and left the separate PMID absent. Check where the reference
 manager stores the identifier if a later step expects a dedicated PMID field.
 
 The tested file has SHA-256 `0ea88114916154b13184f685cb7023dd360618e786c769519dc7be47e9d87ea4`.
+
+## Version 1 reviewed export
+
+The `reviewed-export-v1` mapping and RIS were exported together by commit
+`a4b736491c3d6822d4f59b20a22ed346604a1c69`. The inputs were the synthetic
+walkthrough's catalog record and its index copy with the DOI field omitted.
+Both occurrences were retained. The package smoke checks these frozen files
+against the current CLI.

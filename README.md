@@ -485,9 +485,10 @@ mapping you supplied. This read-only check works with version 1 and 2 mappings
 that contain an output fingerprint. A mismatch or an unreadable, missing or
 ambiguous fingerprint gives exit 2 with a diagnostic and empty standard output.
 
-The check covers only the mapping's output fingerprint and the selected RIS
-bytes. Different runs can produce byte-identical RIS files. Authenticating a
-mapping or verifying review decisions requires separate evidence.
+Use a mapping whose origin and integrity you trust independently. The check
+compares the selected RIS bytes with that mapping's output fingerprint. If two
+runs produced byte-identical RIS files, either file will pass and the result
+cannot distinguish their runs or verify the review decisions.
 
 Open `reconciliation.tsv` in the export directory. It has one row per named
 source and one total row. Every count represents input occurrences. Each

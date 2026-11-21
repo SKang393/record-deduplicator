@@ -3,6 +3,8 @@
 set -euo pipefail
 work=$(mktemp -d)
 trap 'cd / && rm -rf "$work"' EXIT
+mkdir "$work/verify-pairs"
+cp -R "$(dirname "$0")/../testdata/fixtures/reviewed-export-v1" "$work/verify-pairs/legacy"
 mkdir "$work/Extracted package"
 tar -xzf "$1" -C "$work/Extracted package"
 cd "$work/Extracted package"/recorddedu-*
@@ -347,3 +349,31 @@ SUMS
 "${checksum[@]}" -c "$work/trace-export.sha256"
 echo "PASS: trace found the verified copy and keeper at output 1 and the pending report at output 2 in renamed files."
 echo "PASS: same-size substitute with keeper outside the selected folders and altered span both exited 2 with empty stdout; all three export hashes matched."
+
+# Only the two handoff folders are available to the verifier in its working directory.
+cp -R reference-export "$work/verify-pairs/current"
+cd "$work/verify-pairs"
+touch -t 200101010000 "$work/pairs.stamp"
+find . -depth -exec touch -r "$work/pairs.stamp" {} +
+find . -print | LC_ALL=C sort > "$work/pairs-before.txt"
+"${checksum[@]}" -b current/* legacy/* > "$work/pairs-before.sha256"
+verify_pair() (
+    cd "$1"
+    test "$(grep -c '^TY  -' reviewed.ris)" -eq 2
+    dedup verify-export mapping.tsv reviewed.ris > "$work/pair.tsv"
+    grep -Fxq $'matched_output_fingerprint\t"mapping.tsv"\t'"$2"$'\t"reviewed.ris"\t276\t'"$3" "$work/pair.tsv"
+)
+verify_pair current 4364562f7dd989c5e5c7c64df1d5b2d890e4bb7da4643f8f7f28d20e8e160e6e b0cedb50c703d63d28832635724ebd4e8d5e0db177a509af305487a263e0d68a
+verify_pair legacy 81d4818ca49610bd162e98e98107c64da8fefcc9fb07d81045c7d61e933977f2 cb204a3646da21d35ffb49bf904b40bd4b1f882b363d528ba9a8578ee349055d
+if dedup verify-export current/mapping.tsv legacy/reviewed.ris > "$work/pair.tsv" 2> "$work/pair.err"; then
+    exit 1
+else
+    test "$?" -eq 2
+fi
+test ! -s "$work/pair.tsv"
+grep -Fxq 'Reviewed RIS SHA-256 differs from the mapping output row.' "$work/pair.err"
+find . -print | LC_ALL=C sort | cmp - "$work/pairs-before.txt"
+test -z "$(find . -newer "$work/pairs.stamp" -print)"
+"${checksum[@]}" -c "$work/pairs-before.sha256"
+echo "PASS: current and frozen v1 pairs matched; swapped two-record, 276-byte RIS exited 2 with empty stdout."
+echo "PASS: handoff paths, timestamps and file hashes were unchanged."
